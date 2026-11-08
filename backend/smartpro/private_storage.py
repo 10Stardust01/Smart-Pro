@@ -49,6 +49,7 @@ def _client():
         region_name=os.getenv("SMARTPRO_S3_REGION", "ap-southeast-1"),
         config=Config(
             signature_version="s3v4",
+            s3={"addressing_style": "path"},
             connect_timeout=5,
             read_timeout=10,
             retries={"max_attempts": 2, "mode": "standard"},
