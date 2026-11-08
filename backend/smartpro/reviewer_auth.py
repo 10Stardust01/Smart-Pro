@@ -120,7 +120,8 @@ def _page(request, error=""):
         "default-src 'none'; style-src 'self' 'unsafe-inline'; form-action 'self';"
         " frame-ancestors 'none'; base-uri 'none'"
     )
-    response["Referrer-Policy"] = "no-referrer"
+    # Preserve HTTPS CSRF referer checks without leaking referrers cross-origin.
+    response["Referrer-Policy"] = "same-origin"
     return response
 
 
