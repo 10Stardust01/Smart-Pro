@@ -1,26 +1,52 @@
-# SMART-PRO PostgreSQL validation prototype
+# SMART-PRO — Project lifecycle and academic evaluation platform
 
-Current implementation uses Django/DRF and PostgreSQL, retaining the temporary
-FastAPI synopsis harness for regression testing. See the authoritative
-[project status](docs/REPOSITORY_STATUS.md) and
-[integration review](docs/INTEGRATION_READINESS.md) for current functionality,
-verification and rollout limits. The reproduction notes below retain the original
-validation context. Use synthetic data only; this is not a departmental deployment.
+SMART-PRO is a Django / Django REST Framework and PostgreSQL application for
+departmental project registration, teams, guide assignments, document revision
+and approval, configurable evaluation, results, and academic history. The
+frontend contains role-specific workspaces for Student, Faculty, Coordinator,
+HOD, and Admin.
 
-Current development is local-only on `feature/finalized-academic-policies` while
-GitHub access is suspended. See [academic policies](docs/FINALIZED_ACADEMIC_POLICIES.md)
-for the configurable quorum, aggregation, audited corrections and delegation APIs.
+## Existing reviewer staging deployment
 
-The [local departmental demo](docs/DEPARTMENT_DEMO.md) now connects student,
-administrator and faculty screens to the existing APIs. On this machine, after
-starting the local PostgreSQL cluster and running demo setup as documented:
+- **Application:** [SMART-PRO reviewer staging](https://smartpro-reviewer-25775915.onrender.com)
+- **Hosting:** Render **Free** web service (Docker, Singapore).
+- **Database:** existing SMART-PRO PostgreSQL 16 project on Neon **Free**.
+- **Source:** `deployment/reviewer-staging`; deployment verified at
+  commit `0d5281e7b0ff6fae07569a90c907bb75253cb442` on 9 November 2026.
+  Later commits require separate verification. Automatic Render deployment is off.
+- **Access:** staging-only authenticated reviewer sessions, backed by effective
+  database roles. Use **synthetic academic identities and records only**; do not
+  use the site for live institutional approvals or marks.
 
-```powershell
-.venv\Scripts\python.exe scripts/department_demo.py serve
-```
+The application is **already deployed**, but a live web service is not the same
+as production/institutional sign-off. See
+[repository status](docs/REPOSITORY_STATUS.md),
+[department review checklist](docs/DEPARTMENT_REVIEW_CHECKLIST.md), and
+[deployment and recovery](docs/DEPLOYMENT_AND_RECOVERY.md) for verification and
+remaining requirements.
 
-Open **http://127.0.0.1:8000**. No frontend installation/build or production
-authentication is required. Use synthetic identities only.
+**Hosting restriction:** continue only with genuine ongoing free plans. Do not
+upgrade to paid resources, activate free trials or trial credits, consume Railway
+trial credits, or add charge-incurring services. Verify the relevant plan and
+limits before every infrastructure change. Keep the existing live service,
+database, and immutable academic history intact.
+
+**Policy alignment pending:** current course correction code enforces
+independence for certain exceptional published-result authorizations, while a
+later user-approved (not faculty-ratified) product rule permits the responsible
+Coordinator to approve a specific Guide-requested correction even if they are
+the same person or the Coordinator evaluated those marks. Do not silently alter
+the live database. See
+[post-publication correction alignment](docs/POST_PUBLICATION_CORRECTION_ALIGNMENT.md)
+for the exact gap and required regression checks.
+
+## Historic PostgreSQL prototype reproduction
+
+The commands and inventory below are preserved as **historical validation
+context**, not instructions to configure, overwrite or redeploy the current
+Render/Neon staging service. Never run `--recreate` against a live database.
+The original local synopsis harness remains available for regression testing;
+use isolated synthetic test databases and private test files only.
 
 ## Reproduce with PostgreSQL 16
 
