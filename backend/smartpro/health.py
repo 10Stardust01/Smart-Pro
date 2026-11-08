@@ -27,9 +27,14 @@ def ready(request):
     if os.getenv('SMARTPRO_DOCUMENT_API') == 'YES':
         signatures += ['public.smartpro_document_project_page(uuid,uuid,text,text,integer,uuid)',
                        'public.smartpro_course_project_documents(uuid,uuid,uuid,text)']
-        storage = os.getenv('SMARTPRO_DATA_DIR')
-        if not storage or not Path(storage).is_dir() or not os.access(storage, os.W_OK):
-            return response(False)
+        if os.getenv('SMARTPRO_STORAGE_BACKEND') == 's3':
+            from .private_storage import config_ready
+            if not config_ready():
+                return response(False)
+        else:
+            storage = os.getenv('SMARTPRO_DATA_DIR')
+            if not storage or not Path(storage).is_dir() or not os.access(storage, os.W_OK):
+                return response(False)
     if os.getenv('SMARTPRO_COURSE_API') == 'YES':
         signatures += ['public.smartpro_course_evaluation_queue(uuid,uuid,text,text,text,integer)']
     try:
