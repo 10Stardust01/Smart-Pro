@@ -28,7 +28,7 @@ def main(test_name=None):
   @classmethod
   def setUpClass(cls):
    cls.db=psycopg.connect(**dict(owner,dbname=name),autocommit=True,row_factory=dict_row);install_documents(cls.db)
-   for candidate in ['037_course_coordination.sql','038_course_assessment_lifecycle.sql','039_course_deadlines_notifications.sql','040_course_integration.sql','041_course_scope_guards.sql','042_course_authorized_operations.sql','043_runtime_function_grants.sql','044_coordinator_own_corrections.sql','045_admin_course_appointments.sql','046_department_leadership.sql','047_department_intake.sql','048_course_evaluation_queue.sql','049_paginated_evaluation_queue.sql','050_document_project_pages.sql','051_department_intake_pages.sql','052_department_directory.sql','053_department_import_outcomes.sql','054_department_offering_pages.sql','055_leadership_history_pages.sql','056_coordinator_catalog_scope_prefilter.sql','057_department_identity_navigation.sql','058_course_command_lock_order.sql']:execute_file(cls.db,ROOT/'proposals/curriculum'/candidate)
+   for candidate in ['037_course_coordination.sql','038_course_assessment_lifecycle.sql','039_course_deadlines_notifications.sql','040_course_integration.sql','041_course_scope_guards.sql','042_course_authorized_operations.sql','043_runtime_function_grants.sql','044_coordinator_own_corrections.sql','045_admin_course_appointments.sql','046_department_leadership.sql','047_department_intake.sql','048_course_evaluation_queue.sql','049_paginated_evaluation_queue.sql','050_document_project_pages.sql','051_department_intake_pages.sql','052_department_directory.sql','053_department_import_outcomes.sql','054_department_offering_pages.sql','055_leadership_history_pages.sql','056_coordinator_catalog_scope_prefilter.sql','057_department_identity_navigation.sql','058_course_command_lock_order.sql','059_published_correction_authority.sql']:execute_file(cls.db,ROOT/'proposals/curriculum'/candidate)
   @classmethod
   def tearDownClass(cls):cls.db.close();connection.close()
   def client(self,who='staff-policy',role=None):
@@ -798,6 +798,62 @@ def main(test_name=None):
    versions=self.db.execute('SELECT * FROM course_final_results WHERE project_id=%s ORDER BY version',(pid,)).fetchall()
    self.assertEqual([row['results']['00000000-0000-4000-8000-000000000001'] for row in versions],['40.00','42.00'])
    self.assertEqual(str(versions[1]['supersedes_id']),original)
+
+  def test_published_correction_same_person_guide_evaluator_coordinator(self):
+   oid=self.offering()
+   self.ok(self.appoint(oid,uid='00000000-0000-4000-8000-000000000008'))
+   pid=self.project(oid)
+   self.framework(oid)
+   rid,aid,scores=self.stage(oid,pid,'stage-1',20)
+   self.ok(self.appoint(oid,uid=FACULTY,permissions=['OVERVIEW','RESULTS','CORRECTIONS']))
+   original=self.ok(self.command(oid,'PUBLISH_FINAL',dict(projectId=pid,expectedVersion=0),who='coordinator'))['id']
+   revision=self.db.execute('SELECT revision FROM academic_review_bindings WHERE review_id=%s',(rid,)).fetchone()['revision']
+   changed=[dict(row,marks='21') for row in scores]
+   stage_request=self.ok(self.command(oid,'REQUEST_EXCEPTIONAL_STAGE_CORRECTION',
+     dict(reviewId=rid,assessmentId=aid,expectedReviewRevision=revision,scores=changed),
+     who='faculty-a',role='Faculty'))['id']
+   self.ok(self.command(oid,'AUTHORIZE_EXCEPTIONAL_STAGE_CORRECTION',
+     dict(requestId=stage_request,approved=True),who='faculty-a',role='Coordinator'))
+   self.ok(self.command(oid,'APPLY_EXCEPTIONAL_STAGE_CORRECTION',
+     dict(requestId=stage_request),who='faculty-a',role='Faculty'))
+   # Guide makes the exact overall revision request with Faculty responsibility.
+   final_request=self.ok(self.command(oid,'REQUEST_FINAL_REVISION',
+     dict(projectId=pid,expectedVersion=1,reason='Correct verified stage evidence'),
+     who='faculty-a',role='Faculty'))['id']
+   # Same person may be the Guide, evaluator and responsible Coordinator.
+   self.ok(self.command(oid,'AUTHORIZE_FINAL_REVISION',
+     dict(requestId=final_request,approved=True),who='faculty-a',role='Coordinator'))
+   self.ok(self.command(oid,'APPLY_FINAL_REVISION',
+     dict(requestId=final_request),who='faculty-a',role='Coordinator'))
+   releases=self.db.execute('SELECT id,version,supersedes_id,results FROM course_final_results WHERE project_id=%s ORDER BY version',(pid,)).fetchall()
+   self.assertEqual([r['results']['00000000-0000-4000-8000-000000000001'] for r in releases],['40.00','42.00'])
+   self.assertEqual(str(releases[-1]['supersedes_id']),original)
+   self.assertEqual(len(releases),2)
+
+  def test_guide_requests_and_coordinator_applies_exact_overall_revision(self):
+   oid=self.offering()
+   self.ok(self.appoint(oid,uid='00000000-0000-4000-8000-000000000008'))
+   pid=self.project(oid);self.framework(oid)
+   rid,aid,scores=self.stage(oid,pid,'stage-1',20)
+   self.ok(self.command(oid,'PUBLISH_FINAL',dict(projectId=pid,expectedVersion=0),who='coordinator'))
+   revision=self.db.execute('SELECT revision FROM academic_review_bindings WHERE review_id=%s',(rid,)).fetchone()['revision']
+   changed=[dict(row,marks='21') for row in scores]
+   stage_request=self.ok(self.command(oid,'REQUEST_EXCEPTIONAL_STAGE_CORRECTION',
+     dict(reviewId=rid,assessmentId=aid,expectedReviewRevision=revision,scores=changed),who='faculty-a'))['id']
+   self.ok(self.command(oid,'AUTHORIZE_EXCEPTIONAL_STAGE_CORRECTION',
+     dict(requestId=stage_request,approved=True),who='coordinator'))
+   self.ok(self.command(oid,'APPLY_EXCEPTIONAL_STAGE_CORRECTION',
+     dict(requestId=stage_request),who='faculty-a'))
+   guide_request=self.ok(self.command(oid,'REQUEST_FINAL_REVISION',
+     dict(projectId=pid,expectedVersion=1,reason='Correct stage result following review'),
+     who='faculty-a',role='Faculty'))['id']
+   self.ok(self.command(oid,'AUTHORIZE_FINAL_REVISION',
+     dict(requestId=guide_request,approved=True),who='coordinator'))
+   self.ok(self.command(oid,'APPLY_FINAL_REVISION',
+     dict(requestId=guide_request),who='coordinator'))
+   versions=self.db.execute('SELECT version,results FROM course_final_results WHERE project_id=%s ORDER BY version',(pid,)).fetchall()
+   self.assertEqual([x['version'] for x in versions],[1,2])
+   self.assertEqual([x['results']['00000000-0000-4000-8000-000000000001'] for x in versions],['40.00','42.00'])
 
   def test_milestone_completion_and_exact_requirement_permission(self):
    oid=self.offering()

@@ -22,9 +22,17 @@ Assigning a stage includes the active primary guide as an evaluator. Handover
 retains prior evaluation evidence. The authorized primary guide may reopen an
 approved synopsis before overall publication. Stage publication leaves the ordinary
 document workflow open. Overall publication closes ordinary document changes.
-An original evaluator can apply only the exact finalized-mark correction approved
-by an independent offering coordinator. An exceptional overall revision requires
-its own authorization and appends a result version from exact stage releases.
+The older course implementation uses a specific independently authorized
+original-evaluator correction for ordinary, pre-overall-publication changes.
+**Later approved product design (not yet faculty-ratified):** after overall
+publication the assigned Project Guide may request the exact correction, and
+the responsible offering Coordinator may decide it even as the same person or
+a participating evaluator. No extra approver or HOD is required. Any new
+published result appends a version derived from exact stage evidence and retains
+its predecessor. Forward-only candidate 059 prepares this exception without
+altering earlier publication or pre-publication rules; verify it before live use.
+The existing stage-evidence prerequisite is retained pending clarification on
+whether a Guide may request new scores before that evidence is corrected.
 
 The deadline worker checks approved obligations and creates deduplicated in-app
 warnings. A completed obligation stops showing as active, and an authorized date

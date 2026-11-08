@@ -1,5 +1,18 @@
 # SMART-PRO implementation status
 
+## 9 November 2026 — hosted snapshot and product-policy reconciliation
+
+Render Free already hosts the reviewer service from `deployment/reviewer-staging`
+(commit `0d5281e`); Neon reports a `free_v3` PostgreSQL 16 project with a
+populated staging database. This corrects older local-only/deployment-pending
+statements below; it is **not** production or institutional sign-off.
+The new review branch prepares candidate 059 for the finalized exceptional
+published-result correction authority, tests and frontend labels. It is
+**not installed or deployed**. See [requirements register](REQUIREMENTS_COMPLETION_REGISTER.md).
+
+Original results and the current live deployment have not been modified.
+
+
 Updated 8 November 2026 (Asia/Kolkata). Authoritative current status; historical
 reports/evidence retain their original meaning. No main merge or deployment.
 

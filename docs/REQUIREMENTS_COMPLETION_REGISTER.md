@@ -1,9 +1,13 @@
 # SMART-PRO requirements completion register
 
 This register tracks approved behavior and the evidence available at each checkpoint.
-Verified means an applicable test or browser workflow passed. Historical evidence
-is identified by commit and remains valid for the scope it covered. Change a row
-when its behavior, verification evidence or assigned milestone changes.
+Verified means an applicable test or browser workflow passed **within the stated test
+scope**; it does not imply current hosted end-to-end or institutional acceptance.
+Historical evidence is identified by commit and remains valid only for the scope it
+covered. The reviewer staging service is already deployed on Render Free at commit
+`0d5281e`; that deployment is not institutional production.
+The latest product decisions can supersede old code despite historical green tests.
+Change a row when its behavior, verification evidence or assigned milestone changes.
 
 | Requirement | Status | Evidence | Remaining gap | Priority | Assigned milestone |
 | --- | --- | --- | --- | --- | --- |
@@ -31,6 +35,15 @@ when its behavior, verification evidence or assigned milestone changes.
 | Development database restore and migration preserve academic evidence. | Verified | Owner rehearsed candidates 052–057 on fresh restores and aligned `smartpro_dev`; existing table fingerprints and stored PDF matched. | Production-specific backup, restore and rollout authorization. | Critical | Deployment readiness |
 | Production sign-in, retention, emergency HOD succession and institutional onboarding are authorized and validated. | Blocked | Institutional decision register and deployment runbook. | Requires institutional decisions and verification in the approved environment. | Critical | Deployment readiness |
 | Automatic guide allocation and COE integration remain outside current scope. | Intentionally deferred | Existing academic policy and milestone scope. | | Low | Future approved milestone |
+
+| Reviewer staging is already deployed on an ongoing free plan and matches GitHub staging HEAD. | Verified in hosting metadata | Render service `smartpro-reviewer-25775915`, branch `deployment/reviewer-staging`, live deployment `0d5281e`, 8 Nov 2026. Neon reports `free_v3`. | No real-user sign-off; free-plan budgets and end-to-end document access still need inspection. | High | Reviewer staging |
+| Assigned Guide may request a specific published-result revision from revised stage evidence. | Fix prepared; not yet verified | Proposed forward-only candidate 059 and isolated course contract on review branch; enforces current GUIDE assignment and Faculty role. | Does not create arbitrary totals or bypass approved rubric/evaluator evidence; actual installation and tests pending. | Critical | Correction alignment |
+| Responsible Coordinator can approve a post-publication stage/overall correction even when also evaluator, Guide, or requester. | Fix prepared; not yet verified | Candidate 059 preserves independent authorizer rule for ordinary pre-publication correction, changes exceptional-only checks; same-person regression added. | Not installed in live Neon; disposable PostgreSQL regression and deployment-shaped validation pending. | Critical | Correction alignment |
+| Published result correction retains original release, exact request, authorized decision, new version and audit. | Partial | Existing immutable final revision request/authorization/application/result tables; prepared 059 tests original and successor result versions. | Clarify whether a Guide may propose a result before corrected stage evidence exists; verify reason handling and full UI lifecycle. | Critical | Correction alignment |
+| Current faculty appointment can be amended or ended by authorized staff. | Blocked: institutional authority undecided | [Institutional readiness](INSTITUTIONAL_READINESS.md) identifies no approved authority for amendment or termination. | Registrar/HOD must confirm responsibilities. Do not invent power. | High | Institutional decision |
+| Real account provisioning, student identity mapping, and reviewer-to-institution transition. | Blocked: institutional approval | Staging reviewer sessions use configured synthetic actors; production identity integration not approved. | Institution-approved provider and account mapping required. | Critical | Institutional onboarding |
+| Hosted backups and private PDF restore have been rehearsed for the live free-tier stack. | Pending | Earlier local snapshot restoration passed; current Neon staging is populated. | Hosted paired DB + object storage recovery drill not yet evidenced. | Critical | Hosting recovery |
+| Accessibility verification includes screen-reader behavior and accessible document alternatives. | Partial | Keyboard-focused browser checks exist; screen-reader speech/table traversal and PDF accessibility remain unverified. | Institutional testing/criteria needed. | High | Institutional acceptance |
 
 See [repository status](REPOSITORY_STATUS.md), [institutional readiness](INSTITUTIONAL_READINESS.md)
 and [deployment and recovery](DEPLOYMENT_AND_RECOVERY.md) for evidence and boundaries.
