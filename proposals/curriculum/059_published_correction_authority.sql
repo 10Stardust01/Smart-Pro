@@ -81,6 +81,30 @@ BEGIN
  IF (length(definition)-length(replace(definition,old,'')))<>length(old) THEN
   RAISE EXCEPTION 'Reviewed final revision application guard changed; stop for review';
  END IF;
+ definition:=replace(definition,old,replacement);
+ -- Revalidate the same Guide at the existing end-of-transaction authority
+ -- checkpoint. Do not fall through into the publisher-only course guard.
+ old:=$old$PERFORM public.smartpro_course_authority(actor,oid,permission,input->>'_actingRole');
+ result:=jsonb_build_object('id',target,'projectId',pid);$old$;
+ replacement:=$new$IF action='REQUEST_FINAL_REVISION' AND input->>'_actingRole'='Faculty' THEN
+  IF NOT public.smartpro_role_choices(actor) ? 'Faculty'
+     OR NOT EXISTS(
+       SELECT 1 FROM public.faculty_assignments g
+       JOIN public.curriculum_offerings o ON o.id=oid
+       WHERE g.project_id=pid AND public.smartpro_course_project_offering(g.project_id)=oid
+         AND g.faculty_user_id=actor AND g.assignment_type='GUIDE'
+         AND g.valid_from<=clock_timestamp()
+         AND (g.valid_until IS NULL OR clock_timestamp()<g.valid_until)
+         AND public.smartpro_has_role(actor,o.department_id,'FACULTY',clock_timestamp())) THEN
+   RAISE EXCEPTION 'Assigned Guide responsibility expired during correction request' USING ERRCODE='42501';
+  END IF;
+ ELSE
+  PERFORM public.smartpro_course_authority(actor,oid,permission,input->>'_actingRole');
+ END IF;
+ result:=jsonb_build_object('id',target,'projectId',pid);$new$;
+ IF (length(definition)-length(replace(definition,old,'')))<>length(old) THEN
+  RAISE EXCEPTION 'Reviewed final revision closing authority guard changed; stop for review';
+ END IF;
  EXECUTE replace(definition,old,replacement);
  -- Queue action eligibility must match the exceptional-only authority.
  -- The original pre-publication outside-panel restriction still applies.

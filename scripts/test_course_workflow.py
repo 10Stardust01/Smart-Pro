@@ -844,6 +844,9 @@ def main(test_name=None):
      dict(requestId=stage_request,approved=True),who='coordinator'))
    self.ok(self.command(oid,'APPLY_EXCEPTIONAL_STAGE_CORRECTION',
      dict(requestId=stage_request),who='faculty-a'))
+   self.assertEqual(self.command(oid,'REQUEST_FINAL_REVISION',
+     dict(projectId=pid,expectedVersion=1,reason='Unrelated actor cannot request'),
+     who='coordinator',role='Faculty').status_code,403)
    guide_request=self.ok(self.command(oid,'REQUEST_FINAL_REVISION',
      dict(projectId=pid,expectedVersion=1,reason='Correct stage result following review'),
      who='faculty-a',role='Faculty'))['id']

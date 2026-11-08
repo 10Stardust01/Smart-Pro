@@ -56,7 +56,9 @@ introduced. Existing historic migration candidates 001–058 are unchanged.
 - Ordinary prepublication self-authorization remains blocked.
 - Forged/expired guide, foreign offering, unappointed coordinator,
   stale result version, changed stage scores, declined decision and replay
-  remain denied or idempotent as applicable.
+  remain denied or idempotent as applicable. A non-Guide Faculty actor is now
+  explicitly checked in the prepared course contract; more denial tests await
+  the isolated database run.
 - Browser tests of authorization panels, reviewer session, role switching,
   stage history and overall result history. Queue permission and final revision
   authorizer projection are included in candidate 059; the Guide-only frontend
