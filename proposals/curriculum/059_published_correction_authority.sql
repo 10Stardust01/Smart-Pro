@@ -109,12 +109,10 @@ BEGIN
  -- Queue action eligibility must match the exceptional-only authority.
  -- The original pre-publication outside-panel restriction still applies.
  definition:=pg_get_functiondef('public.smartpro_course_evaluation_queue(uuid,uuid,text,text,text,integer)'::regprocedure);
- old:=$old
-canAuthorizeCorrection',can_authorize AND
+ old:=$old$'canAuthorizeCorrection',can_authorize AND
          (NOT coalesce(outside_panel,true) OR NOT EXISTS(SELECT FROM public.evaluator_assignments
            WHERE review_id=review.id AND faculty_user_id=actor)),$old$;
- replacement:=$new
-canAuthorizeCorrection',can_authorize AND
+ replacement:=$new$'canAuthorizeCorrection',can_authorize AND
          (release_version IS NOT NULL OR NOT coalesce(outside_panel,true) OR NOT EXISTS(SELECT FROM public.evaluator_assignments
            WHERE review_id=review.id AND faculty_user_id=actor)),$new$;
  IF (length(definition)-length(replace(definition,old,'')))<>length(old) THEN
