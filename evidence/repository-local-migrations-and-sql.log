@@ -1,0 +1,30 @@
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL 001_seed.sql
+SQL NOTICE PASS cross-project submission blocked
+SQL NOTICE PASS wrong criterion scope blocked
+SQL NOTICE PASS over-maximum marks blocked in draft
+SQL NOTICE PASS incomplete assessment finalization blocked
+SQL NOTICE PASS finalized assessment protected
+SQL NOTICE PASS approved rubric locked
+SQL NOTICE PASS review mode fixed after assessment
+SQL NOTICE PASS review roster locked
+SQL NOTICE PASS published result immutable
+SQL NOTICE PASS document version immutable
+SQL NOTICE PASS referenced object identity immutable
+SQL NOTICE PASS duplicate idempotency key blocked
+SQL NOTICE PASS stale version refused
+SQL NOTICE PASS wrong review roster blocked
+SQL NOTICE PASS incomplete scheme approval blocked
+SQL NOTICE PASS pending file rejected
+SQL NOTICE PASS approved policy locked
+SQL NOTICE PASS synthetic published-score baseline
+PASS SQL 002_constraints.sql
+PASS SQL 003_smoke_queries.sql

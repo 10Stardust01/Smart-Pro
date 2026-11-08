@@ -1,0 +1,50 @@
+{
+  "first_four_migrations_unchanged": {
+    "database-v1.5/migrations/001_core.sql": "9d23e31ac2f8a4f0117c6fb78b52acff31d5face15725c41c8cac45322f61464",
+    "database-v1.5/migrations/002_documents.sql": "b3a386be6f7e71eea5861278a6991f3eb199ed6e600a84c134be21745def0f11",
+    "database-v1.5/migrations/003_evaluation.sql": "dab635c6062505a9124661b4992cfd3998e7b47f51efb7c30477bc8d283a9b94",
+    "database-v1.5/migrations/004_operations_and_guards.sql": "b8a9e870ac506ffb9ab6eef770f191d2146c6e9c82fad82bbe4616ab2503e208"
+  },
+  "changed_original_files": [
+    "database-v1.5/.github/workflows/database-contracts.yml",
+    "database-v1.5/README.md",
+    "database-v1.5/compose.yaml",
+    "database-v1.5/run-tests.sh",
+    "database-v1.5/tests/001_seed.sql",
+    "database-v1.5/tests/002_constraints.sql",
+    "workflow-poc/POSTGRES_SCHEMA_REVIEW.md",
+    "workflow-poc/README.md",
+    "workflow-poc/app.py",
+    "workflow-poc/openapi.json",
+    "workflow-poc/requirements.txt",
+    "workflow-poc/tests/test_workflow.py"
+  ],
+  "new_source_files": [
+    ".env.example",
+    ".gitignore",
+    "academic_services.py",
+    "ARCHITECTURE_DECISIONS.md",
+    "db_setup.py",
+    "pytest.ini",
+    "README.md",
+    "requirements-dev.txt",
+    "requirements-lock.txt",
+    "START_HERE.original.txt",
+    "validate.py",
+    "WORK_LOG.md",
+    "scripts/portable_postgres.py",
+    "scripts/test_upgrade.py",
+    "tests/test_database.py",
+    "workflow-poc/domain.py",
+    ".github/workflows/postgres-validation.yml",
+    "database-v1.5/migrations/005_integrity_hardening.sql",
+    "database-v1.5/migrations/006_publication_contract.sql",
+    "database-v1.5/migrations/007_upload_and_delivery.sql",
+    "database-v1.5/migrations/008_runtime_authorization.sql",
+    "database-v1.5/migrations/009_temporal_and_review_history.sql",
+    "database-v1.5/tests/api_seed.sql",
+    "workflow-poc/tests/conftest.py",
+    "workflow-poc/tests/test_additional.py",
+    "DATABASE_VALIDATION_REPORT.md"
+  ]
+}

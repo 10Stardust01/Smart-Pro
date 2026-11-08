@@ -1,0 +1,1068 @@
+Recreated isolated database: smartpro_validation
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL 001_seed.sql
+SQL NOTICE role "smartpro_api" has already been granted membership in role "smartpro_runtime" by role "smartpro_owner"
+SQL NOTICE PASS cross-project submission blocked
+SQL NOTICE PASS wrong criterion scope blocked
+SQL NOTICE PASS over-maximum marks blocked in draft
+SQL NOTICE PASS incomplete assessment finalization blocked
+SQL NOTICE PASS finalized assessment protected
+SQL NOTICE PASS approved rubric locked
+SQL NOTICE PASS review mode fixed after assessment
+SQL NOTICE PASS review roster locked
+SQL NOTICE PASS published result immutable
+SQL NOTICE PASS document version immutable
+SQL NOTICE PASS referenced object identity immutable
+SQL NOTICE PASS duplicate idempotency key blocked
+SQL NOTICE PASS stale version refused
+SQL NOTICE PASS wrong review roster blocked
+SQL NOTICE PASS incomplete scheme approval blocked
+SQL NOTICE PASS pending file rejected
+SQL NOTICE PASS approved policy locked
+SQL NOTICE PASS synthetic published-score baseline
+PASS SQL 002_constraints.sql
+PASS SQL 003_smoke_queries.sql
+
+SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL 001_seed.sql
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL 001_seed.sql
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL 001_seed.sql
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL 001_seed.sql
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL 001_seed.sql
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL 001_seed.sql
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL 001_seed.sql
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL 001_seed.sql
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL 001_seed.sql
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL 001_seed.sql
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL 001_seed.sql
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL 001_seed.sql
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL 001_seed.sql
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL 001_seed.sql
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL 001_seed.sql
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL 001_seed.sql
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL 001_seed.sql
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL 001_seed.sql
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL 001_seed.sql
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL 001_seed.sql
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL 001_seed.sql
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL 001_seed.sql
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL 001_seed.sql
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL 001_seed.sql
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL 001_seed.sql
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL 001_seed.sql
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL 001_seed.sql
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL 001_seed.sql
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL 001_seed.sql
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL 001_seed.sql
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL 001_seed.sql
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL 001_seed.sql
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL 001_seed.sql
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL 001_seed.sql
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL 001_seed.sql
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL 001_seed.sql
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL 001_seed.sql
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL 001_seed.sql
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL 001_seed.sql
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL 001_seed.sql
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL 001_seed.sql
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL 001_seed.sql
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL 001_seed.sql
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL 001_seed.sql
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL 001_seed.sql
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL 001_seed.sql
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL 001_seed.sql
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL 001_seed.sql
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL 001_seed.sql
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL 001_seed.sql
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL 001_seed.sql
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL 001_seed.sql
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL 001_seed.sql
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL 001_seed.sql
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL 001_seed.sql
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL 001_seed.sql
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL 001_seed.sql
+REAL CONCURRENT BACKENDS [14032, 25500] [('committed', 1), ('rejected', '23514')]
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL 001_seed.sql
+REAL CONCURRENT BACKENDS [25888, 11588] [('committed', 1), ('rejected', '23514')]
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL 001_seed.sql
+REAL CONCURRENT BACKENDS [16336, 30528] [('committed', ['6d553dc2-355c-469d-93ea-9615209d869c']), ('committed', [])]
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL 001_seed.sql
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL 001_seed.sql
+.ssssSQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL api_seed.sql
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL api_seed.sql
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL api_seed.sql
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL api_seed.sql
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL api_seed.sql
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL api_seed.sql
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL api_seed.sql
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL api_seed.sql
+.SQL NOTICE drop cascades to 80 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL api_seed.sql
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL api_seed.sql
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL api_seed.sql
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL api_seed.sql
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL api_seed.sql
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL api_seed.sql
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL api_seed.sql
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL api_seed.sql
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL api_seed.sql
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL api_seed.sql
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL api_seed.sql
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL api_seed.sql
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL api_seed.sql
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL api_seed.sql
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL api_seed.sql
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL api_seed.sql
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL api_seed.sql
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL api_seed.sql
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL api_seed.sql
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL api_seed.sql
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL api_seed.sql
+.SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL api_seed.sql
+.
+============================== warnings summary ===============================
+..\..\work\smartpro-venv\Lib\site-packages\fastapi\testclient.py:1
+  C:\Users\DELL\Documents\Codex\2026-11-03\perform-an-independent-aquacrop-ospy-3\work\smartpro-venv\Lib\site-packages\fastapi\testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+SKIPPED [1] tests\test_database.py:389: Faculty policy not decided: institutional_approval_quorum; no institutional behavior invented
+SKIPPED [1] tests\test_database.py:389: Faculty policy not decided: multi_evaluator_aggregation; no institutional behavior invented
+SKIPPED [1] tests\test_database.py:389: Faculty policy not decided: mark_correction_authority_and_amendment; no institutional behavior invented
+SKIPPED [1] tests\test_database.py:389: Faculty policy not decided: retrospective_membership_exceptions; no institutional behavior invented
+91 passed, 4 skipped, 1 warning in 90.74s (0:01:30)
+
+All checks passed!
+
+OFFLINE STATIC CHECK PASS: 38 tables, 40 trigger functions, 46 trigger hooks, 106 FK references, 9 ordered migration files
+LIMITATION: This cannot establish SQL syntax, server compatibility or runtime behavior. Run psql tests.
+OFFLINE COMPOSITE KEY CHECK PASS: 35 explicit FOREIGN KEY declarations match declared unique/primary keys
+
+SQL NOTICE drop cascades to 79 other objects
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+PASS SQL 001_seed.sql

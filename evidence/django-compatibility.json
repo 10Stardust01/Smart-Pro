@@ -1,0 +1,19 @@
+{
+  "django": "5.2.18",
+  "checks": {
+    "project_uuid_read": true,
+    "composite_key_roundtrip": true,
+    "unmanaged_models": true,
+    "restricted_role": true,
+    "production_rejects_demo_header": true,
+    "demo_requires_second_switch": true,
+    "missing_identity_denied": true,
+    "student_scoped_case_read": true,
+    "assigned_faculty_read": true,
+    "unassigned_faculty_denied": true,
+    "catalog_unchanged": true
+  },
+  "system_check": "System check identified no issues (0 silenced).\n",
+  "introspection_sha256": "89547404e14037f6f7f1f0bf6cd76734420b423564a78ec6986b2dff58909ec2",
+  "status": "PASSED"
+}

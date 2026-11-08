@@ -1,0 +1,36 @@
+name: Curriculum team membership contracts
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  curriculum-contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: smartpro_owner
+          POSTGRES_PASSWORD: synthetic_ci_owner_only
+          POSTGRES_DB: smartpro_test_curriculum
+        ports: [5432:5432]
+        options: >-
+          --health-cmd "pg_isready -U smartpro_owner -d smartpro_test_curriculum"
+          --health-interval 3s --health-timeout 3s --health-retries 20
+    env:
+      DATABASE_ADMIN_URL: postgresql://smartpro_owner:synthetic_ci_owner_only@127.0.0.1:5432/smartpro_test_curriculum
+      DATABASE_URL: postgresql://smartpro_api:synthetic_ci_app_only@127.0.0.1:5432/smartpro_test_curriculum
+      ALLOW_SMARTPRO_TEST_DB: 'YES'
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r requirements-lock.txt
+      - run: python -m pytest proposals/curriculum/test_contracts.py -q --junitxml=evidence/curriculum-contracts.xml -p no:cacheprovider
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: curriculum-contract-evidence
+          path: evidence/curriculum-contracts.xml

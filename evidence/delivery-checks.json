@@ -1,0 +1,25 @@
+{
+  "random_local_credentials_absent": true,
+  "original_four_migrations_unchanged": true,
+  "python_syntax_valid": true,
+  "acceptance": {
+    "tests": 95,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 4,
+    "passed": 91
+  },
+  "test_groups": {
+    "tests.test_database": {
+      "passed": 61,
+      "skipped": 4
+    },
+    "workflow-poc.tests.test_additional": {
+      "passed": 17
+    },
+    "workflow-poc.tests.test_workflow": {
+      "passed": 13
+    }
+  },
+  "legacy_sql_pass_notices": 18
+}

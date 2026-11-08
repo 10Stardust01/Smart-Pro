@@ -1,0 +1,22 @@
+PASS ORIGINAL SQL database-v1.5/migrations/001_core.sql
+PASS ORIGINAL SQL database-v1.5/migrations/002_documents.sql
+PASS ORIGINAL SQL database-v1.5/migrations/003_evaluation.sql
+PASS ORIGINAL SQL database-v1.5/migrations/004_operations_and_guards.sql
+PASS ORIGINAL SQL database-v1.5/tests/001_seed.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+FAIL SQL 009_temporal_and_review_history.sql sqlstate=55006: cannot ALTER TABLE "submission_attempts" because it has pending trigger events
+Traceback (most recent call last):
+  File "C:\Users\DELL\Documents\Codex\2026-11-03\perform-an-independent-aquacrop-ospy-3\outputs\smartpro\scripts\test_upgrade.py", line 69, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "C:\Users\DELL\Documents\Codex\2026-11-03\perform-an-independent-aquacrop-ospy-3\outputs\smartpro\scripts\test_upgrade.py", line 46, in main
+    execute_file(db, path)
+  File "C:\Users\DELL\Documents\Codex\2026-11-03\perform-an-independent-aquacrop-ospy-3\outputs\smartpro\db_setup.py", line 20, in execute_file
+    db.execute(source, prepare=False)
+  File "C:\Users\DELL\Documents\Codex\2026-11-03\perform-an-independent-aquacrop-ospy-3\work\smartpro-venv\Lib\site-packages\psycopg\connection.py", line 304, in execute
+    raise ex.with_traceback(None)
+psycopg.errors.ObjectInUse: cannot ALTER TABLE "submission_attempts" because it has pending trigger events
+exit_code=1

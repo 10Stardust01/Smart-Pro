@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="3" skipped="0" tests="3" time="2.222" timestamp="2026-11-03T20:03:22.252511+05:30" hostname="DESKTOP-GE6VTAG"><testcase classname="outputs.smartpro.tests.test_database" name="test_review_cannot_finalize_before_assessments" time="0.677"><failure message="Failed: DID NOT RAISE Error">db = &lt;psycopg.Connection [IDLE] (host=127.0.0.1 port=55439 user=smartpro_owner database=smartpro_validation) at 0x1d160f8c500&gt;
+
+    def test_review_cannot_finalize_before_assessments(db):
+        rid, _, _ = open_review(db)
+&gt;       reject(db, "UPDATE project_reviews SET review_state='FINALIZED' WHERE id=%s", (rid,))
+
+outputs\smartpro\tests\test_database.py:251: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+db = &lt;psycopg.Connection [IDLE] (host=127.0.0.1 port=55439 user=smartpro_owner database=smartpro_validation) at 0x1d160f8c500&gt;
+statement = "UPDATE project_reviews SET review_state='FINALIZED' WHERE id=%s"
+params = ('dae5c3b9-78b7-45cc-87c6-f6545414358c',), states = ('23514',)
+
+    def reject(db, statement, params=(), states=('23514',)):
+&gt;       with pytest.raises(psycopg.Error) as caught:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE Error
+
+outputs\smartpro\tests\test_database.py:37: Failed</failure></testcase><testcase classname="outputs.smartpro.tests.test_database" name="test_same_team_membership_intervals_cannot_overlap" time="0.641"><failure message="Failed: DID NOT RAISE Error">db = &lt;psycopg.Connection [IDLE] (host=127.0.0.1 port=55439 user=smartpro_owner database=smartpro_validation) at 0x1d160fd0f80&gt;
+
+    def test_same_team_membership_intervals_cannot_overlap(db):
+&gt;       reject(db, '''INSERT INTO team_memberships(team_id,user_id,joined_at,left_at)
+          SELECT team_id,user_id,joined_at,joined_at+interval '1 day' FROM team_memberships WHERE id=%s''',
+          (ident('14'),), ('23P01',))
+
+outputs\smartpro\tests\test_database.py:255: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+db = &lt;psycopg.Connection [IDLE] (host=127.0.0.1 port=55439 user=smartpro_owner database=smartpro_validation) at 0x1d160fd0f80&gt;
+statement = "INSERT INTO team_memberships(team_id,user_id,joined_at,left_at)\n      SELECT team_id,user_id,joined_at,joined_at+interval '1 day' FROM team_memberships WHERE id=%s"
+params = ('14000000-0000-4000-8000-000000000001',), states = ('23P01',)
+
+    def reject(db, statement, params=(), states=('23514',)):
+&gt;       with pytest.raises(psycopg.Error) as caught:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE Error
+
+outputs\smartpro\tests\test_database.py:37: Failed</failure></testcase><testcase classname="outputs.smartpro.tests.test_database" name="test_submission_preserves_membership_history_without_review" time="0.678"><failure message="Failed: DID NOT RAISE Error">db = &lt;psycopg.Connection [IDLE] (host=127.0.0.1 port=55439 user=smartpro_owner database=smartpro_validation) at 0x1d16132e390&gt;
+
+    def test_submission_preserves_membership_history_without_review(db):
+        # End-of-term changes may close membership, but may not rewrite its identity.
+        user, team, member = map(str, [uuid4(), uuid4(), uuid4()])
+        db.execute('INSERT INTO users(id,display_name,email) VALUES(%s,\'Synthetic submitter\',%s)', (user, user+'@example.invalid'))
+        db.execute("INSERT INTO department_role_assignments(user_id,department_id,role_code) VALUES(%s,%s,'STUDENT')", (user, ident('10')))
+        db.execute('INSERT INTO team_memberships(id,team_id,user_id) VALUES(%s,%s,%s)', (member, ident('13'), user))
+        with db.transaction():
+            attempt = str(uuid4())
+            db.execute('INSERT INTO submission_attempts(id,case_id,project_id,attempt_no,submitted_by) VALUES(%s,%s,%s,2,%s)', (attempt, ident('19'), P, user))
+            db.execute('INSERT INTO submission_items SELECT %s,project_id,document_id,document_version_id FROM submission_items LIMIT 1', (attempt,))
+            db.execute('UPDATE submission_attempts SET sealed_at=clock_timestamp() WHERE id=%s', (attempt,))
+&gt;       reject(db, "UPDATE team_memberships SET joined_at=joined_at-interval '1 day' WHERE id=%s", (member,))
+
+outputs\smartpro\tests\test_database.py:271: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+db = &lt;psycopg.Connection [IDLE] (host=127.0.0.1 port=55439 user=smartpro_owner database=smartpro_validation) at 0x1d16132e390&gt;
+statement = "UPDATE team_memberships SET joined_at=joined_at-interval '1 day' WHERE id=%s"
+params = ('2baf1706-7d0b-4bb5-9ec0-33cbd6670e7e',), states = ('23514',)
+
+    def reject(db, statement, params=(), states=('23514',)):
+&gt;       with pytest.raises(psycopg.Error) as caught:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE Error
+
+outputs\smartpro\tests\test_database.py:37: Failed</failure></testcase></testsuite></testsuites>

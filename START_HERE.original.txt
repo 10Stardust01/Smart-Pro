@@ -1,0 +1,30 @@
+SMART-PRO — Executable Workflow PoC + PostgreSQL Reference Schema
+
+STATUS (3 November 2026)
+
+WHAT RAN AND PASSED
+- 13 FastAPI/SQLite contract-workflow tests: PASSED.
+- Structural lint of PostgreSQL v1.5 schema: PASSED.
+
+WHAT DID NOT RUN
+- PostgreSQL migrations and negative tests (no PostgreSQL server available).
+- Real SSO, secure file storage, notification delivery, result calculation, real deployment.
+
+IN THIS BUNDLE
+workflow-poc/  : Executable synopsis upload/revise/approve API harness, generated OpenAPI, tests, README, review of schema gaps.
+database-v1.5/: Four unexecuted PostgreSQL migrations, synthetic seed, constraint tests, GitHub Actions config, README.
+
+FASTEST WAY TO VERIFY WORKFLOW
+  cd workflow-poc
+  pip install -r requirements.txt
+  python -m pytest -q tests/test_workflow.py
+
+START LOCAL DEMO API
+  cd workflow-poc
+  python app.py
+  Open http://127.0.0.1:8765/docs
+
+Do not deploy the PoC. X-Demo-User is INSECURE synthetic identity, and the upload handler is demonstration-only.
+
+ARCHITECTURE DECISIONS
+Initial modular-monolith direction approved. Backend (NestJS versus Django) undecided. No student/faculty production data used. Current academic-policy uncertainties remain explicit.

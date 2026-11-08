@@ -1,0 +1,32 @@
+PASS ORIGINAL SQL database-v1.5/migrations/001_core.sql
+PASS ORIGINAL SQL database-v1.5/migrations/002_documents.sql
+PASS ORIGINAL SQL database-v1.5/migrations/003_evaluation.sql
+PASS ORIGINAL SQL database-v1.5/migrations/004_operations_and_guards.sql
+PASS ORIGINAL SQL database-v1.5/tests/001_seed.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 009_temporal_and_review_history.sql
+{
+  "status": "PASSED",
+  "version": "PostgreSQL 16.15, compiled by Visual C++ build 1944, 64-bit",
+  "database": "smartpro_test_upgrade",
+  "forward_migrations": [
+    "005_integrity_hardening.sql",
+    "006_publication_contract.sql",
+    "007_upload_and_delivery.sql",
+    "008_runtime_authorization.sql",
+    "009_temporal_and_review_history.sql"
+  ],
+  "historical_queries_unchanged": [
+    "documents",
+    "assessments",
+    "releases",
+    "results",
+    "decisions"
+  ],
+  "legacy_release_grants_not_fabricated": 1,
+  "scope": "Supplied synthetic v1.5 schema/seed only; no production upgrade claim"
+}
+exit_code=0

@@ -1,0 +1,3 @@
+OFFLINE STATIC CHECK PASS: 38 tables, 40 trigger functions, 46 trigger hooks, 106 FK references, 9 ordered migration files
+LIMITATION: This cannot establish SQL syntax, server compatibility or runtime behavior. Run psql tests.
+OFFLINE COMPOSITE KEY CHECK PASS: 35 explicit FOREIGN KEY declarations match declared unique/primary keys

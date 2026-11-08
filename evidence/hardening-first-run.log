@@ -1,0 +1,10 @@
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 001_seed.sql
+PASS SQL 002_constraints.sql
+PASS SQL 003_smoke_queries.sql

@@ -1,0 +1,238 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="13" skipped="0" tests="13" time="18.905" timestamp="2026-11-03T19:44:07.514925+05:30" hostname="DESKTOP-GE6VTAG"><testcase classname="outputs.smartpro.workflow-poc.tests.test_workflow" name="test_complete_synopsis_revision_workflow" time="1.467"><failure message="AssertionError: {&quot;detail&quot;:{&quot;code&quot;:&quot;DATABASE_AUTHORITY_DENIED&quot;,&quot;message&quot;:&quot;Database transaction rejected; no partial academic change committed&quot;}}&#10;assert 403 == 201&#10; +  where 403 = &lt;Response [403 Forbidden]&gt;.status_code">client = &lt;starlette.testclient.TestClient object at 0x00000177BC2BA030&gt;
+
+    def test_complete_synopsis_revision_workflow(client):
+&gt;       v1=upload(client)
+           ^^^^^^^^^^^^^^
+
+outputs\smartpro\workflow-poc\tests\test_workflow.py:42: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+client = &lt;starlette.testclient.TestClient object at 0x00000177BC2BA030&gt;
+doc = 'synopsis-1', actor = 'student-a'
+content = b'%PDF-1.4\nDemo synthetic PDF bytes\n%%EOF\n'
+
+    def upload(client,doc='synopsis-1',actor='student-a',content=b'%PDF-1.4\nDemo synthetic PDF bytes\n%%EOF\n'):
+        r=client.post(f'/api/v1/documents/{doc}/upload-sessions',headers=headers(actor))
+&gt;       assert r.status_code==201,r.text
+E       AssertionError: {"detail":{"code":"DATABASE_AUTHORITY_DENIED","message":"Database transaction rejected; no partial academic change committed"}}
+E       assert 403 == 201
+E        +  where 403 = &lt;Response [403 Forbidden]&gt;.status_code
+
+outputs\smartpro\workflow-poc\tests\test_workflow.py:27: AssertionError</failure></testcase><testcase classname="outputs.smartpro.workflow-poc.tests.test_workflow" name="test_replayed_submission_returns_original_result_without_duplicates" time="1.308"><failure message="AssertionError: {&quot;detail&quot;:{&quot;code&quot;:&quot;DATABASE_AUTHORITY_DENIED&quot;,&quot;message&quot;:&quot;Database transaction rejected; no partial academic change committed&quot;}}&#10;assert 403 == 201&#10; +  where 403 = &lt;Response [403 Forbidden]&gt;.status_code">client = &lt;starlette.testclient.TestClient object at 0x00000177BC2B8DD0&gt;
+
+    def test_replayed_submission_returns_original_result_without_duplicates(client):
+&gt;       vid=upload(client)
+            ^^^^^^^^^^^^^^
+
+outputs\smartpro\workflow-poc\tests\test_workflow.py:66: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+client = &lt;starlette.testclient.TestClient object at 0x00000177BC2B8DD0&gt;
+doc = 'synopsis-1', actor = 'student-a'
+content = b'%PDF-1.4\nDemo synthetic PDF bytes\n%%EOF\n'
+
+    def upload(client,doc='synopsis-1',actor='student-a',content=b'%PDF-1.4\nDemo synthetic PDF bytes\n%%EOF\n'):
+        r=client.post(f'/api/v1/documents/{doc}/upload-sessions',headers=headers(actor))
+&gt;       assert r.status_code==201,r.text
+E       AssertionError: {"detail":{"code":"DATABASE_AUTHORITY_DENIED","message":"Database transaction rejected; no partial academic change committed"}}
+E       assert 403 == 201
+E        +  where 403 = &lt;Response [403 Forbidden]&gt;.status_code
+
+outputs\smartpro\workflow-poc\tests\test_workflow.py:27: AssertionError</failure></testcase><testcase classname="outputs.smartpro.workflow-poc.tests.test_workflow" name="test_idempotency_key_cannot_be_reused_with_new_request" time="1.320"><failure message="AssertionError: {&quot;detail&quot;:{&quot;code&quot;:&quot;DATABASE_AUTHORITY_DENIED&quot;,&quot;message&quot;:&quot;Database transaction rejected; no partial academic change committed&quot;}}&#10;assert 403 == 201&#10; +  where 403 = &lt;Response [403 Forbidden]&gt;.status_code">client = &lt;starlette.testclient.TestClient object at 0x00000177BC2D4410&gt;
+
+    def test_idempotency_key_cannot_be_reused_with_new_request(client):
+&gt;       vid=upload(client)
+            ^^^^^^^^^^^^^^
+
+outputs\smartpro\workflow-poc\tests\test_workflow.py:76: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+client = &lt;starlette.testclient.TestClient object at 0x00000177BC2D4410&gt;
+doc = 'synopsis-1', actor = 'student-a'
+content = b'%PDF-1.4\nDemo synthetic PDF bytes\n%%EOF\n'
+
+    def upload(client,doc='synopsis-1',actor='student-a',content=b'%PDF-1.4\nDemo synthetic PDF bytes\n%%EOF\n'):
+        r=client.post(f'/api/v1/documents/{doc}/upload-sessions',headers=headers(actor))
+&gt;       assert r.status_code==201,r.text
+E       AssertionError: {"detail":{"code":"DATABASE_AUTHORITY_DENIED","message":"Database transaction rejected; no partial academic change committed"}}
+E       assert 403 == 201
+E        +  where 403 = &lt;Response [403 Forbidden]&gt;.status_code
+
+outputs\smartpro\workflow-poc\tests\test_workflow.py:27: AssertionError</failure></testcase><testcase classname="outputs.smartpro.workflow-poc.tests.test_workflow" name="test_outsider_and_unassigned_faculty_denied" time="1.426"><failure message="AssertionError: {&quot;detail&quot;:{&quot;code&quot;:&quot;DATABASE_AUTHORITY_DENIED&quot;,&quot;message&quot;:&quot;Database transaction rejected; no partial academic change committed&quot;}}&#10;assert 403 == 201&#10; +  where 403 = &lt;Response [403 Forbidden]&gt;.status_code">client = &lt;starlette.testclient.TestClient object at 0x00000177BC2D42F0&gt;
+
+    def test_outsider_and_unassigned_faculty_denied(client):
+        r=client.post('/api/v1/documents/synopsis-1/upload-sessions',headers=headers('student-outsider'))
+        assert r.status_code==403
+&gt;       vid=upload(client)
+            ^^^^^^^^^^^^^^
+
+outputs\smartpro\workflow-poc\tests\test_workflow.py:84: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+client = &lt;starlette.testclient.TestClient object at 0x00000177BC2D42F0&gt;
+doc = 'synopsis-1', actor = 'student-a'
+content = b'%PDF-1.4\nDemo synthetic PDF bytes\n%%EOF\n'
+
+    def upload(client,doc='synopsis-1',actor='student-a',content=b'%PDF-1.4\nDemo synthetic PDF bytes\n%%EOF\n'):
+        r=client.post(f'/api/v1/documents/{doc}/upload-sessions',headers=headers(actor))
+&gt;       assert r.status_code==201,r.text
+E       AssertionError: {"detail":{"code":"DATABASE_AUTHORITY_DENIED","message":"Database transaction rejected; no partial academic change committed"}}
+E       assert 403 == 201
+E        +  where 403 = &lt;Response [403 Forbidden]&gt;.status_code
+
+outputs\smartpro\workflow-poc\tests\test_workflow.py:27: AssertionError</failure></testcase><testcase classname="outputs.smartpro.workflow-poc.tests.test_workflow" name="test_incomplete_upload_cannot_be_finalized" time="1.291"><failure message="KeyError: 'uploadId'">client = &lt;starlette.testclient.TestClient object at 0x00000177BC33CDA0&gt;
+
+    def test_incomplete_upload_cannot_be_finalized(client):
+&gt;       uid=client.post('/api/v1/documents/synopsis-1/upload-sessions',headers=headers()).json()['uploadId']
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'uploadId'
+
+outputs\smartpro\workflow-poc\tests\test_workflow.py:92: KeyError</failure></testcase><testcase classname="outputs.smartpro.workflow-poc.tests.test_workflow" name="test_wrong_format_rejected" time="1.247"><failure message="KeyError: 'uploadId'">client = &lt;starlette.testclient.TestClient object at 0x00000177BC33E960&gt;
+
+    def test_wrong_format_rejected(client):
+&gt;       uid=client.post('/api/v1/documents/synopsis-1/upload-sessions',headers=headers()).json()['uploadId']
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'uploadId'
+
+outputs\smartpro\workflow-poc\tests\test_workflow.py:100: KeyError</failure></testcase><testcase classname="outputs.smartpro.workflow-poc.tests.test_workflow" name="test_stale_decision_and_wrong_transition_refused" time="1.242"><failure message="AssertionError: {&quot;detail&quot;:{&quot;code&quot;:&quot;DATABASE_AUTHORITY_DENIED&quot;,&quot;message&quot;:&quot;Database transaction rejected; no partial academic change committed&quot;}}&#10;assert 403 == 201&#10; +  where 403 = &lt;Response [403 Forbidden]&gt;.status_code">client = &lt;starlette.testclient.TestClient object at 0x00000177BC33C560&gt;
+
+    def test_stale_decision_and_wrong_transition_refused(client):
+&gt;       vid=upload(client)
+            ^^^^^^^^^^^^^^
+
+outputs\smartpro\workflow-poc\tests\test_workflow.py:105: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+client = &lt;starlette.testclient.TestClient object at 0x00000177BC33C560&gt;
+doc = 'synopsis-1', actor = 'student-a'
+content = b'%PDF-1.4\nDemo synthetic PDF bytes\n%%EOF\n'
+
+    def upload(client,doc='synopsis-1',actor='student-a',content=b'%PDF-1.4\nDemo synthetic PDF bytes\n%%EOF\n'):
+        r=client.post(f'/api/v1/documents/{doc}/upload-sessions',headers=headers(actor))
+&gt;       assert r.status_code==201,r.text
+E       AssertionError: {"detail":{"code":"DATABASE_AUTHORITY_DENIED","message":"Database transaction rejected; no partial academic change committed"}}
+E       assert 403 == 201
+E        +  where 403 = &lt;Response [403 Forbidden]&gt;.status_code
+
+outputs\smartpro\workflow-poc\tests\test_workflow.py:27: AssertionError</failure></testcase><testcase classname="outputs.smartpro.workflow-poc.tests.test_workflow" name="test_wrong_project_document_rejected" time="1.354"><failure message="AssertionError: {&quot;detail&quot;:{&quot;code&quot;:&quot;DATABASE_AUTHORITY_DENIED&quot;,&quot;message&quot;:&quot;Database transaction rejected; no partial academic change committed&quot;}}&#10;assert 403 == 201&#10; +  where 403 = &lt;Response [403 Forbidden]&gt;.status_code">client = &lt;starlette.testclient.TestClient object at 0x00000177BC2D6E40&gt;
+
+    def test_wrong_project_document_rejected(client):
+&gt;       vid=upload(client)
+            ^^^^^^^^^^^^^^
+
+outputs\smartpro\workflow-poc\tests\test_workflow.py:114: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+client = &lt;starlette.testclient.TestClient object at 0x00000177BC2D6E40&gt;
+doc = 'synopsis-1', actor = 'student-a'
+content = b'%PDF-1.4\nDemo synthetic PDF bytes\n%%EOF\n'
+
+    def upload(client,doc='synopsis-1',actor='student-a',content=b'%PDF-1.4\nDemo synthetic PDF bytes\n%%EOF\n'):
+        r=client.post(f'/api/v1/documents/{doc}/upload-sessions',headers=headers(actor))
+&gt;       assert r.status_code==201,r.text
+E       AssertionError: {"detail":{"code":"DATABASE_AUTHORITY_DENIED","message":"Database transaction rejected; no partial academic change committed"}}
+E       assert 403 == 201
+E        +  where 403 = &lt;Response [403 Forbidden]&gt;.status_code
+
+outputs\smartpro\workflow-poc\tests\test_workflow.py:27: AssertionError</failure></testcase><testcase classname="outputs.smartpro.workflow-poc.tests.test_workflow" name="test_immutable_evidence_triggers" time="1.281"><failure message="AssertionError: {&quot;detail&quot;:{&quot;code&quot;:&quot;DATABASE_AUTHORITY_DENIED&quot;,&quot;message&quot;:&quot;Database transaction rejected; no partial academic change committed&quot;}}&#10;assert 403 == 201&#10; +  where 403 = &lt;Response [403 Forbidden]&gt;.status_code">client = &lt;starlette.testclient.TestClient object at 0x00000177BC33DCD0&gt;
+
+    def test_immutable_evidence_triggers(client):
+&gt;       vid=upload(client)
+            ^^^^^^^^^^^^^^
+
+outputs\smartpro\workflow-poc\tests\test_workflow.py:122: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+client = &lt;starlette.testclient.TestClient object at 0x00000177BC33DCD0&gt;
+doc = 'synopsis-1', actor = 'student-a'
+content = b'%PDF-1.4\nDemo synthetic PDF bytes\n%%EOF\n'
+
+    def upload(client,doc='synopsis-1',actor='student-a',content=b'%PDF-1.4\nDemo synthetic PDF bytes\n%%EOF\n'):
+        r=client.post(f'/api/v1/documents/{doc}/upload-sessions',headers=headers(actor))
+&gt;       assert r.status_code==201,r.text
+E       AssertionError: {"detail":{"code":"DATABASE_AUTHORITY_DENIED","message":"Database transaction rejected; no partial academic change committed"}}
+E       assert 403 == 201
+E        +  where 403 = &lt;Response [403 Forbidden]&gt;.status_code
+
+outputs\smartpro\workflow-poc\tests\test_workflow.py:27: AssertionError</failure></testcase><testcase classname="outputs.smartpro.workflow-poc.tests.test_workflow" name="test_missing_idempotency_and_anonymous_access" time="1.282"><failure message="AssertionError: {&quot;detail&quot;:{&quot;code&quot;:&quot;DATABASE_AUTHORITY_DENIED&quot;,&quot;message&quot;:&quot;Database transaction rejected; no partial academic change committed&quot;}}&#10;assert 403 == 201&#10; +  where 403 = &lt;Response [403 Forbidden]&gt;.status_code">client = &lt;starlette.testclient.TestClient object at 0x00000177BC2BAD50&gt;
+
+    def test_missing_idempotency_and_anonymous_access(client):
+&gt;       vid=upload(client)
+            ^^^^^^^^^^^^^^
+
+outputs\smartpro\workflow-poc\tests\test_workflow.py:133: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+client = &lt;starlette.testclient.TestClient object at 0x00000177BC2BAD50&gt;
+doc = 'synopsis-1', actor = 'student-a'
+content = b'%PDF-1.4\nDemo synthetic PDF bytes\n%%EOF\n'
+
+    def upload(client,doc='synopsis-1',actor='student-a',content=b'%PDF-1.4\nDemo synthetic PDF bytes\n%%EOF\n'):
+        r=client.post(f'/api/v1/documents/{doc}/upload-sessions',headers=headers(actor))
+&gt;       assert r.status_code==201,r.text
+E       AssertionError: {"detail":{"code":"DATABASE_AUTHORITY_DENIED","message":"Database transaction rejected; no partial academic change committed"}}
+E       assert 403 == 201
+E        +  where 403 = &lt;Response [403 Forbidden]&gt;.status_code
+
+outputs\smartpro\workflow-poc\tests\test_workflow.py:27: AssertionError</failure></testcase><testcase classname="outputs.smartpro.workflow-poc.tests.test_workflow" name="test_replayed_decision_returns_identical_result" time="1.319"><failure message="AssertionError: {&quot;detail&quot;:{&quot;code&quot;:&quot;DATABASE_AUTHORITY_DENIED&quot;,&quot;message&quot;:&quot;Database transaction rejected; no partial academic change committed&quot;}}&#10;assert 403 == 201&#10; +  where 403 = &lt;Response [403 Forbidden]&gt;.status_code">client = &lt;starlette.testclient.TestClient object at 0x00000177BC380B00&gt;
+
+    def test_replayed_decision_returns_identical_result(client):
+&gt;       vid=upload(client)
+            ^^^^^^^^^^^^^^
+
+outputs\smartpro\workflow-poc\tests\test_workflow.py:140: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+client = &lt;starlette.testclient.TestClient object at 0x00000177BC380B00&gt;
+doc = 'synopsis-1', actor = 'student-a'
+content = b'%PDF-1.4\nDemo synthetic PDF bytes\n%%EOF\n'
+
+    def upload(client,doc='synopsis-1',actor='student-a',content=b'%PDF-1.4\nDemo synthetic PDF bytes\n%%EOF\n'):
+        r=client.post(f'/api/v1/documents/{doc}/upload-sessions',headers=headers(actor))
+&gt;       assert r.status_code==201,r.text
+E       AssertionError: {"detail":{"code":"DATABASE_AUTHORITY_DENIED","message":"Database transaction rejected; no partial academic change committed"}}
+E       assert 403 == 201
+E        +  where 403 = &lt;Response [403 Forbidden]&gt;.status_code
+
+outputs\smartpro\workflow-poc\tests\test_workflow.py:27: AssertionError</failure></testcase><testcase classname="outputs.smartpro.workflow-poc.tests.test_workflow" name="test_concurrent_submissions_only_one_wins" time="1.455"><failure message="AssertionError: {&quot;detail&quot;:{&quot;code&quot;:&quot;DATABASE_AUTHORITY_DENIED&quot;,&quot;message&quot;:&quot;Database transaction rejected; no partial academic change committed&quot;}}&#10;assert 403 == 201&#10; +  where 403 = &lt;Response [403 Forbidden]&gt;.status_code">client = &lt;starlette.testclient.TestClient object at 0x00000177BC382C60&gt;
+
+    def test_concurrent_submissions_only_one_wins(client):
+        from concurrent.futures import ThreadPoolExecutor
+&gt;       vid=upload(client)
+            ^^^^^^^^^^^^^^
+
+outputs\smartpro\workflow-poc\tests\test_workflow.py:152: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+client = &lt;starlette.testclient.TestClient object at 0x00000177BC382C60&gt;
+doc = 'synopsis-1', actor = 'student-a'
+content = b'%PDF-1.4\nDemo synthetic PDF bytes\n%%EOF\n'
+
+    def upload(client,doc='synopsis-1',actor='student-a',content=b'%PDF-1.4\nDemo synthetic PDF bytes\n%%EOF\n'):
+        r=client.post(f'/api/v1/documents/{doc}/upload-sessions',headers=headers(actor))
+&gt;       assert r.status_code==201,r.text
+E       AssertionError: {"detail":{"code":"DATABASE_AUTHORITY_DENIED","message":"Database transaction rejected; no partial academic change committed"}}
+E       assert 403 == 201
+E        +  where 403 = &lt;Response [403 Forbidden]&gt;.status_code
+
+outputs\smartpro\workflow-poc\tests\test_workflow.py:27: AssertionError</failure></testcase><testcase classname="outputs.smartpro.workflow-poc.tests.test_workflow" name="test_document_version_attached_to_other_project_is_rejected" time="1.353"><failure message="AssertionError: {&quot;detail&quot;:{&quot;code&quot;:&quot;DATABASE_AUTHORITY_DENIED&quot;,&quot;message&quot;:&quot;Database transaction rejected; no partial academic change committed&quot;}}&#10;assert 403 == 201&#10; +  where 403 = &lt;Response [403 Forbidden]&gt;.status_code">client = &lt;starlette.testclient.TestClient object at 0x00000177BC380830&gt;
+
+    def test_document_version_attached_to_other_project_is_rejected(client):
+&gt;       vid=upload(client,doc='synopsis-2',actor='student-outsider')
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+outputs\smartpro\workflow-poc\tests\test_workflow.py:166: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+client = &lt;starlette.testclient.TestClient object at 0x00000177BC380830&gt;
+doc = 'synopsis-2', actor = 'student-outsider'
+content = b'%PDF-1.4\nDemo synthetic PDF bytes\n%%EOF\n'
+
+    def upload(client,doc='synopsis-1',actor='student-a',content=b'%PDF-1.4\nDemo synthetic PDF bytes\n%%EOF\n'):
+        r=client.post(f'/api/v1/documents/{doc}/upload-sessions',headers=headers(actor))
+&gt;       assert r.status_code==201,r.text
+E       AssertionError: {"detail":{"code":"DATABASE_AUTHORITY_DENIED","message":"Database transaction rejected; no partial academic change committed"}}
+E       assert 403 == 201
+E        +  where 403 = &lt;Response [403 Forbidden]&gt;.status_code
+
+outputs\smartpro\workflow-poc\tests\test_workflow.py:27: AssertionError</failure></testcase></testsuite></testsuites>

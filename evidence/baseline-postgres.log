@@ -1,0 +1,29 @@
+001_core.sql exit 0
+002_documents.sql exit 0
+003_evaluation.sql exit 0
+004_operations_and_guards.sql exit 0
+001_seed.sql exit 0
+002_constraints.sql exit 3
+003_smoke_queries.sql exit 0
+[
+  {
+    "probe": "submitted_item_delete",
+    "accepted": true,
+    "rowcount": 1
+  },
+  {
+    "probe": "finalized_assessment_timestamp_change",
+    "accepted": true,
+    "rowcount": 1
+  },
+  {
+    "probe": "project_draft_policy_link",
+    "accepted": true,
+    "rowcount": 0
+  },
+  {
+    "probe": "approved_scheme_insert_bypass",
+    "accepted": true,
+    "rowcount": 1
+  }
+]

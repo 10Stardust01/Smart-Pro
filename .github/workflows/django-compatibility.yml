@@ -1,0 +1,40 @@
+name: Django PostgreSQL compatibility
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  django-compatibility:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: smartpro_owner
+          POSTGRES_PASSWORD: synthetic_ci_owner_only
+          POSTGRES_DB: smartpro_test
+        ports: [5432:5432]
+        options: >-
+          --health-cmd "pg_isready -U smartpro_owner -d smartpro_test"
+          --health-interval 3s --health-timeout 3s --health-retries 20
+    env:
+      DATABASE_ADMIN_URL: postgresql://smartpro_owner:synthetic_ci_owner_only@127.0.0.1:5432/smartpro_test
+      DATABASE_URL: postgresql://smartpro_api:synthetic_ci_app_only@127.0.0.1:5432/smartpro_test
+      ALLOW_SMARTPRO_TEST_DB: 'YES'
+      SMARTPRO_DB_ROLE: smartpro_runtime
+      SMARTPRO_DATA_DIR: .test-data
+      DJANGO_SECRET_KEY: synthetic-ci-adapter-only-key
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r backend/requirements.txt
+      - run: python -m unittest discover -s backend -p 'test_*.py'
+      - run: python backend/verify_compatibility.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: django-compatibility-evidence
+          path: evidence/django-*

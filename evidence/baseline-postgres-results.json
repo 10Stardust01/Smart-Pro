@@ -1,0 +1,55 @@
+{
+  "scripts": [
+    {
+      "file": "001_core.sql",
+      "exit_code": 0
+    },
+    {
+      "file": "002_documents.sql",
+      "exit_code": 0
+    },
+    {
+      "file": "003_evaluation.sql",
+      "exit_code": 0
+    },
+    {
+      "file": "004_operations_and_guards.sql",
+      "exit_code": 0
+    },
+    {
+      "file": "001_seed.sql",
+      "exit_code": 0
+    },
+    {
+      "file": "002_constraints.sql",
+      "exit_code": 3
+    },
+    {
+      "file": "003_smoke_queries.sql",
+      "exit_code": 0
+    }
+  ],
+  "probes": [
+    {
+      "probe": "submitted_item_delete",
+      "accepted": true,
+      "rowcount": 1
+    },
+    {
+      "probe": "finalized_assessment_timestamp_change",
+      "accepted": true,
+      "rowcount": 1
+    },
+    {
+      "probe": "project_draft_policy_link",
+      "accepted": true,
+      "rowcount": 0
+    },
+    {
+      "probe": "approved_scheme_insert_bypass",
+      "accepted": true,
+      "rowcount": 1
+    }
+  ],
+  "version": "PostgreSQL 16.15, compiled by Visual C++ build 1944, 64-bit"
+}

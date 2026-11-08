@@ -1,0 +1,1746 @@
+﻿2026-11-03T15:17:57.7064255Z Current runner version: '2.338.2'
+2026-11-03T15:17:57.7100110Z ##[group]Runner Image Provisioner
+2026-11-03T15:17:57.7101487Z Hosted Compute Agent
+2026-11-03T15:17:57.7102413Z Version: 20261021.618
+2026-11-03T15:17:57.7103412Z Commit: 21505ad2541d5be6135ed84fc33697146cf75b8e
+2026-11-03T15:17:57.7104632Z Build Date: 2026-10-21T00:45:21Z
+2026-11-03T15:17:57.7106037Z Worker ID: {0ec921f1-41f2-43f2-891b-c36ac1c57ab0}
+2026-11-03T15:17:57.7107270Z Region: westus3
+2026-11-03T15:17:57.7108125Z Cloud: Azure
+2026-11-03T15:17:57.7108987Z ##[endgroup]
+2026-11-03T15:17:57.7111738Z ##[group]Operating System
+2026-11-03T15:17:57.7112735Z Ubuntu
+2026-11-03T15:17:57.7113506Z 24.04.5
+2026-11-03T15:17:57.7114403Z LTS
+2026-11-03T15:17:57.7115272Z ##[endgroup]
+2026-11-03T15:17:57.7116869Z ##[group]Runner Image
+2026-11-03T15:17:57.7117926Z Image: ubuntu-24.04
+2026-11-03T15:17:57.7118797Z Version: 20261025.353.1
+2026-11-03T15:17:57.7121032Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20261025.353/images/ubuntu/Ubuntu2404-Readme.md
+2026-11-03T15:17:57.7123659Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20261025.353
+2026-11-03T15:17:57.7125262Z ##[endgroup]
+2026-11-03T15:17:57.7127448Z ##[group]GITHUB_TOKEN Permissions
+2026-11-03T15:17:57.7130596Z Contents: read
+2026-11-03T15:17:57.7131461Z Metadata: read
+2026-11-03T15:17:57.7132437Z Packages: read
+2026-11-03T15:17:57.7133298Z ##[endgroup]
+2026-11-03T15:17:57.7136705Z Secret source: Actions
+2026-11-03T15:17:57.7138230Z Cache mode: write
+2026-11-03T15:17:57.7139705Z Prepare workflow directory
+2026-11-03T15:17:57.7971545Z Prepare all required actions
+2026-11-03T15:17:57.8043692Z Getting action download info
+2026-11-03T15:17:58.1779357Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+2026-11-03T15:17:58.2714769Z Download action repository 'actions/setup-python@v5' (SHA:a26af69be951a213d495a4c3e4e4022e16d87065)
+2026-11-03T15:17:58.3408214Z Download action repository 'actions/upload-artifact@v4' (SHA:ea165f8d65b6e75b540449e92b4886f43607fa02)
+2026-11-03T15:17:58.5353076Z Complete job name: postgres-validation
+2026-11-03T15:17:58.5891256Z ##[group]Checking docker version
+2026-11-03T15:17:58.5903958Z ##[command]/usr/bin/docker version --format '{{.Server.APIVersion}}'
+2026-11-03T15:17:58.6728386Z '1.48'
+2026-11-03T15:17:58.6745770Z Docker daemon API version: '1.48'
+2026-11-03T15:17:58.6746925Z ##[command]/usr/bin/docker version --format '{{.Client.APIVersion}}'
+2026-11-03T15:17:58.6949231Z '1.48'
+2026-11-03T15:17:58.6960815Z Docker client API version: '1.48'
+2026-11-03T15:17:58.6967533Z ##[endgroup]
+2026-11-03T15:17:58.6970218Z ##[group]Clean up resources from previous jobs
+2026-11-03T15:17:58.6975753Z ##[command]/usr/bin/docker ps --all --quiet --no-trunc --filter "label=b10812"
+2026-11-03T15:17:58.7174975Z ##[command]/usr/bin/docker network prune --force --filter "label=b10812"
+2026-11-03T15:17:58.7336898Z ##[endgroup]
+2026-11-03T15:17:58.7337993Z ##[group]Create local container network
+2026-11-03T15:17:58.7470115Z ##[command]/usr/bin/docker network create --label b10812 github_network_b7220cc5e4854f799bdccaf74f979fa7
+2026-11-03T15:17:58.8280907Z db6d34660d0b8d79f345845f43e2c30e29b21a953a3fecbea356c11632236657
+2026-11-03T15:17:58.8289810Z ##[endgroup]
+2026-11-03T15:17:58.8328875Z ##[group]Starting postgres service container
+2026-11-03T15:17:58.8357532Z ##[command]/usr/bin/docker pull postgres:16
+2026-11-03T15:17:59.6469095Z 16: Pulling from library/postgres
+2026-11-03T15:17:59.8888644Z 6fc242d221a6: Pulling fs layer
+2026-11-03T15:17:59.8889451Z d06edb2e3f43: Pulling fs layer
+2026-11-03T15:17:59.8890120Z 3795839385bc: Pulling fs layer
+2026-11-03T15:17:59.8890822Z cea4f0db46a6: Pulling fs layer
+2026-11-03T15:17:59.8891540Z 9b1a18996a22: Pulling fs layer
+2026-11-03T15:17:59.8892247Z fbc84e711712: Pulling fs layer
+2026-11-03T15:17:59.8892932Z 879995175298: Pulling fs layer
+2026-11-03T15:17:59.8893521Z d89068781d71: Pulling fs layer
+2026-11-03T15:17:59.8894233Z 5c4d204f6daa: Pulling fs layer
+2026-11-03T15:17:59.8895627Z 28d8a96df569: Pulling fs layer
+2026-11-03T15:17:59.8896410Z b355a8fcc1d3: Pulling fs layer
+2026-11-03T15:17:59.8897238Z dc3e98153fd4: Pulling fs layer
+2026-11-03T15:17:59.8897904Z c60d02d02e9b: Pulling fs layer
+2026-11-03T15:17:59.8898575Z 7ee6ed8de1c8: Pulling fs layer
+2026-11-03T15:17:59.8899186Z d89068781d71: Waiting
+2026-11-03T15:17:59.8899721Z 5c4d204f6daa: Waiting
+2026-11-03T15:17:59.8900369Z 28d8a96df569: Waiting
+2026-11-03T15:17:59.8900975Z b355a8fcc1d3: Waiting
+2026-11-03T15:17:59.8901484Z dc3e98153fd4: Waiting
+2026-11-03T15:17:59.8902073Z c60d02d02e9b: Waiting
+2026-11-03T15:17:59.8902674Z 7ee6ed8de1c8: Waiting
+2026-11-03T15:17:59.8903297Z 9b1a18996a22: Waiting
+2026-11-03T15:17:59.8903803Z fbc84e711712: Waiting
+2026-11-03T15:17:59.8904387Z 879995175298: Waiting
+2026-11-03T15:17:59.8905005Z cea4f0db46a6: Waiting
+2026-11-03T15:18:00.0757315Z d06edb2e3f43: Verifying Checksum
+2026-11-03T15:18:00.0759056Z d06edb2e3f43: Download complete
+2026-11-03T15:18:00.1061590Z 3795839385bc: Verifying Checksum
+2026-11-03T15:18:00.1064678Z 3795839385bc: Download complete
+2026-11-03T15:18:00.1612662Z 6fc242d221a6: Verifying Checksum
+2026-11-03T15:18:00.1614830Z 6fc242d221a6: Download complete
+2026-11-03T15:18:00.2641329Z cea4f0db46a6: Verifying Checksum
+2026-11-03T15:18:00.2645516Z cea4f0db46a6: Download complete
+2026-11-03T15:18:00.3631657Z 9b1a18996a22: Verifying Checksum
+2026-11-03T15:18:00.3638576Z 9b1a18996a22: Download complete
+2026-11-03T15:18:00.3644396Z fbc84e711712: Verifying Checksum
+2026-11-03T15:18:00.3647363Z fbc84e711712: Download complete
+2026-11-03T15:18:00.4448472Z 879995175298: Verifying Checksum
+2026-11-03T15:18:00.4454498Z 879995175298: Download complete
+2026-11-03T15:18:00.5520871Z d89068781d71: Verifying Checksum
+2026-11-03T15:18:00.5536647Z d89068781d71: Download complete
+2026-11-03T15:18:00.6265025Z 28d8a96df569: Verifying Checksum
+2026-11-03T15:18:00.6272208Z 28d8a96df569: Download complete
+2026-11-03T15:18:00.7337132Z b355a8fcc1d3: Verifying Checksum
+2026-11-03T15:18:00.7339682Z b355a8fcc1d3: Download complete
+2026-11-03T15:18:00.8314536Z dc3e98153fd4: Verifying Checksum
+2026-11-03T15:18:00.8321346Z dc3e98153fd4: Download complete
+2026-11-03T15:18:00.9777538Z c60d02d02e9b: Verifying Checksum
+2026-11-03T15:18:00.9778980Z c60d02d02e9b: Download complete
+2026-11-03T15:18:01.0019084Z 5c4d204f6daa: Verifying Checksum
+2026-11-03T15:18:01.0021783Z 5c4d204f6daa: Download complete
+2026-11-03T15:18:01.0487348Z 7ee6ed8de1c8: Verifying Checksum
+2026-11-03T15:18:01.0488001Z 7ee6ed8de1c8: Download complete
+2026-11-03T15:18:01.3627561Z 6fc242d221a6: Pull complete
+2026-11-03T15:18:02.4679759Z d06edb2e3f43: Pull complete
+2026-11-03T15:18:02.6217951Z 3795839385bc: Pull complete
+2026-11-03T15:18:02.6741722Z cea4f0db46a6: Pull complete
+2026-11-03T15:18:02.9590537Z 9b1a18996a22: Pull complete
+2026-11-03T15:18:03.0083042Z fbc84e711712: Pull complete
+2026-11-03T15:18:03.0190584Z 879995175298: Pull complete
+2026-11-03T15:18:03.0269526Z d89068781d71: Pull complete
+2026-11-03T15:18:06.8608990Z 5c4d204f6daa: Pull complete
+2026-11-03T15:18:06.8803987Z 28d8a96df569: Pull complete
+2026-11-03T15:18:06.9023506Z b355a8fcc1d3: Pull complete
+2026-11-03T15:18:06.9177484Z dc3e98153fd4: Pull complete
+2026-11-03T15:18:06.9255729Z c60d02d02e9b: Pull complete
+2026-11-03T15:18:06.9376058Z 7ee6ed8de1c8: Pull complete
+2026-11-03T15:18:06.9415048Z Digest: sha256:5db6dac2ef5dcff512f4f00a009c3c332b9f2f28f24277175bf3e4a3d02ef83a
+2026-11-03T15:18:06.9437164Z Status: Downloaded newer image for postgres:16
+2026-11-03T15:18:06.9453949Z docker.io/library/postgres:16
+2026-11-03T15:18:06.9518547Z ##[command]/usr/bin/docker create --name 6ca0b3282a734c3991a5158480ae8b4e_postgres16_70aeb6 --label b10812 --network github_network_b7220cc5e4854f799bdccaf74f979fa7 --network-alias postgres -p 5432:5432 --health-cmd "pg_isready -U smartpro_owner -d smartpro_test" --health-interval 3s --health-timeout 3s --health-retries 20 -e "POSTGRES_USER=smartpro_owner" -e "POSTGRES_PASSWORD=synthetic_ci_owner_only" -e "POSTGRES_DB=smartpro_test" -e GITHUB_ACTIONS=true -e CI=true postgres:16
+2026-11-03T15:18:06.9797144Z 65660f7620ef6c4aa68c307a12069d195e4103074334484ba4f993c8580d9668
+2026-11-03T15:18:06.9822677Z ##[command]/usr/bin/docker start 65660f7620ef6c4aa68c307a12069d195e4103074334484ba4f993c8580d9668
+2026-11-03T15:18:07.2024189Z 65660f7620ef6c4aa68c307a12069d195e4103074334484ba4f993c8580d9668
+2026-11-03T15:18:07.2055648Z ##[command]/usr/bin/docker ps --all --filter id=65660f7620ef6c4aa68c307a12069d195e4103074334484ba4f993c8580d9668 --filter status=running --no-trunc --format "{{.ID}} {{.Status}}"
+2026-11-03T15:18:07.2324654Z 65660f7620ef6c4aa68c307a12069d195e4103074334484ba4f993c8580d9668 Up Less than a second (health: starting)
+2026-11-03T15:18:07.2339054Z ##[command]/usr/bin/docker port 65660f7620ef6c4aa68c307a12069d195e4103074334484ba4f993c8580d9668
+2026-11-03T15:18:07.2571716Z 5432/tcp -> 0.0.0.0:5432
+2026-11-03T15:18:07.2572389Z 5432/tcp -> [::]:5432
+2026-11-03T15:18:07.2637317Z ##[endgroup]
+2026-11-03T15:18:07.2649949Z ##[group]Waiting for all services to be ready
+2026-11-03T15:18:07.2672851Z ##[command]/usr/bin/docker inspect --format="{{if .Config.Healthcheck}}{{print .State.Health.Status}}{{end}}" 65660f7620ef6c4aa68c307a12069d195e4103074334484ba4f993c8580d9668
+2026-11-03T15:18:07.2901758Z starting
+2026-11-03T15:18:07.2928572Z postgres service is starting, waiting 2 seconds before checking again.
+2026-11-03T15:18:09.2934310Z ##[command]/usr/bin/docker inspect --format="{{if .Config.Healthcheck}}{{print .State.Health.Status}}{{end}}" 65660f7620ef6c4aa68c307a12069d195e4103074334484ba4f993c8580d9668
+2026-11-03T15:18:09.3100750Z starting
+2026-11-03T15:18:09.3111628Z postgres service is starting, waiting 4 seconds before checking again.
+2026-11-03T15:18:13.5954629Z ##[command]/usr/bin/docker inspect --format="{{if .Config.Healthcheck}}{{print .State.Health.Status}}{{end}}" 65660f7620ef6c4aa68c307a12069d195e4103074334484ba4f993c8580d9668
+2026-11-03T15:18:13.6100651Z healthy
+2026-11-03T15:18:13.6118024Z postgres service is healthy.
+2026-11-03T15:18:13.6118745Z ##[endgroup]
+2026-11-03T15:18:13.6412762Z ##[group]Run actions/checkout@v4
+2026-11-03T15:18:13.6413296Z with:
+2026-11-03T15:18:13.6413585Z   repository: divyanshuacharya0990-lab/SMART-PRO
+2026-11-03T15:18:13.6416997Z   token: ***
+2026-11-03T15:18:13.6417218Z   ssh-strict: true
+2026-11-03T15:18:13.6417427Z   ssh-user: git
+2026-11-03T15:18:13.6417649Z   persist-credentials: true
+2026-11-03T15:18:13.6417894Z   clean: true
+2026-11-03T15:18:13.6418109Z   sparse-checkout-cone-mode: true
+2026-11-03T15:18:13.6418356Z   fetch-depth: 1
+2026-11-03T15:18:13.6418552Z   fetch-tags: false
+2026-11-03T15:18:13.6418757Z   show-progress: true
+2026-11-03T15:18:13.6418958Z   lfs: false
+2026-11-03T15:18:13.6419142Z   submodules: false
+2026-11-03T15:18:13.6419352Z   set-safe-directory: true
+2026-11-03T15:18:13.6419598Z   allow-unsafe-pr-checkout: false
+2026-11-03T15:18:13.6420037Z env:
+2026-11-03T15:18:13.6420564Z   DATABASE_ADMIN_URL: ***127.0.0.1:5432/smartpro_test
+2026-11-03T15:18:13.6421080Z   DATABASE_URL: ***127.0.0.1:5432/smartpro_test
+2026-11-03T15:18:13.6421427Z   ALLOW_SMARTPRO_TEST_DB: YES
+2026-11-03T15:18:13.6421669Z   SMARTPRO_DEMO_AUTH: YES
+2026-11-03T15:18:13.6421905Z   SMARTPRO_DB_ROLE: smartpro_runtime
+2026-11-03T15:18:13.6422168Z   SMARTPRO_DATA_DIR: .test-data
+2026-11-03T15:18:13.6422415Z   PYTHONDONTWRITEBYTECODE: 1
+2026-11-03T15:18:13.6422648Z ##[endgroup]
+2026-11-03T15:18:13.8973534Z Syncing repository: divyanshuacharya0990-lab/SMART-PRO
+2026-11-03T15:18:13.8977692Z ##[group]Getting Git version info
+2026-11-03T15:18:13.8978480Z Working directory is '/home/runner/work/SMART-PRO/SMART-PRO'
+2026-11-03T15:18:13.8980504Z [command]/usr/bin/git version
+2026-11-03T15:18:13.9037359Z git version 2.56.0
+2026-11-03T15:18:13.9132064Z ##[endgroup]
+2026-11-03T15:18:13.9154540Z Temporarily overriding HOME='/home/runner/work/_temp/0a655295-edef-4f9b-87c9-c760b9a28941' before making global git config changes
+2026-11-03T15:18:13.9196236Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-03T15:18:13.9230241Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/SMART-PRO/SMART-PRO
+2026-11-03T15:18:13.9251057Z Deleting the contents of '/home/runner/work/SMART-PRO/SMART-PRO'
+2026-11-03T15:18:13.9252220Z ##[group]Initializing the repository
+2026-11-03T15:18:13.9252870Z [command]/usr/bin/git init /home/runner/work/SMART-PRO/SMART-PRO
+2026-11-03T15:18:13.9376897Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-11-03T15:18:13.9377859Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-11-03T15:18:13.9395576Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-11-03T15:18:13.9406269Z hint: call:
+2026-11-03T15:18:13.9406820Z hint:
+2026-11-03T15:18:13.9407500Z hint: 	git config --global init.defaultBranch <name>
+2026-11-03T15:18:13.9408152Z hint:
+2026-11-03T15:18:13.9408867Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-11-03T15:18:13.9409902Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-11-03T15:18:13.9410737Z hint:
+2026-11-03T15:18:13.9411184Z hint: 	git branch -m <name>
+2026-11-03T15:18:13.9411729Z hint:
+2026-11-03T15:18:13.9412407Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-11-03T15:18:13.9413641Z Initialized empty Git repository in /home/runner/work/SMART-PRO/SMART-PRO/.git/
+2026-11-03T15:18:13.9416546Z [command]/usr/bin/git remote add origin https://github.com/divyanshuacharya0990-lab/SMART-PRO
+2026-11-03T15:18:13.9491473Z ##[endgroup]
+2026-11-03T15:18:13.9492351Z ##[group]Disabling automatic garbage collection
+2026-11-03T15:18:13.9493168Z [command]/usr/bin/git config --local gc.auto 0
+2026-11-03T15:18:13.9556825Z ##[endgroup]
+2026-11-03T15:18:13.9557613Z ##[group]Setting up auth
+2026-11-03T15:18:13.9558451Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-03T15:18:13.9633573Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-03T15:18:14.0214340Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-03T15:18:14.0252733Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-03T15:18:14.0468395Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-03T15:18:14.0496657Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-03T15:18:14.0701244Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-11-03T15:18:14.0743146Z ##[endgroup]
+2026-11-03T15:18:14.0743989Z ##[group]Fetching the repository
+2026-11-03T15:18:14.0756478Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +be4fabdd9aab16b72232bb4f8c745e7f23fa91aa:refs/remotes/origin/main
+2026-11-03T15:18:14.8579532Z From https://github.com/divyanshuacharya0990-lab/SMART-PRO
+2026-11-03T15:18:14.8580671Z  * [new ref]         be4fabdd9aab16b72232bb4f8c745e7f23fa91aa -> origin/main
+2026-11-03T15:18:14.8583367Z ##[endgroup]
+2026-11-03T15:18:14.8584123Z ##[group]Determining the checkout info
+2026-11-03T15:18:14.8587739Z ##[endgroup]
+2026-11-03T15:18:14.8594455Z [command]/usr/bin/git sparse-checkout disable
+2026-11-03T15:18:14.8646517Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-11-03T15:18:14.8706705Z ##[group]Checking out the ref
+2026-11-03T15:18:14.8715204Z [command]/usr/bin/git checkout --progress --force -B main refs/remotes/origin/main
+2026-11-03T15:18:14.8824045Z Switched to a new branch 'main'
+2026-11-03T15:18:14.8829654Z branch 'main' set up to track 'origin/main'.
+2026-11-03T15:18:14.8847230Z ##[endgroup]
+2026-11-03T15:18:14.8878735Z [command]/usr/bin/git log -1 --format=%H
+2026-11-03T15:18:14.8906837Z be4fabdd9aab16b72232bb4f8c745e7f23fa91aa
+2026-11-03T15:18:14.9167353Z ##[group]Run actions/setup-python@v5
+2026-11-03T15:18:14.9167627Z with:
+2026-11-03T15:18:14.9167824Z   python-version: 3.12
+2026-11-03T15:18:14.9168043Z   check-latest: false
+2026-11-03T15:18:14.9170547Z   token: ***
+2026-11-03T15:18:14.9170749Z   update-environment: true
+2026-11-03T15:18:14.9170993Z   allow-prereleases: false
+2026-11-03T15:18:14.9171222Z   freethreaded: false
+2026-11-03T15:18:14.9171426Z env:
+2026-11-03T15:18:14.9171904Z   DATABASE_ADMIN_URL: ***127.0.0.1:5432/smartpro_test
+2026-11-03T15:18:14.9172420Z   DATABASE_URL: ***127.0.0.1:5432/smartpro_test
+2026-11-03T15:18:14.9172703Z   ALLOW_SMARTPRO_TEST_DB: YES
+2026-11-03T15:18:14.9172939Z   SMARTPRO_DEMO_AUTH: YES
+2026-11-03T15:18:14.9173171Z   SMARTPRO_DB_ROLE: smartpro_runtime
+2026-11-03T15:18:14.9173445Z   SMARTPRO_DATA_DIR: .test-data
+2026-11-03T15:18:14.9173710Z   PYTHONDONTWRITEBYTECODE: 1
+2026-11-03T15:18:14.9173944Z ##[endgroup]
+2026-11-03T15:18:15.0578608Z ##[group]Installed versions
+2026-11-03T15:18:15.0701919Z (node:2503) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-11-03T15:18:15.0703121Z Successfully set up CPython (3.12.15)
+2026-11-03T15:18:15.0703960Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-11-03T15:18:15.0705236Z ##[endgroup]
+2026-11-03T15:18:15.0938453Z ##[group]Run pip install -r requirements-lock.txt
+2026-11-03T15:18:15.0939142Z [36;1mpip install -r requirements-lock.txt[0m
+2026-11-03T15:18:15.0985302Z shell: /usr/bin/bash -e {0}
+2026-11-03T15:18:15.0985839Z env:
+2026-11-03T15:18:15.0986450Z   DATABASE_ADMIN_URL: ***127.0.0.1:5432/smartpro_test
+2026-11-03T15:18:15.0986998Z   DATABASE_URL: ***127.0.0.1:5432/smartpro_test
+2026-11-03T15:18:15.0987289Z   ALLOW_SMARTPRO_TEST_DB: YES
+2026-11-03T15:18:15.0987562Z   SMARTPRO_DEMO_AUTH: YES
+2026-11-03T15:18:15.0987797Z   SMARTPRO_DB_ROLE: smartpro_runtime
+2026-11-03T15:18:15.0988064Z   SMARTPRO_DATA_DIR: .test-data
+2026-11-03T15:18:15.0988318Z   PYTHONDONTWRITEBYTECODE: 1
+2026-11-03T15:18:15.0988639Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.15/x64
+2026-11-03T15:18:15.0989049Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.15/x64/lib/pkgconfig
+2026-11-03T15:18:15.0989452Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.15/x64
+2026-11-03T15:18:15.0989870Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.15/x64
+2026-11-03T15:18:15.0990233Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.15/x64
+2026-11-03T15:18:15.0990595Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.15/x64/lib
+2026-11-03T15:18:15.0990910Z ##[endgroup]
+2026-11-03T15:18:15.9707278Z Collecting annotated-doc==0.0.5 (from -r requirements-lock.txt (line 1))
+2026-11-03T15:18:16.0291699Z   Downloading annotated_doc-0.0.5-py3-none-any.whl.metadata (6.5 kB)
+2026-11-03T15:18:16.0478547Z Collecting annotated-types==0.8.0 (from -r requirements-lock.txt (line 2))
+2026-11-03T15:18:16.0514200Z   Downloading annotated_types-0.8.0-py3-none-any.whl.metadata (15 kB)
+2026-11-03T15:18:16.0801729Z Collecting anyio==4.16.0 (from -r requirements-lock.txt (line 3))
+2026-11-03T15:18:16.0837655Z   Downloading anyio-4.16.0-py3-none-any.whl.metadata (4.7 kB)
+2026-11-03T15:18:16.1081217Z Collecting certifi==2026.10.23 (from -r requirements-lock.txt (line 4))
+2026-11-03T15:18:16.1118476Z   Downloading certifi-2026.10.23-py3-none-any.whl.metadata (2.5 kB)
+2026-11-03T15:18:16.1348243Z Collecting click==8.5.0 (from -r requirements-lock.txt (line 5))
+2026-11-03T15:18:16.1384634Z   Downloading click-8.5.0-py3-none-any.whl.metadata (2.6 kB)
+2026-11-03T15:18:16.1586845Z Collecting colorama==0.4.6 (from -r requirements-lock.txt (line 6))
+2026-11-03T15:18:16.1620644Z   Downloading colorama-0.4.6-py2.py3-none-any.whl.metadata (17 kB)
+2026-11-03T15:18:16.2436786Z Collecting fastapi==0.162.0 (from -r requirements-lock.txt (line 7))
+2026-11-03T15:18:16.2472838Z   Downloading fastapi-0.162.0-py3-none-any.whl.metadata (26 kB)
+2026-11-03T15:18:16.2792344Z Collecting h11==0.16.0 (from -r requirements-lock.txt (line 8))
+2026-11-03T15:18:16.2846627Z   Downloading h11-0.16.0-py3-none-any.whl.metadata (8.3 kB)
+2026-11-03T15:18:16.3286999Z Collecting httpcore==1.0.9 (from -r requirements-lock.txt (line 9))
+2026-11-03T15:18:16.3328917Z   Downloading httpcore-1.0.9-py3-none-any.whl.metadata (21 kB)
+2026-11-03T15:18:16.3787675Z Collecting httpx==0.28.1 (from -r requirements-lock.txt (line 10))
+2026-11-03T15:18:16.3789258Z   Downloading httpx-0.28.1-py3-none-any.whl.metadata (7.1 kB)
+2026-11-03T15:18:16.4060610Z Collecting idna==3.20 (from -r requirements-lock.txt (line 11))
+2026-11-03T15:18:16.4106927Z   Downloading idna-3.20-py3-none-any.whl.metadata (7.2 kB)
+2026-11-03T15:18:16.4299917Z Collecting iniconfig==2.3.1 (from -r requirements-lock.txt (line 12))
+2026-11-03T15:18:16.4335717Z   Downloading iniconfig-2.3.1-py3-none-any.whl.metadata (2.8 kB)
+2026-11-03T15:18:16.4573693Z Collecting opentelemetry-api==1.45.2 (from -r requirements-lock.txt (line 13))
+2026-11-03T15:18:16.4609812Z   Downloading opentelemetry_api-1.45.2-py3-none-any.whl.metadata (1.4 kB)
+2026-11-03T15:18:16.4821950Z Collecting packaging==26.3 (from -r requirements-lock.txt (line 14))
+2026-11-03T15:18:16.4860290Z   Downloading packaging-26.3-py3-none-any.whl.metadata (3.5 kB)
+2026-11-03T15:18:16.5049790Z Collecting pluggy==1.7.0 (from -r requirements-lock.txt (line 15))
+2026-11-03T15:18:16.5086022Z   Downloading pluggy-1.7.0-py3-none-any.whl.metadata (5.0 kB)
+2026-11-03T15:18:16.5324815Z Collecting psycopg==3.3.7 (from -r requirements-lock.txt (line 16))
+2026-11-03T15:18:16.5360902Z   Downloading psycopg-3.3.7-py3-none-any.whl.metadata (4.4 kB)
+2026-11-03T15:18:16.6851108Z Collecting psycopg-binary==3.3.7 (from -r requirements-lock.txt (line 17))
+2026-11-03T15:18:16.6893217Z   Downloading psycopg_binary-3.3.7-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (2.7 kB)
+2026-11-03T15:18:16.7814064Z Collecting pydantic==2.14.2 (from -r requirements-lock.txt (line 18))
+2026-11-03T15:18:16.7852823Z   Downloading pydantic-2.14.2-py3-none-any.whl.metadata (137 kB)
+2026-11-03T15:18:17.4013517Z Collecting pydantic_core==2.50.2 (from -r requirements-lock.txt (line 19))
+2026-11-03T15:18:17.4052362Z   Downloading pydantic_core-2.50.2-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (6.5 kB)
+2026-11-03T15:18:17.4296774Z Collecting Pygments==2.21.0 (from -r requirements-lock.txt (line 20))
+2026-11-03T15:18:17.4332097Z   Downloading pygments-2.21.0-py3-none-any.whl.metadata (2.5 kB)
+2026-11-03T15:18:17.4635803Z Collecting pytest==9.2.0 (from -r requirements-lock.txt (line 21))
+2026-11-03T15:18:17.4677576Z   Downloading pytest-9.2.0-py3-none-any.whl.metadata (7.9 kB)
+2026-11-03T15:18:17.7878707Z Collecting ruff==0.17.3 (from -r requirements-lock.txt (line 22))
+2026-11-03T15:18:17.7915575Z   Downloading ruff-0.17.3-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (20 kB)
+2026-11-03T15:18:17.8208857Z Collecting starlette==1.10.0 (from -r requirements-lock.txt (line 23))
+2026-11-03T15:18:17.8246679Z   Downloading starlette-1.10.0-py3-none-any.whl.metadata (6.6 kB)
+2026-11-03T15:18:17.8443369Z Collecting typing-inspection==0.4.4 (from -r requirements-lock.txt (line 24))
+2026-11-03T15:18:17.8482056Z   Downloading typing_inspection-0.4.4-py3-none-any.whl.metadata (2.6 kB)
+2026-11-03T15:18:17.8699587Z Collecting typing_extensions==4.16.0 (from -r requirements-lock.txt (line 25))
+2026-11-03T15:18:17.8734807Z   Downloading typing_extensions-4.16.0-py3-none-any.whl.metadata (3.3 kB)
+2026-11-03T15:18:17.8935005Z Collecting tzdata==2026.6 (from -r requirements-lock.txt (line 26))
+2026-11-03T15:18:17.8974851Z   Downloading tzdata-2026.6-py2.py3-none-any.whl.metadata (1.4 kB)
+2026-11-03T15:18:17.9241499Z Collecting uvicorn==0.54.0 (from -r requirements-lock.txt (line 27))
+2026-11-03T15:18:17.9278928Z   Downloading uvicorn-0.54.0-py3-none-any.whl.metadata (6.6 kB)
+2026-11-03T15:18:17.9592196Z Downloading annotated_doc-0.0.5-py3-none-any.whl (5.3 kB)
+2026-11-03T15:18:17.9648969Z Downloading annotated_types-0.8.0-py3-none-any.whl (13 kB)
+2026-11-03T15:18:17.9704381Z Downloading anyio-4.16.0-py3-none-any.whl (134 kB)
+2026-11-03T15:18:17.9765604Z Downloading certifi-2026.10.23-py3-none-any.whl (135 kB)
+2026-11-03T15:18:17.9830653Z Downloading click-8.5.0-py3-none-any.whl (125 kB)
+2026-11-03T15:18:17.9907026Z Downloading colorama-0.4.6-py2.py3-none-any.whl (25 kB)
+2026-11-03T15:18:17.9963154Z Downloading fastapi-0.162.0-py3-none-any.whl (148 kB)
+2026-11-03T15:18:18.0038286Z Downloading h11-0.16.0-py3-none-any.whl (37 kB)
+2026-11-03T15:18:18.0118516Z Downloading httpcore-1.0.9-py3-none-any.whl (78 kB)
+2026-11-03T15:18:18.0178669Z Downloading httpx-0.28.1-py3-none-any.whl (73 kB)
+2026-11-03T15:18:18.0233881Z Downloading idna-3.20-py3-none-any.whl (69 kB)
+2026-11-03T15:18:18.0284217Z Downloading iniconfig-2.3.1-py3-none-any.whl (7.6 kB)
+2026-11-03T15:18:18.0333764Z Downloading opentelemetry_api-1.45.2-py3-none-any.whl (60 kB)
+2026-11-03T15:18:18.0389152Z Downloading packaging-26.3-py3-none-any.whl (129 kB)
+2026-11-03T15:18:18.0439223Z Downloading pluggy-1.7.0-py3-none-any.whl (27 kB)
+2026-11-03T15:18:18.0487445Z Downloading psycopg-3.3.7-py3-none-any.whl (216 kB)
+2026-11-03T15:18:18.0551971Z Downloading psycopg_binary-3.3.7-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (5.3 MB)
+2026-11-03T15:18:18.0826138Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 5.3/5.3 MB 206.4 MB/s  0:00:00
+2026-11-03T15:18:18.0865146Z Downloading pydantic-2.14.2-py3-none-any.whl (490 kB)
+2026-11-03T15:18:18.0930378Z Downloading pydantic_core-2.50.2-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (2.2 MB)
+2026-11-03T15:18:18.1032915Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.2/2.2 MB 254.3 MB/s  0:00:00
+2026-11-03T15:18:18.1069156Z Downloading pygments-2.21.0-py3-none-any.whl (1.3 MB)
+2026-11-03T15:18:18.1149747Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.3/1.3 MB 221.0 MB/s  0:00:00
+2026-11-03T15:18:18.1184748Z Downloading pytest-9.2.0-py3-none-any.whl (411 kB)
+2026-11-03T15:18:18.1248345Z Downloading ruff-0.17.3-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (10.6 MB)
+2026-11-03T15:18:18.1656692Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 10.6/10.6 MB 269.9 MB/s  0:00:00
+2026-11-03T15:18:18.1695634Z Downloading starlette-1.10.0-py3-none-any.whl (80 kB)
+2026-11-03T15:18:18.1765691Z Downloading typing_inspection-0.4.4-py3-none-any.whl (14 kB)
+2026-11-03T15:18:18.1836160Z Downloading typing_extensions-4.16.0-py3-none-any.whl (45 kB)
+2026-11-03T15:18:18.1891249Z Downloading tzdata-2026.6-py2.py3-none-any.whl (348 kB)
+2026-11-03T15:18:18.1954935Z Downloading uvicorn-0.54.0-py3-none-any.whl (87 kB)
+2026-11-03T15:18:18.3532682Z Installing collected packages: tzdata, typing_extensions, ruff, Pygments, psycopg-binary, pluggy, packaging, iniconfig, idna, h11, colorama, click, certifi, annotated-types, annotated-doc, uvicorn, typing-inspection, pytest, pydantic_core, psycopg, opentelemetry-api, httpcore, anyio, starlette, pydantic, httpx, fastapi
+2026-11-03T15:18:20.9610518Z 
+2026-11-03T15:18:20.9638151Z Successfully installed Pygments-2.21.0 annotated-doc-0.0.5 annotated-types-0.8.0 anyio-4.16.0 certifi-2026.10.23 click-8.5.0 colorama-0.4.6 fastapi-0.162.0 h11-0.16.0 httpcore-1.0.9 httpx-0.28.1 idna-3.20 iniconfig-2.3.1 opentelemetry-api-1.45.2 packaging-26.3 pluggy-1.7.0 psycopg-3.3.7 psycopg-binary-3.3.7 pydantic-2.14.2 pydantic_core-2.50.2 pytest-9.2.0 ruff-0.17.3 starlette-1.10.0 typing-inspection-0.4.4 typing_extensions-4.16.0 tzdata-2026.6 uvicorn-0.54.0
+2026-11-03T15:18:20.9647624Z 
+2026-11-03T15:18:20.9648239Z [notice] A new release of pip is available: 26.2.2 -> 26.3
+2026-11-03T15:18:20.9649025Z [notice] To update, run: pip install --upgrade pip
+2026-11-03T15:18:21.1028250Z ##[group]Run python validate.py --recreate --label ci
+2026-11-03T15:18:21.1028642Z [36;1mpython validate.py --recreate --label ci[0m
+2026-11-03T15:18:21.1042756Z shell: /usr/bin/bash -e {0}
+2026-11-03T15:18:21.1043159Z env:
+2026-11-03T15:18:21.1043720Z   DATABASE_ADMIN_URL: ***127.0.0.1:5432/smartpro_test
+2026-11-03T15:18:21.1044226Z   DATABASE_URL: ***127.0.0.1:5432/smartpro_test
+2026-11-03T15:18:21.1044515Z   ALLOW_SMARTPRO_TEST_DB: YES
+2026-11-03T15:18:21.1044756Z   SMARTPRO_DEMO_AUTH: YES
+2026-11-03T15:18:21.1044994Z   SMARTPRO_DB_ROLE: smartpro_runtime
+2026-11-03T15:18:21.1045265Z   SMARTPRO_DATA_DIR: .test-data
+2026-11-03T15:18:21.1045848Z   PYTHONDONTWRITEBYTECODE: 1
+2026-11-03T15:18:21.1046153Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.15/x64
+2026-11-03T15:18:21.1046565Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.15/x64/lib/pkgconfig
+2026-11-03T15:18:21.1046978Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.15/x64
+2026-11-03T15:18:21.1047411Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.15/x64
+2026-11-03T15:18:21.1047776Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.15/x64
+2026-11-03T15:18:21.1048149Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.15/x64/lib
+2026-11-03T15:18:21.1048464Z ##[endgroup]
+2026-11-03T15:18:21.4386631Z Recreated isolated database: smartpro_test
+2026-11-03T15:18:21.9880596Z PASS SQL 001_core.sql
+2026-11-03T15:18:21.9881351Z PASS SQL 002_documents.sql
+2026-11-03T15:18:21.9881924Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:21.9882367Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:21.9882885Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:21.9883449Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:21.9883993Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:21.9884544Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:21.9885159Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:21.9885931Z PASS SQL 001_seed.sql
+2026-11-03T15:18:21.9886526Z SQL NOTICE PASS cross-project submission blocked
+2026-11-03T15:18:21.9887219Z SQL NOTICE PASS wrong criterion scope blocked
+2026-11-03T15:18:21.9887898Z SQL NOTICE PASS over-maximum marks blocked in draft
+2026-11-03T15:18:21.9888650Z SQL NOTICE PASS incomplete assessment finalization blocked
+2026-11-03T15:18:21.9889380Z SQL NOTICE PASS finalized assessment protected
+2026-11-03T15:18:21.9890039Z SQL NOTICE PASS approved rubric locked
+2026-11-03T15:18:21.9890704Z SQL NOTICE PASS review mode fixed after assessment
+2026-11-03T15:18:21.9891365Z SQL NOTICE PASS review roster locked
+2026-11-03T15:18:21.9892002Z SQL NOTICE PASS published result immutable
+2026-11-03T15:18:21.9892637Z SQL NOTICE PASS document version immutable
+2026-11-03T15:18:21.9893317Z SQL NOTICE PASS referenced object identity immutable
+2026-11-03T15:18:21.9894045Z SQL NOTICE PASS duplicate idempotency key blocked
+2026-11-03T15:18:21.9894699Z SQL NOTICE PASS stale version refused
+2026-11-03T15:18:21.9895491Z SQL NOTICE PASS wrong review roster blocked
+2026-11-03T15:18:21.9896190Z SQL NOTICE PASS incomplete scheme approval blocked
+2026-11-03T15:18:21.9896877Z SQL NOTICE PASS pending file rejected
+2026-11-03T15:18:21.9897485Z SQL NOTICE PASS approved policy locked
+2026-11-03T15:18:21.9898141Z SQL NOTICE PASS synthetic published-score baseline
+2026-11-03T15:18:21.9898792Z PASS SQL 002_constraints.sql
+2026-11-03T15:18:21.9899334Z PASS SQL 003_smoke_queries.sql
+2026-11-03T15:18:21.9899758Z 
+2026-11-03T15:18:51.7995147Z SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.7996703Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.7997192Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.7997956Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.7998544Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.7999353Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8000003Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8000794Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8001472Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8002685Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8003376Z PASS SQL 001_seed.sql
+2026-11-03T15:18:51.8004535Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8005195Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8056751Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8057548Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8058409Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8059124Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8060000Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8060692Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8061532Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8062261Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8063115Z PASS SQL 001_seed.sql
+2026-11-03T15:18:51.8063742Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8064591Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8080599Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8081101Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8081530Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8082003Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8082472Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8082978Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8083453Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8083975Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8084442Z PASS SQL 001_seed.sql
+2026-11-03T15:18:51.8084848Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8085498Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8085868Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8086278Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8086708Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8087189Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8087640Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8088092Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8088566Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8089042Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8089506Z PASS SQL 001_seed.sql
+2026-11-03T15:18:51.8089905Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8090377Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8090752Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8091174Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8091580Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8092043Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8092485Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8092940Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8093410Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8093868Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8094323Z PASS SQL 001_seed.sql
+2026-11-03T15:18:51.8094751Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8095213Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8095777Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8096167Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8096592Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8097018Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8097469Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8097943Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8098420Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8098926Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8099531Z PASS SQL 001_seed.sql
+2026-11-03T15:18:51.8099947Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8100443Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8100830Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8101226Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8101604Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8102052Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8102505Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8103349Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8103820Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8104306Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8104890Z PASS SQL 001_seed.sql
+2026-11-03T15:18:51.8105701Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8106186Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8106569Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8106983Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8107433Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8107876Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8108360Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8108836Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8109305Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8109826Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8110317Z PASS SQL 001_seed.sql
+2026-11-03T15:18:51.8110737Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8111219Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8111626Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8112042Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8112495Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8112969Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8113474Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8113949Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8114446Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8114958Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8115636Z PASS SQL 001_seed.sql
+2026-11-03T15:18:51.8116049Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8116493Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8116862Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8117316Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8117710Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8118154Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8118612Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8119081Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8119541Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8120053Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8120539Z PASS SQL 001_seed.sql
+2026-11-03T15:18:51.8120935Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8121387Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8121761Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8122153Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8122571Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8123044Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8123478Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8123894Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8124322Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8124778Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8125237Z PASS SQL 001_seed.sql
+2026-11-03T15:18:51.8129075Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8129578Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8129971Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8130356Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8130753Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8131217Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8131717Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8132136Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8132601Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8133078Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8133526Z PASS SQL 001_seed.sql
+2026-11-03T15:18:51.8133943Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8134397Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8134737Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8135103Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8135671Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8136143Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8136885Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8137328Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8137764Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8138228Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8139064Z PASS SQL 001_seed.sql
+2026-11-03T15:18:51.8139479Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8139933Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8140278Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8140663Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8141078Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8141530Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8141969Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8142416Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8142847Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8143318Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8143784Z PASS SQL 001_seed.sql
+2026-11-03T15:18:51.8144198Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8144598Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8144932Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8145314Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8145850Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8146298Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8146735Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8147177Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8147639Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8148134Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8148592Z PASS SQL 001_seed.sql
+2026-11-03T15:18:51.8148999Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8149466Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8149826Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8150197Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8150605Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8151085Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8151564Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8151999Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8152452Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8152965Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8153435Z PASS SQL 001_seed.sql
+2026-11-03T15:18:51.8153822Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8154275Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8154633Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8155013Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8158679Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8159247Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8159706Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8160158Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8160611Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8161073Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8161554Z PASS SQL 001_seed.sql
+2026-11-03T15:18:51.8161949Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8162405Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8162754Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8163140Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8163552Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8164010Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8164535Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8164991Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8165607Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8166101Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8166606Z PASS SQL 001_seed.sql
+2026-11-03T15:18:51.8167014Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8167498Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8167874Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8168226Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8169181Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8169670Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8170120Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8170565Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8171150Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8171631Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8172102Z PASS SQL 001_seed.sql
+2026-11-03T15:18:51.8172508Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8172955Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8173316Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8173706Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8174112Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8174722Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8175184Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8175770Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8176216Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8176708Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8177185Z PASS SQL 001_seed.sql
+2026-11-03T15:18:51.8177598Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8178081Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8178457Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8178863Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8179287Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8179702Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8180134Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8180601Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8181068Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8181584Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8182061Z PASS SQL 001_seed.sql
+2026-11-03T15:18:51.8182440Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8182904Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8183254Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8183623Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8184033Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8184496Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8184965Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8187685Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8188235Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8188731Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8189190Z PASS SQL 001_seed.sql
+2026-11-03T15:18:51.8189596Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8190053Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8190406Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8190792Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8191201Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8191657Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8192114Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8192572Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8193023Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8193738Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8194208Z PASS SQL 001_seed.sql
+2026-11-03T15:18:51.8194606Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8195094Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8196090Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8196511Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8196934Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8197416Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8197895Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8198350Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8198805Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8199284Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8199777Z PASS SQL 001_seed.sql
+2026-11-03T15:18:51.8200154Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8200585Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8200932Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8201913Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8202359Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8202816Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8203257Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8203967Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8204391Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8204853Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8205311Z PASS SQL 001_seed.sql
+2026-11-03T15:18:51.8205840Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8206318Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8206669Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8207083Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8207511Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8207988Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8208446Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8208920Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8209358Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8209816Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8210247Z PASS SQL 001_seed.sql
+2026-11-03T15:18:51.8210649Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8211120Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8211466Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8211869Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8212273Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8212735Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8213166Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8213606Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8214051Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8214543Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8215020Z PASS SQL 001_seed.sql
+2026-11-03T15:18:51.8215588Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8216037Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8216394Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8216766Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8217174Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8217687Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8218125Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8218589Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8219052Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8219534Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8220002Z PASS SQL 001_seed.sql
+2026-11-03T15:18:51.8220414Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8220899Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8221285Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8221717Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8222157Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8222630Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8223098Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8223562Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8224072Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8224605Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8225057Z PASS SQL 001_seed.sql
+2026-11-03T15:18:51.8225632Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8226110Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8226497Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8226922Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8227380Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8227886Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8228400Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8228909Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8229417Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8229964Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8230470Z PASS SQL 001_seed.sql
+2026-11-03T15:18:51.8230850Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8231556Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8231920Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8232295Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8232700Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8233311Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8233775Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8234223Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8234667Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8235140Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8235770Z PASS SQL 001_seed.sql
+2026-11-03T15:18:51.8236174Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8236642Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8237001Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8237386Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8237795Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8238253Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8238723Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8239177Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8239643Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8240127Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8240608Z PASS SQL 001_seed.sql
+2026-11-03T15:18:51.8241018Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8241479Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8241884Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8242278Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8242689Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8243178Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8243647Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8244127Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8244584Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8245051Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8245712Z PASS SQL 001_seed.sql
+2026-11-03T15:18:51.8246118Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8246580Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8246942Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8247346Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8247761Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8248238Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8248712Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8249185Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8249658Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8250152Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8250633Z PASS SQL 001_seed.sql
+2026-11-03T15:18:51.8251036Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8251509Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8251877Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8252293Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8252737Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8253213Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8253688Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8254163Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8254633Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8255146Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8255781Z PASS SQL 001_seed.sql
+2026-11-03T15:18:51.8256177Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8256632Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8256977Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8257342Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8257752Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8258210Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8258632Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8259077Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8259526Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8260003Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8260457Z PASS SQL 001_seed.sql
+2026-11-03T15:18:51.8261072Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8261543Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8261897Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8262279Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8262817Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8263256Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8263702Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8264148Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8264591Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8265070Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8266874Z PASS SQL 001_seed.sql
+2026-11-03T15:18:51.8267293Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8267748Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8268047Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8268419Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8268835Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8269322Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8269805Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8270282Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8270755Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8271222Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8271683Z PASS SQL 001_seed.sql
+2026-11-03T15:18:51.8272092Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8272560Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8272931Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8273308Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8273714Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8274152Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8274612Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8275066Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8275716Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8276237Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8276693Z PASS SQL 001_seed.sql
+2026-11-03T15:18:51.8277123Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8277601Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8277965Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8278337Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8278739Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8279194Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8279646Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8280082Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8280514Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8280983Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8281440Z PASS SQL 001_seed.sql
+2026-11-03T15:18:51.8281827Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8282276Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8282629Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8283010Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8283445Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8283912Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8284368Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8284833Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8285296Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8286056Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8286511Z PASS SQL 001_seed.sql
+2026-11-03T15:18:51.8286915Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8287402Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8287780Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8288217Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8288620Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8289110Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8289512Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8289910Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8290282Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8290840Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8291246Z PASS SQL 001_seed.sql
+2026-11-03T15:18:51.8291597Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8292004Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8292447Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8292843Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8293224Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8293627Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8294055Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8294449Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8294858Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8295274Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8295901Z PASS SQL 001_seed.sql
+2026-11-03T15:18:51.8296312Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8296800Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8297161Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8297582Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8297927Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8298342Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8298772Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8299163Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8299599Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8300064Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8300483Z PASS SQL 001_seed.sql
+2026-11-03T15:18:51.8300862Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8301325Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8301676Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8302053Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8302456Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8302903Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8303345Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8303799Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8304217Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8304666Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8305153Z PASS SQL 001_seed.sql
+2026-11-03T15:18:51.8305736Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8306225Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8306603Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8307005Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8307427Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8307892Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8308328Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8308771Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8309211Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8309685Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8310126Z PASS SQL 001_seed.sql
+2026-11-03T15:18:51.8310476Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8310894Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8311220Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8311584Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8311932Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8312330Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8312778Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8313199Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8313587Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8314026Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8314513Z PASS SQL 001_seed.sql
+2026-11-03T15:18:51.8314878Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8315518Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8315874Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8316251Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8316638Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8317062Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8317541Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8317949Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8318565Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8319055Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8319481Z PASS SQL 001_seed.sql
+2026-11-03T15:18:51.8319850Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8320406Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8320718Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8321082Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8321473Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8321882Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8322281Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8322711Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8323127Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8323582Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8324020Z PASS SQL 001_seed.sql
+2026-11-03T15:18:51.8324411Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8324869Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8325239Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8325794Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8326202Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8326673Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8327150Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8327637Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8328102Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8328593Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8329067Z PASS SQL 001_seed.sql
+2026-11-03T15:18:51.8329440Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8329913Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8330285Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8330686Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8331103Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8331581Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8332062Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8332459Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8332869Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8333292Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8333765Z PASS SQL 001_seed.sql
+2026-11-03T15:18:51.8334151Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8334616Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8334982Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8335542Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8335956Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8336401Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8336875Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8337349Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8337775Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8338286Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8338770Z PASS SQL 001_seed.sql
+2026-11-03T15:18:51.8339130Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8339572Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8339927Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8340308Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8340711Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8341336Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8341801Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8342283Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8342699Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8343118Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8343496Z PASS SQL 001_seed.sql
+2026-11-03T15:18:51.8343859Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8344271Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8344603Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8344947Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8345509Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8345936Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8346561Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8347035Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8347467Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8347923Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8348492Z PASS SQL 001_seed.sql
+2026-11-03T15:18:51.8348873Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8349315Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8349675Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8350078Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8350504Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8350950Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8351411Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8351897Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8352382Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8352887Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8353353Z PASS SQL 001_seed.sql
+2026-11-03T15:18:51.8353761Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8354245Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8354582Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8354932Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8355312Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8355901Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8356299Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8356685Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8357047Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8357321Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8357588Z PASS SQL 001_seed.sql
+2026-11-03T15:18:51.8357820Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8358080Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8358305Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8358535Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8358771Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8359042Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8359302Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8359563Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8359819Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8360099Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8360364Z PASS SQL 001_seed.sql
+2026-11-03T15:18:51.8360680Z REAL CONCURRENT BACKENDS [265, 266] [('committed', 1), ('rejected', '23514')]
+2026-11-03T15:18:51.8361074Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8361337Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8361544Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8361775Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8362015Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8362273Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8362526Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8362781Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8363034Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8363303Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8363575Z PASS SQL 001_seed.sql
+2026-11-03T15:18:51.8363880Z REAL CONCURRENT BACKENDS [269, 270] [('committed', 1), ('rejected', '23514')]
+2026-11-03T15:18:51.8364253Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8364514Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8364724Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8364952Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8365282Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8365809Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8366231Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8366653Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8367075Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8367516Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8367907Z PASS SQL 001_seed.sql
+2026-11-03T15:18:51.8368738Z REAL CONCURRENT BACKENDS [274, 273] [('committed', ['e97b566d-dd2c-47e1-a62e-f792ca00e752']), ('committed', [])]
+2026-11-03T15:18:51.8369496Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8369902Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8370237Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8370735Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8371130Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8371527Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8371929Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8372365Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8372753Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8373180Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8373606Z PASS SQL 001_seed.sql
+2026-11-03T15:18:51.8373997Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8374467Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8374819Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8375173Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8386022Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8386557Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8387045Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8387501Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8387968Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8388465Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8388941Z PASS SQL 001_seed.sql
+2026-11-03T15:18:51.8389374Z .ssssSQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8389876Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8390232Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8390625Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8391053Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8391523Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8391998Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8392461Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8392912Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8393427Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8393905Z PASS SQL api_seed.sql
+2026-11-03T15:18:51.8394317Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8394764Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8395123Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8395683Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8396094Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8396499Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8396929Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8397383Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8397840Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8398345Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8398833Z PASS SQL api_seed.sql
+2026-11-03T15:18:51.8399236Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8399684Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8400056Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8400489Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8400922Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8401406Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8401871Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8402297Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8402756Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8403249Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8403737Z PASS SQL api_seed.sql
+2026-11-03T15:18:51.8404151Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8404600Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8404986Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8406920Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8407380Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8407854Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8408325Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8408798Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8409585Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8410103Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8410544Z PASS SQL api_seed.sql
+2026-11-03T15:18:51.8410946Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8411605Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8411992Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8412396Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8412812Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8413295Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8413755Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8414215Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8414561Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8414837Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8415098Z PASS SQL api_seed.sql
+2026-11-03T15:18:51.8415532Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8415945Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8416243Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8416580Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8416932Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8417357Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8417786Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8418219Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8418623Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8419064Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8419475Z PASS SQL api_seed.sql
+2026-11-03T15:18:51.8419861Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8420318Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8420617Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8421099Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8421548Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8422040Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8422469Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8422840Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8423184Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8423560Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8423975Z PASS SQL api_seed.sql
+2026-11-03T15:18:51.8424301Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8424687Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8424998Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8425494Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8425864Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8426276Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8426660Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8427038Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8427408Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8427831Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8428227Z PASS SQL api_seed.sql
+2026-11-03T15:18:51.8428578Z .SQL NOTICE drop cascades to 80 other objects
+2026-11-03T15:18:51.8428978Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8429262Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8429554Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8429879Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8430260Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8430692Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8431142Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8431576Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8432012Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8432430Z PASS SQL api_seed.sql
+2026-11-03T15:18:51.8432823Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8433271Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8433625Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8433994Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8434391Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8434836Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8435242Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8436021Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8436406Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8436870Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8437335Z PASS SQL api_seed.sql
+2026-11-03T15:18:51.8437866Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8438341Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8438708Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8439113Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8439535Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8439996Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8440453Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8440923Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8441391Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8441872Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8442345Z PASS SQL api_seed.sql
+2026-11-03T15:18:51.8442756Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8443237Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8443610Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8444004Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8444401Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8444865Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8445313Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8445935Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8446373Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8446861Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8447341Z PASS SQL api_seed.sql
+2026-11-03T15:18:51.8447769Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8448255Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8448591Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8448939Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8449297Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8449701Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8450112Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8450500Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8450928Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8451360Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8451803Z PASS SQL api_seed.sql
+2026-11-03T15:18:51.8452162Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8452615Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8452976Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8453349Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8453770Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8454243Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8454728Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8455144Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8455720Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8456171Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8456645Z PASS SQL api_seed.sql
+2026-11-03T15:18:51.8457059Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8457535Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8457901Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8458298Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8458732Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8459196Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8459659Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8460120Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8460574Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8461078Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8461551Z PASS SQL api_seed.sql
+2026-11-03T15:18:51.8461943Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8462398Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8462771Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8463181Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8463602Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8464237Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8464694Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8465150Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8465782Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8466402Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8466882Z PASS SQL api_seed.sql
+2026-11-03T15:18:51.8467289Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8467761Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8468144Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8468539Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8468952Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8469409Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8469872Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8470345Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8470819Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8471315Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8471811Z PASS SQL api_seed.sql
+2026-11-03T15:18:51.8472216Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8472690Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8473058Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8473462Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8473882Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8474363Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8474835Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8475279Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8475841Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8476320Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8476783Z PASS SQL api_seed.sql
+2026-11-03T15:18:51.8477193Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8477655Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8478007Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8478387Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8478796Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8479277Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8479772Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8480268Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8480741Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8481246Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8481757Z PASS SQL api_seed.sql
+2026-11-03T15:18:51.8482189Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8482657Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8483041Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8483425Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8483816Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8484266Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8484730Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8485176Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8485790Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8486268Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8486739Z PASS SQL api_seed.sql
+2026-11-03T15:18:51.8487141Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8487592Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8487948Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8488342Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8488742Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8489164Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8489619Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8490090Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8490565Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8491085Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8491533Z PASS SQL api_seed.sql
+2026-11-03T15:18:51.8491915Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8492361Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8492721Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8493110Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8493841Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8494323Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8494794Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8495260Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8495980Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8496460Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8496938Z PASS SQL api_seed.sql
+2026-11-03T15:18:51.8497336Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8497804Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8498167Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8498567Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8498981Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8530603Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8531240Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8531739Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8532216Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8532724Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8533231Z PASS SQL api_seed.sql
+2026-11-03T15:18:51.8533678Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8534147Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8534503Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8534890Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8535299Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8536008Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8536478Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8536938Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8537398Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8537893Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8538333Z PASS SQL api_seed.sql
+2026-11-03T15:18:51.8538752Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8539242Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8539635Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8540049Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8540501Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8540951Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8541420Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8541903Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8542390Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8542913Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8543413Z PASS SQL api_seed.sql
+2026-11-03T15:18:51.8543833Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8544326Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8544705Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8545112Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8545691Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8546163Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8546661Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8547144Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8547631Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8548140Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8548639Z PASS SQL api_seed.sql
+2026-11-03T15:18:51.8549075Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8549743Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8550130Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8550517Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8550928Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8551385Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8551868Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8552312Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8552781Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8553285Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8553750Z PASS SQL api_seed.sql
+2026-11-03T15:18:51.8554161Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8554639Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8555311Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8555978Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8556366Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8556806Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8557416Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8557855Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8558305Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8558795Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8559265Z PASS SQL api_seed.sql
+2026-11-03T15:18:51.8559673Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8560155Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8560520Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8560921Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8561343Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8561787Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8562232Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8562720Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8563152Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8563612Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8564073Z PASS SQL api_seed.sql
+2026-11-03T15:18:51.8564469Z .SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:51.8564886Z PASS SQL 001_core.sql
+2026-11-03T15:18:51.8565229Z PASS SQL 002_documents.sql
+2026-11-03T15:18:51.8565773Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:51.8566198Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:51.8566670Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:51.8567148Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:51.8567603Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:51.8568067Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:51.8568571Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:51.8569061Z PASS SQL api_seed.sql
+2026-11-03T15:18:51.8569412Z .
+2026-11-03T15:18:51.8569832Z =============================== warnings summary ===============================
+2026-11-03T15:18:51.8570749Z ../../../../../opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/site-packages/fastapi/testclient.py:1
+2026-11-03T15:18:51.8572579Z   /opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+2026-11-03T15:18:51.8574271Z     from starlette.testclient import TestClient as TestClient  # noqa
+2026-11-03T15:18:51.8574752Z 
+2026-11-03T15:18:51.8575128Z -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+2026-11-03T15:18:51.8576083Z =========================== short test summary info ============================
+2026-11-03T15:18:51.8577224Z SKIPPED [1] tests/test_database.py:389: Faculty policy not decided: institutional_approval_quorum; no institutional behavior invented
+2026-11-03T15:18:51.8578798Z SKIPPED [1] tests/test_database.py:389: Faculty policy not decided: multi_evaluator_aggregation; no institutional behavior invented
+2026-11-03T15:18:51.8580279Z SKIPPED [1] tests/test_database.py:389: Faculty policy not decided: mark_correction_authority_and_amendment; no institutional behavior invented
+2026-11-03T15:18:51.8581804Z SKIPPED [1] tests/test_database.py:389: Faculty policy not decided: retrospective_membership_exceptions; no institutional behavior invented
+2026-11-03T15:18:51.8582908Z 91 passed, 4 skipped, 1 warning in 28.77s
+2026-11-03T15:18:51.8583272Z 
+2026-11-03T15:18:51.8586219Z All checks passed!
+2026-11-03T15:18:51.8586865Z 
+2026-11-03T15:18:51.8913508Z OFFLINE STATIC CHECK PASS: 38 tables, 40 trigger functions, 46 trigger hooks, 106 FK references, 9 ordered migration files
+2026-11-03T15:18:51.8915064Z LIMITATION: This cannot establish SQL syntax, server compatibility or runtime behavior. Run psql tests.
+2026-11-03T15:18:51.8917502Z OFFLINE COMPOSITE KEY CHECK PASS: 35 explicit FOREIGN KEY declarations match declared unique/primary keys
+2026-11-03T15:18:51.8918368Z 
+2026-11-03T15:18:51.9408073Z SQL NOTICE drop cascades to 79 other objects
+2026-11-03T15:18:52.0311688Z PASS SQL 001_core.sql
+2026-11-03T15:18:52.0534323Z PASS SQL 002_documents.sql
+2026-11-03T15:18:52.1106133Z PASS SQL 003_evaluation.sql
+2026-11-03T15:18:52.1254872Z PASS SQL 004_operations_and_guards.sql
+2026-11-03T15:18:52.1313963Z PASS SQL 005_integrity_hardening.sql
+2026-11-03T15:18:52.1374491Z PASS SQL 006_publication_contract.sql
+2026-11-03T15:18:52.1417300Z PASS SQL 007_upload_and_delivery.sql
+2026-11-03T15:18:52.1427338Z PASS SQL 008_runtime_authorization.sql
+2026-11-03T15:18:52.1680981Z PASS SQL 009_temporal_and_review_history.sql
+2026-11-03T15:18:52.1985223Z PASS SQL 001_seed.sql
+2026-11-03T15:18:52.2843403Z ##[group]Run actions/upload-artifact@v4
+2026-11-03T15:18:52.2843686Z with:
+2026-11-03T15:18:52.2843901Z   name: postgres-validation-evidence
+2026-11-03T15:18:52.2844168Z   path: evidence/ci*
+2026-11-03T15:18:52.2844389Z   if-no-files-found: warn
+2026-11-03T15:18:52.2844614Z   compression-level: 6
+2026-11-03T15:18:52.2844829Z   overwrite: false
+2026-11-03T15:18:52.2845043Z   include-hidden-files: false
+2026-11-03T15:18:52.2845271Z env:
+2026-11-03T15:18:52.2846093Z   DATABASE_ADMIN_URL: ***127.0.0.1:5432/smartpro_test
+2026-11-03T15:18:52.2846599Z   DATABASE_URL: ***127.0.0.1:5432/smartpro_test
+2026-11-03T15:18:52.2846888Z   ALLOW_SMARTPRO_TEST_DB: YES
+2026-11-03T15:18:52.2847142Z   SMARTPRO_DEMO_AUTH: YES
+2026-11-03T15:18:52.2847388Z   SMARTPRO_DB_ROLE: smartpro_runtime
+2026-11-03T15:18:52.2847659Z   SMARTPRO_DATA_DIR: .test-data
+2026-11-03T15:18:52.2847915Z   PYTHONDONTWRITEBYTECODE: 1
+2026-11-03T15:18:52.2848214Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.15/x64
+2026-11-03T15:18:52.2848665Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.15/x64/lib/pkgconfig
+2026-11-03T15:18:52.2849072Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.15/x64
+2026-11-03T15:18:52.2849434Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.15/x64
+2026-11-03T15:18:52.2849797Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.15/x64
+2026-11-03T15:18:52.2850157Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.15/x64/lib
+2026-11-03T15:18:52.2850467Z ##[endgroup]
+2026-11-03T15:18:52.4597879Z (node:3572) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-11-03T15:18:52.4599571Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-11-03T15:18:52.4910084Z With the provided path, there will be 7 files uploaded
+2026-11-03T15:18:52.4934807Z Artifact name is valid!
+2026-11-03T15:18:52.4935855Z Root directory input is valid!
+2026-11-03T15:18:52.8916310Z Beginning upload of artifact content to blob storage
+2026-11-03T15:18:52.9306377Z (node:3572) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-11-03T15:18:53.1846137Z Uploaded bytes 14485
+2026-11-03T15:18:53.2427786Z Finished uploading artifact content to blob storage!
+2026-11-03T15:18:53.2429314Z SHA256 digest of uploaded artifact zip is 7b46e6f9c1e281a7d77c4ba996b1d4360dc99db45d2ab2237e1bea2e43073a04
+2026-11-03T15:18:53.2430645Z Finalizing artifact upload
+2026-11-03T15:18:53.7916607Z Artifact postgres-validation-evidence.zip successfully finalized. Artifact ID 13241823184
+2026-11-03T15:18:53.7918047Z Artifact postgres-validation-evidence has been successfully uploaded! Final size is 14485 bytes. Artifact ID is 13241823184
+2026-11-03T15:18:53.7926788Z Artifact download URL: https://github.com/divyanshuacharya0990-lab/SMART-PRO/actions/runs/41662405802/artifacts/13241823184
+2026-11-03T15:18:53.8123225Z Post job cleanup.
+2026-11-03T15:18:53.9409598Z (node:3608) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-11-03T15:18:53.9411051Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-11-03T15:18:53.9675830Z Post job cleanup.
+2026-11-03T15:18:54.1050128Z [command]/usr/bin/git version
+2026-11-03T15:18:54.1096043Z git version 2.56.0
+2026-11-03T15:18:54.1239135Z Temporarily overriding HOME='/home/runner/work/_temp/65fe51a1-1a3f-4542-9b79-ed25bce563cd' before making global git config changes
+2026-11-03T15:18:54.1286459Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-03T15:18:54.1316423Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/SMART-PRO/SMART-PRO
+2026-11-03T15:18:54.1366344Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-03T15:18:54.1578099Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-03T15:18:54.2315680Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-03T15:18:54.2351804Z http.https://github.com/.extraheader
+2026-11-03T15:18:54.2566852Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2026-11-03T15:18:54.2676975Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-03T15:18:54.2852006Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-03T15:18:54.3126653Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-03T15:18:54.3280790Z Print service container logs: 6ca0b3282a734c3991a5158480ae8b4e_postgres16_70aeb6
+2026-11-03T15:18:54.3286593Z ##[command]/usr/bin/docker logs --details 65660f7620ef6c4aa68c307a12069d195e4103074334484ba4f993c8580d9668
+2026-11-03T15:18:54.3496921Z  initdb: warning: enabling "trust" authentication for local connections
+2026-11-03T15:18:54.3497536Z  The files belonging to this database system will be owned by user "postgres".
+2026-11-03T15:18:54.3498460Z  This user must also own the server process.
+2026-11-03T15:18:54.3513965Z  initdb: hint: You can change this by editing pg_hba.conf or using the option -A, or --auth-local and --auth-host, the next time you run initdb.
+2026-11-03T15:18:54.3514948Z  
+2026-11-03T15:18:54.3516206Z  2026-11-03 15:18:08.134 UTC [1] LOG:  starting PostgreSQL 16.15 (Debian 16.15-1.pgdg13+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit
+2026-11-03T15:18:54.3517525Z  2026-11-03 15:18:08.134 UTC [1] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+2026-11-03T15:18:54.3518322Z  2026-11-03 15:18:08.134 UTC [1] LOG:  listening on IPv6 address "::", port 5432
+2026-11-03T15:18:54.3519169Z  2026-11-03 15:18:08.135 UTC [1] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+2026-11-03T15:18:54.3519715Z  2026-11-03 15:18:08.139 UTC [63] LOG:  database system was shut down at 2026-11-03 15:18:08 UTC
+2026-11-03T15:18:54.3520198Z  2026-11-03 15:18:08.145 UTC [1] LOG:  database system is ready to accept connections
+2026-11-03T15:18:54.3520649Z  2026-11-03 15:18:21.385 UTC [61] LOG:  checkpoint starting: immediate force wait
+2026-11-03T15:18:54.3521660Z  2026-11-03 15:18:21.388 UTC [61] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.004 s; sync files=3, longest=0.001 s, average=0.001 s; distance=0 kB, estimate=0 kB; lsn=0/191F520, redo lsn=0/191F4E8
+2026-11-03T15:18:54.3523005Z  2026-11-03 15:18:23.552 UTC [114] ERROR:  update or delete on table "projects" violates foreign key constraint "project_reviews_project_id_cycle_id_policy_version_id_fkey" on table "project_reviews"
+2026-11-03T15:18:54.3524274Z  2026-11-03 15:18:23.552 UTC [114] DETAIL:  Key (id, cycle_id, policy_version_id)=(15000000-0000-4000-8000-000000000001, 11000000-0000-4000-8000-000000000001, 12000000-0000-4000-8000-000000000001) is still referenced from table "project_reviews".
+2026-11-03T15:18:54.3525203Z  2026-11-03 15:18:23.552 UTC [114] STATEMENT:  UPDATE projects SET cycle_id=$1 WHERE id=$2
+2026-11-03T15:18:54.3525907Z  2026-11-03 15:18:23.823 UTC [116] ERROR:  new project binding requires approved scoped policy
+2026-11-03T15:18:54.3526697Z  2026-11-03 15:18:23.823 UTC [116] CONTEXT:  PL/pgSQL function smartpro_project_policy_binding() line 8 at RAISE
+2026-11-03T15:18:54.3527279Z  2026-11-03 15:18:23.823 UTC [116] STATEMENT:  UPDATE projects SET department_id=$1 WHERE id=$2
+2026-11-03T15:18:54.3527807Z  2026-11-03 15:18:23.827 UTC [116] ERROR:  faculty assignment requires scoped faculty role
+2026-11-03T15:18:54.3528358Z  2026-11-03 15:18:23.827 UTC [116] CONTEXT:  PL/pgSQL function smartpro_assignment_integrity() line 22 at RAISE
+2026-11-03T15:18:54.3529006Z  2026-11-03 15:18:23.827 UTC [116] STATEMENT:  INSERT INTO evaluator_assignments(review_id,faculty_user_id) VALUES($1,$2)
+2026-11-03T15:18:54.3529614Z  2026-11-03 15:18:24.405 UTC [120] ERROR:  new project binding requires approved scoped policy
+2026-11-03T15:18:54.3530179Z  2026-11-03 15:18:24.405 UTC [120] CONTEXT:  PL/pgSQL function smartpro_project_policy_binding() line 8 at RAISE
+2026-11-03T15:18:54.3530911Z  2026-11-03 15:18:24.405 UTC [120] STATEMENT:  INSERT INTO projects(department_id,cycle_id,team_id,project_type,policy_version_id,project_code,title)
+2026-11-03T15:18:54.3531707Z  	      SELECT department_id,cycle_id,team_id,project_type,$1,'DRAFT-P','Invalid' FROM projects WHERE id=$2
+2026-11-03T15:18:54.3532534Z  2026-11-03 15:18:24.698 UTC [122] ERROR:  duplicate key value violates unique constraint "document_versions_file_asset_id_key"
+2026-11-03T15:18:54.3533211Z  2026-11-03 15:18:24.698 UTC [122] DETAIL:  Key (file_asset_id)=(17000000-0000-4000-8000-000000000001) already exists.
+2026-11-03T15:18:54.3533914Z  2026-11-03 15:18:24.698 UTC [122] STATEMENT:  INSERT INTO document_versions(project_id,document_id,version_no,file_asset_id,uploaded_by)
+2026-11-03T15:18:54.3534618Z  	      SELECT project_id,document_id,version_no,file_asset_id,uploaded_by FROM document_versions LIMIT 1
+2026-11-03T15:18:54.3535156Z  2026-11-03 15:18:24.978 UTC [124] ERROR:  submitted item references are immutable
+2026-11-03T15:18:54.3535977Z  2026-11-03 15:18:24.978 UTC [124] CONTEXT:  PL/pgSQL function smartpro_submission_item_set() line 4 at RAISE
+2026-11-03T15:18:54.3536491Z  2026-11-03 15:18:24.978 UTC [124] STATEMENT:  DELETE FROM submission_items
+2026-11-03T15:18:54.3536958Z  2026-11-03 15:18:25.256 UTC [126] ERROR:  submitted item references are immutable
+2026-11-03T15:18:54.3537505Z  2026-11-03 15:18:25.256 UTC [126] CONTEXT:  PL/pgSQL function smartpro_submission_item_set() line 4 at RAISE
+2026-11-03T15:18:54.3538130Z  2026-11-03 15:18:25.256 UTC [126] STATEMENT:  UPDATE submission_items SET document_version_id=document_version_id
+2026-11-03T15:18:54.3538701Z  2026-11-03 15:18:25.525 UTC [128] ERROR:  sealed attempt cannot accept additional items
+2026-11-03T15:18:54.3539244Z  2026-11-03 15:18:25.525 UTC [128] CONTEXT:  PL/pgSQL function smartpro_submission_item_set() line 6 at RAISE
+2026-11-03T15:18:54.3539800Z  2026-11-03 15:18:25.525 UTC [128] STATEMENT:  INSERT INTO submission_items VALUES($1,$2,$3,$4)
+2026-11-03T15:18:54.3540333Z  2026-11-03 15:18:25.823 UTC [138] ERROR:  formal attempt requires sealed nonempty item set at commit
+2026-11-03T15:18:54.3540910Z  2026-11-03 15:18:25.823 UTC [138] CONTEXT:  PL/pgSQL function smartpro_attempt_complete() line 5 at RAISE
+2026-11-03T15:18:54.3541406Z  2026-11-03 15:18:25.823 UTC [138] STATEMENT:  SET CONSTRAINTS ALL IMMEDIATE
+2026-11-03T15:18:54.3541819Z  2026-11-03 15:18:26.089 UTC [140] ERROR:  finalized assessment immutable
+2026-11-03T15:18:54.3542325Z  2026-11-03 15:18:26.089 UTC [140] CONTEXT:  PL/pgSQL function smartpro_assessment_identity() line 15 at RAISE
+2026-11-03T15:18:54.3542942Z  2026-11-03 15:18:26.089 UTC [140] STATEMENT:  UPDATE assessments SET finalized_at=now()+interval '1 day' WHERE id=$1
+2026-11-03T15:18:54.3543462Z  2026-11-03 15:18:26.356 UTC [142] ERROR:  finalized assessment immutable
+2026-11-03T15:18:54.3543966Z  2026-11-03 15:18:26.356 UTC [142] CONTEXT:  PL/pgSQL function smartpro_assessment_identity() line 15 at RAISE
+2026-11-03T15:18:54.3544549Z  2026-11-03 15:18:26.356 UTC [142] STATEMENT:  UPDATE assessments SET row_version=row_version+1 WHERE id=$1
+2026-11-03T15:18:54.3545153Z  2026-11-03 15:18:26.649 UTC [144] ERROR:  finalized assessment immutable
+2026-11-03T15:18:54.3545854Z  2026-11-03 15:18:26.649 UTC [144] CONTEXT:  PL/pgSQL function smartpro_assessment_identity() line 15 at RAISE
+2026-11-03T15:18:54.3546424Z  2026-11-03 15:18:26.649 UTC [144] STATEMENT:  UPDATE assessments SET state='DRAFT' WHERE id=$1
+2026-11-03T15:18:54.3546888Z  2026-11-03 15:18:26.918 UTC [146] ERROR:  finalized assessment immutable
+2026-11-03T15:18:54.3547392Z  2026-11-03 15:18:26.918 UTC [146] CONTEXT:  PL/pgSQL function smartpro_assessment_identity() line 15 at RAISE
+2026-11-03T15:18:54.3548091Z  2026-11-03 15:18:26.918 UTC [146] STATEMENT:  UPDATE assessments SET evaluator_assignment_id='28000000-0000-4000-8000-000000000001' WHERE id=$1
+2026-11-03T15:18:54.3548692Z  2026-11-03 15:18:27.186 UTC [148] ERROR:  finalized assessment immutable
+2026-11-03T15:18:54.3549185Z  2026-11-03 15:18:27.186 UTC [148] CONTEXT:  PL/pgSQL function smartpro_assessment_identity() line 15 at RAISE
+2026-11-03T15:18:54.3549754Z  2026-11-03 15:18:27.186 UTC [148] STATEMENT:  UPDATE assessments SET review_id=review_id WHERE id=$1
+2026-11-03T15:18:54.3550246Z  2026-11-03 15:18:27.455 UTC [150] ERROR:  cannot edit finalized assessment
+2026-11-03T15:18:54.3550836Z  2026-11-03 15:18:27.455 UTC [150] CONTEXT:  PL/pgSQL function smartpro_validate_score() line 16 at RAISE
+2026-11-03T15:18:54.3551355Z  2026-11-03 15:18:27.455 UTC [150] STATEMENT:  UPDATE team_criterion_scores SET marks=0
+2026-11-03T15:18:54.3551813Z  2026-11-03 15:18:27.724 UTC [152] ERROR:  cannot edit finalized assessment
+2026-11-03T15:18:54.3552296Z  2026-11-03 15:18:27.724 UTC [152] CONTEXT:  PL/pgSQL function smartpro_validate_score() line 16 at RAISE
+2026-11-03T15:18:54.3552818Z  2026-11-03 15:18:27.724 UTC [152] STATEMENT:  UPDATE student_criterion_scores SET marks=0
+2026-11-03T15:18:54.3553311Z  2026-11-03 15:18:28.187 UTC [154] ERROR:  finalized assessment scores cannot be deleted
+2026-11-03T15:18:54.3553852Z  2026-11-03 15:18:28.187 UTC [154] CONTEXT:  PL/pgSQL function smartpro_guard_score_delete() line 5 at RAISE
+2026-11-03T15:18:54.3554362Z  2026-11-03 15:18:28.187 UTC [154] STATEMENT:  DELETE FROM team_criterion_scores
+2026-11-03T15:18:54.3554824Z  2026-11-03 15:18:28.471 UTC [156] ERROR:  finalized assessment scores cannot be deleted
+2026-11-03T15:18:54.3555476Z  2026-11-03 15:18:28.471 UTC [156] CONTEXT:  PL/pgSQL function smartpro_guard_score_delete() line 5 at RAISE
+2026-11-03T15:18:54.3556124Z  2026-11-03 15:18:28.471 UTC [156] STATEMENT:  DELETE FROM student_criterion_scores
+2026-11-03T15:18:54.3556562Z  2026-11-03 15:18:28.795 UTC [166] ERROR:  assessment must start DRAFT
+2026-11-03T15:18:54.3557057Z  2026-11-03 15:18:28.795 UTC [166] CONTEXT:  PL/pgSQL function smartpro_assessment_identity() line 11 at RAISE
+2026-11-03T15:18:54.3557726Z  2026-11-03 15:18:28.795 UTC [166] STATEMENT:  INSERT INTO assessments(review_id,scheme_mode_id,evaluator_assignment_id,state)
+2026-11-03T15:18:54.3558368Z  	      SELECT review_id,$1,id,'FINALIZED' FROM evaluator_assignments WHERE review_id=$2
+2026-11-03T15:18:54.3558915Z  2026-11-03 15:18:29.071 UTC [168] ERROR:  approved configuration identity and metadata are immutable
+2026-11-03T15:18:54.3559513Z  2026-11-03 15:18:29.071 UTC [168] CONTEXT:  PL/pgSQL function smartpro_immutable_configuration() line 16 at RAISE
+2026-11-03T15:18:54.3560105Z  2026-11-03 15:18:29.071 UTC [168] STATEMENT:  UPDATE scheme_versions SET version_no=99 WHERE id=$1
+2026-11-03T15:18:54.3560648Z  2026-11-03 15:18:29.340 UTC [170] ERROR:  approved configuration identity and metadata are immutable
+2026-11-03T15:18:54.3561234Z  2026-11-03 15:18:29.340 UTC [170] CONTEXT:  PL/pgSQL function smartpro_immutable_configuration() line 16 at RAISE
+2026-11-03T15:18:54.3561882Z  2026-11-03 15:18:29.340 UTC [170] STATEMENT:  UPDATE scheme_versions SET created_at=now()+interval '1 day' WHERE id=$1
+2026-11-03T15:18:54.3562414Z  2026-11-03 15:18:29.613 UTC [172] ERROR:  invalid scheme state transition
+2026-11-03T15:18:54.3562999Z  2026-11-03 15:18:29.613 UTC [172] CONTEXT:  PL/pgSQL function smartpro_scheme_transition() line 20 at RAISE
+2026-11-03T15:18:54.3563570Z  2026-11-03 15:18:29.613 UTC [172] STATEMENT:  UPDATE scheme_versions SET state='DRAFT' WHERE id=$1
+2026-11-03T15:18:54.3564108Z  2026-11-03 15:18:29.892 UTC [174] ERROR:  scheme must start DRAFT and pass approval validation
+2026-11-03T15:18:54.3564679Z  2026-11-03 15:18:29.892 UTC [174] CONTEXT:  PL/pgSQL function smartpro_immutable_configuration() line 9 at RAISE
+2026-11-03T15:18:54.3565838Z  2026-11-03 15:18:29.892 UTC [174] STATEMENT:  INSERT INTO scheme_versions(scheme_id,cycle_id,review_definition_id,version_no,state) SELECT scheme_id,cycle_id,review_definition_id,99,'APPROVED' FROM scheme_versions LIMIT 1
+2026-11-03T15:18:54.3566695Z  2026-11-03 15:18:30.192 UTC [176] ERROR:  marks outside finite criterion range
+2026-11-03T15:18:54.3567208Z  2026-11-03 15:18:30.192 UTC [176] CONTEXT:  PL/pgSQL function smartpro_validate_score() line 18 at RAISE
+2026-11-03T15:18:54.3568093Z  2026-11-03 15:18:30.192 UTC [176] STATEMENT:  INSERT INTO team_criterion_scores(assessment_id,scheme_mode_id,mode_criterion_id,marks) VALUES($1,$2,$3,$4)
+2026-11-03T15:18:54.3568747Z  2026-11-03 15:18:30.471 UTC [178] ERROR:  marks outside finite criterion range
+2026-11-03T15:18:54.3569349Z  2026-11-03 15:18:30.471 UTC [178] CONTEXT:  PL/pgSQL function smartpro_validate_score() line 18 at RAISE
+2026-11-03T15:18:54.3570060Z  2026-11-03 15:18:30.471 UTC [178] STATEMENT:  INSERT INTO team_criterion_scores(assessment_id,scheme_mode_id,mode_criterion_id,marks) VALUES($1,$2,$3,$4)
+2026-11-03T15:18:54.3570703Z  2026-11-03 15:18:30.748 UTC [180] ERROR:  marks outside finite criterion range
+2026-11-03T15:18:54.3571205Z  2026-11-03 15:18:30.748 UTC [180] CONTEXT:  PL/pgSQL function smartpro_validate_score() line 18 at RAISE
+2026-11-03T15:18:54.3571929Z  2026-11-03 15:18:30.748 UTC [180] STATEMENT:  INSERT INTO team_criterion_scores(assessment_id,scheme_mode_id,mode_criterion_id,marks) VALUES($1,$2,$3,$4)
+2026-11-03T15:18:54.3572569Z  2026-11-03 15:18:31.949 UTC [196] ERROR:  assessment scores incomplete
+2026-11-03T15:18:54.3573078Z  2026-11-03 15:18:31.949 UTC [196] CONTEXT:  PL/pgSQL function smartpro_finalize_assessment() line 20 at RAISE
+2026-11-03T15:18:54.3573655Z  2026-11-03 15:18:31.949 UTC [196] STATEMENT:  UPDATE assessments SET state='FINALIZED' WHERE id=$1
+2026-11-03T15:18:54.3574131Z  2026-11-03 15:18:32.233 UTC [198] ERROR:  assessment scores incomplete
+2026-11-03T15:18:54.3574642Z  2026-11-03 15:18:32.233 UTC [198] CONTEXT:  PL/pgSQL function smartpro_finalize_assessment() line 20 at RAISE
+2026-11-03T15:18:54.3575210Z  2026-11-03 15:18:32.233 UTC [198] STATEMENT:  UPDATE assessments SET state='FINALIZED' WHERE id=$1
+2026-11-03T15:18:54.3575982Z  2026-11-03 15:18:32.509 UTC [200] ERROR:  assessment scores incomplete
+2026-11-03T15:18:54.3576480Z  2026-11-03 15:18:32.509 UTC [200] CONTEXT:  PL/pgSQL function smartpro_finalize_assessment() line 20 at RAISE
+2026-11-03T15:18:54.3577059Z  2026-11-03 15:18:32.509 UTC [200] STATEMENT:  UPDATE assessments SET state='FINALIZED' WHERE id=$1
+2026-11-03T15:18:54.3577593Z  2026-11-03 15:18:32.788 UTC [202] ERROR:  assessment scoring identity cannot be reparented
+2026-11-03T15:18:54.3578158Z  2026-11-03 15:18:32.788 UTC [202] CONTEXT:  PL/pgSQL function smartpro_assessment_identity() line 18 at RAISE
+2026-11-03T15:18:54.3579086Z  2026-11-03 15:18:32.788 UTC [202] STATEMENT:  UPDATE assessments SET scheme_mode_id=$1 WHERE id=$2
+2026-11-03T15:18:54.3580282Z  2026-11-03 15:18:33.071 UTC [204] ERROR:  duplicate key value violates unique constraint "assessments_evaluator_assignment_id_key"
+2026-11-03T15:18:54.3581073Z  2026-11-03 15:18:33.071 UTC [204] DETAIL:  Key (evaluator_assignment_id)=(28000000-0000-4000-8000-000000000001) already exists.
+2026-11-03T15:18:54.3581798Z  2026-11-03 15:18:33.071 UTC [204] STATEMENT:  INSERT INTO assessments(review_id,scheme_mode_id,evaluator_assignment_id) VALUES($1,$2,$3)
+2026-11-03T15:18:54.3582558Z  2026-11-03 15:18:33.357 UTC [206] ERROR:  invalid assessment/criterion scope
+2026-11-03T15:18:54.3583073Z  2026-11-03 15:18:33.357 UTC [206] CONTEXT:  PL/pgSQL function smartpro_validate_score() line 9 at RAISE
+2026-11-03T15:18:54.3583809Z  2026-11-03 15:18:33.357 UTC [206] STATEMENT:  INSERT INTO team_criterion_scores(assessment_id,scheme_mode_id,mode_criterion_id,marks) VALUES($1,$2,$3,1)
+2026-11-03T15:18:54.3584472Z  2026-11-03 15:18:33.663 UTC [208] ERROR:  invalid assessment/criterion scope
+2026-11-03T15:18:54.3584974Z  2026-11-03 15:18:33.663 UTC [208] CONTEXT:  PL/pgSQL function smartpro_validate_score() line 9 at RAISE
+2026-11-03T15:18:54.3586059Z  2026-11-03 15:18:33.663 UTC [208] STATEMENT:  INSERT INTO student_criterion_scores(assessment_id,review_id,scheme_mode_id,roster_member_id,mode_criterion_id,marks) VALUES($1,$2,$3,$4,$5,1)
+2026-11-03T15:18:54.3586845Z  2026-11-03 15:18:33.950 UTC [210] ERROR:  student score outside exact review roster
+2026-11-03T15:18:54.3587367Z  2026-11-03 15:18:33.950 UTC [210] CONTEXT:  PL/pgSQL function smartpro_validate_score() line 12 at RAISE
+2026-11-03T15:18:54.3588185Z  2026-11-03 15:18:33.950 UTC [210] STATEMENT:  INSERT INTO student_criterion_scores(assessment_id,review_id,scheme_mode_id,roster_member_id,mode_criterion_id,marks) VALUES($1,$2,$3,$4,$5,1)
+2026-11-03T15:18:54.3589073Z  2026-11-03 15:18:34.228 UTC [212] ERROR:  membership edit would falsify historical eligibility
+2026-11-03T15:18:54.3589639Z  2026-11-03 15:18:34.228 UTC [212] CONTEXT:  PL/pgSQL function smartpro_membership_history() line 10 at RAISE
+2026-11-03T15:18:54.3590269Z  2026-11-03 15:18:34.228 UTC [212] STATEMENT:  UPDATE team_memberships SET joined_at=now()+interval '1 day' WHERE id=$1
+2026-11-03T15:18:54.3590857Z  2026-11-03 15:18:34.230 UTC [212] ERROR:  membership edit would falsify historical eligibility
+2026-11-03T15:18:54.3591409Z  2026-11-03 15:18:34.230 UTC [212] CONTEXT:  PL/pgSQL function smartpro_membership_history() line 10 at RAISE
+2026-11-03T15:18:54.3592248Z  2026-11-03 15:18:34.230 UTC [212] STATEMENT:  UPDATE team_memberships SET left_at=(SELECT roster_locked_at FROM project_reviews WHERE id=$1)-interval '1 microsecond' WHERE id=$2
+2026-11-03T15:18:54.3592990Z  2026-11-03 15:18:34.514 UTC [214] ERROR:  roster student not eligible at freeze instant
+2026-11-03T15:18:54.3593549Z  2026-11-03 15:18:34.514 UTC [214] CONTEXT:  PL/pgSQL function smartpro_roster_freeze_eligibility() line 10 at RAISE
+2026-11-03T15:18:54.3594264Z  2026-11-03 15:18:34.514 UTC [214] STATEMENT:  UPDATE project_reviews SET review_state='OPEN',roster_locked_at=clock_timestamp() WHERE id=$1
+2026-11-03T15:18:54.3594905Z  2026-11-03 15:18:34.791 UTC [216] ERROR:  faculty assignment requires scoped faculty role
+2026-11-03T15:18:54.3595585Z  2026-11-03 15:18:34.791 UTC [216] CONTEXT:  PL/pgSQL function smartpro_assignment_integrity() line 22 at RAISE
+2026-11-03T15:18:54.3596234Z  2026-11-03 15:18:34.791 UTC [216] STATEMENT:  INSERT INTO evaluator_assignments(review_id,faculty_user_id) VALUES($1,$2)
+2026-11-03T15:18:54.3596771Z  2026-11-03 15:18:35.096 UTC [226] ERROR:  release history immutable
+2026-11-03T15:18:54.3597243Z  2026-11-03 15:18:35.096 UTC [226] CONTEXT:  PL/pgSQL function smartpro_release_guard() line 4 at RAISE
+2026-11-03T15:18:54.3597730Z  2026-11-03 15:18:35.096 UTC [226] STATEMENT:  DELETE FROM result_releases
+2026-11-03T15:18:54.3598211Z  2026-11-03 15:18:35.379 UTC [228] ERROR:  academic evidence is append-only: result_student_scores
+2026-11-03T15:18:54.3598778Z  2026-11-03 15:18:35.379 UTC [228] CONTEXT:  PL/pgSQL function smartpro_forbid_mutation() line 3 at RAISE
+2026-11-03T15:18:54.3599279Z  2026-11-03 15:18:35.379 UTC [228] STATEMENT:  DELETE FROM result_student_scores
+2026-11-03T15:18:54.3599775Z  2026-11-03 15:18:35.653 UTC [230] ERROR:  academic evidence is append-only: result_source_assessments
+2026-11-03T15:18:54.3600346Z  2026-11-03 15:18:35.653 UTC [230] CONTEXT:  PL/pgSQL function smartpro_forbid_mutation() line 3 at RAISE
+2026-11-03T15:18:54.3600853Z  2026-11-03 15:18:35.653 UTC [230] STATEMENT:  DELETE FROM result_source_assessments
+2026-11-03T15:18:54.3601488Z  2026-11-03 15:18:35.931 UTC [232] ERROR:  academic evidence is append-only: audit_events
+2026-11-03T15:18:54.3602020Z  2026-11-03 15:18:35.931 UTC [232] CONTEXT:  PL/pgSQL function smartpro_forbid_mutation() line 3 at RAISE
+2026-11-03T15:18:54.3602500Z  2026-11-03 15:18:35.931 UTC [232] STATEMENT:  DELETE FROM audit_events
+2026-11-03T15:18:54.3602956Z  2026-11-03 15:18:36.208 UTC [234] ERROR:  academic evidence is append-only: approval_decisions
+2026-11-03T15:18:54.3603504Z  2026-11-03 15:18:36.208 UTC [234] CONTEXT:  PL/pgSQL function smartpro_forbid_mutation() line 3 at RAISE
+2026-11-03T15:18:54.3604005Z  2026-11-03 15:18:36.208 UTC [234] STATEMENT:  DELETE FROM approval_decisions
+2026-11-03T15:18:54.3604474Z  2026-11-03 15:18:36.484 UTC [236] ERROR:  academic evidence is append-only: document_versions
+2026-11-03T15:18:54.3605017Z  2026-11-03 15:18:36.484 UTC [236] CONTEXT:  PL/pgSQL function smartpro_forbid_mutation() line 3 at RAISE
+2026-11-03T15:18:54.3605688Z  2026-11-03 15:18:36.484 UTC [236] STATEMENT:  DELETE FROM document_versions
+2026-11-03T15:18:54.3606434Z  2026-11-03 15:18:36.769 UTC [238] ERROR:  insert or update on table "result_source_assessments" violates foreign key constraint "result_source_assessments_assessment_id_review_id_fkey"
+2026-11-03T15:18:54.3607619Z  2026-11-03 15:18:36.769 UTC [238] DETAIL:  Key (assessment_id, review_id)=(69cff737-d0f4-4932-934d-917a2eda6ca1, 26000000-0000-4000-8000-000000000001) is not present in table "assessments".
+2026-11-03T15:18:54.3608548Z  2026-11-03 15:18:36.769 UTC [238] STATEMENT:  INSERT INTO result_source_assessments(release_id,review_id,assessment_id) VALUES($1,$2,$3)
+2026-11-03T15:18:54.3609157Z  2026-11-03 15:18:36.772 UTC [238] ERROR:  assessment requires open frozen review
+2026-11-03T15:18:54.3609682Z  2026-11-03 15:18:36.772 UTC [238] CONTEXT:  PL/pgSQL function smartpro_assessment_identity() line 13 at RAISE
+2026-11-03T15:18:54.3610363Z  2026-11-03 15:18:36.772 UTC [238] STATEMENT:  INSERT INTO assessments(review_id,scheme_mode_id,evaluator_assignment_id) VALUES($1,$2,$3)
+2026-11-03T15:18:54.3611021Z  2026-11-03 15:18:37.340 UTC [242] ERROR:  publication/correction requires explicit scoped grant
+2026-11-03T15:18:54.3611568Z  2026-11-03 15:18:37.340 UTC [242] CONTEXT:  PL/pgSQL function smartpro_release_guard() line 27 at RAISE
+2026-11-03T15:18:54.3612278Z  2026-11-03 15:18:37.340 UTC [242] STATEMENT:  INSERT INTO result_releases(id,review_id,release_no,scheme_version_id,scheme_mode_id,calculation_snapshot,
+2026-11-03T15:18:54.3612972Z  	      released_by,supersedes_id,correction_reason) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)
+2026-11-03T15:18:54.3613445Z  2026-11-03 15:18:37.616 UTC [244] ERROR:  release must be sealed before commit
+2026-11-03T15:18:54.3613941Z  2026-11-03 15:18:37.616 UTC [244] CONTEXT:  PL/pgSQL function smartpro_release_complete() line 6 at RAISE
+2026-11-03T15:18:54.3614442Z  2026-11-03 15:18:37.616 UTC [244] STATEMENT:  SET CONSTRAINTS ALL IMMEDIATE
+2026-11-03T15:18:54.3614934Z  2026-11-03 15:18:37.896 UTC [246] ERROR:  published score/breakdown differs from finalized source marks
+2026-11-03T15:18:54.3615682Z  2026-11-03 15:18:37.896 UTC [246] CONTEXT:  PL/pgSQL function smartpro_release_complete() line 26 at RAISE
+2026-11-03T15:18:54.3616190Z  2026-11-03 15:18:37.896 UTC [246] STATEMENT:  SET CONSTRAINTS ALL IMMEDIATE
+2026-11-03T15:18:54.3616681Z  2026-11-03 15:18:38.236 UTC [256] ERROR:  review finalization requires complete finalized assessments
+2026-11-03T15:18:54.3617266Z  2026-11-03 15:18:38.236 UTC [256] CONTEXT:  PL/pgSQL function smartpro_review_terminal_state() line 14 at RAISE
+2026-11-03T15:18:54.3617881Z  2026-11-03 15:18:38.236 UTC [256] STATEMENT:  UPDATE project_reviews SET review_state='FINALIZED' WHERE id=$1
+2026-11-03T15:18:54.3618543Z  2026-11-03 15:18:38.505 UTC [258] ERROR:  conflicting key value violates exclusion constraint "same_team_membership_no_overlap"
+2026-11-03T15:18:54.3620128Z  2026-11-03 15:18:38.505 UTC [258] DETAIL:  Key (team_id, user_id, tstzrange(joined_at, left_at, '[)'::text))=(13000000-0000-4000-8000-000000000001, 00000000-0000-4000-8000-000000000001, ["2026-11-03 15:18:38.456857+00","2026-11-04 15:18:38.456857+00")) conflicts with existing key (team_id, user_id, tstzrange(joined_at, left_at, '[)'::text))=(13000000-0000-4000-8000-000000000001, 00000000-0000-4000-8000-000000000001, ["2026-11-03 15:18:38.456857+00",)).
+2026-11-03T15:18:54.3621738Z  2026-11-03 15:18:38.505 UTC [258] STATEMENT:  INSERT INTO team_memberships(team_id,user_id,joined_at,left_at)
+2026-11-03T15:18:54.3622330Z  	      SELECT team_id,user_id,joined_at,joined_at+interval '1 day' FROM team_memberships WHERE id=$1
+2026-11-03T15:18:54.3622889Z  2026-11-03 15:18:38.797 UTC [260] ERROR:  membership edit would falsify historical eligibility
+2026-11-03T15:18:54.3623457Z  2026-11-03 15:18:38.797 UTC [260] CONTEXT:  PL/pgSQL function smartpro_membership_history() line 10 at RAISE
+2026-11-03T15:18:54.3624102Z  2026-11-03 15:18:38.797 UTC [260] STATEMENT:  UPDATE team_memberships SET joined_at=joined_at-interval '1 day' WHERE id=$1
+2026-11-03T15:18:54.3624731Z  2026-11-03 15:18:39.071 UTC [262] ERROR:  permission denied for table department_role_assignments
+2026-11-03T15:18:54.3625281Z  2026-11-03 15:18:39.071 UTC [262] STATEMENT:  UPDATE department_role_assignments SET role_code='HOD'
+2026-11-03T15:18:54.3626044Z  2026-11-03 15:18:39.071 UTC [262] ERROR:  permission denied for table audit_events
+2026-11-03T15:18:54.3626483Z  2026-11-03 15:18:39.071 UTC [262] STATEMENT:  TRUNCATE audit_events
+2026-11-03T15:18:54.3626929Z  2026-11-03 15:18:39.073 UTC [262] ERROR:  permission denied for table academic_action_grants
+2026-11-03T15:18:54.3627615Z  2026-11-03 15:18:39.073 UTC [262] STATEMENT:  INSERT INTO academic_action_grants(user_id,department_id,action_code) VALUES($1,$2,'CORRECT_RESULTS')
+2026-11-03T15:18:54.3628258Z  2026-11-03 15:18:39.378 UTC [266] ERROR:  cannot edit finalized assessment
+2026-11-03T15:18:54.3628749Z  2026-11-03 15:18:39.378 UTC [266] CONTEXT:  PL/pgSQL function smartpro_validate_score() line 16 at RAISE
+2026-11-03T15:18:54.3629333Z  2026-11-03 15:18:39.378 UTC [266] STATEMENT:  UPDATE team_criterion_scores SET marks=1 WHERE assessment_id=$1
+2026-11-03T15:18:54.3629958Z  2026-11-03 15:18:39.677 UTC [270] ERROR:  scheme f649c628-0385-4f40-897a-fabb38b58423 is locked in state APPROVED
+2026-11-03T15:18:54.3630564Z  2026-11-03 15:18:39.677 UTC [270] CONTEXT:  PL/pgSQL function smartpro_guard_scheme_child() line 13 at RAISE
+2026-11-03T15:18:54.3631336Z  2026-11-03 15:18:39.677 UTC [270] STATEMENT:  INSERT INTO rubric_criteria(scheme_version_id,code,label,maximum,sort_order) VALUES($1,'EXTRA','Unmapped',10,2)
+2026-11-03T15:18:54.3631982Z  2026-11-03 15:18:43.523 UTC [349] ERROR:  synthetic commit failure
+2026-11-03T15:18:54.3632443Z  2026-11-03 15:18:43.523 UTC [349] CONTEXT:  PL/pgSQL function test_fail_at_commit() line 2 at RAISE
+2026-11-03T15:18:54.3632888Z  2026-11-03 15:18:43.523 UTC [349] STATEMENT:  COMMIT
+2026-11-03T15:18:54.3633286Z  2026-11-03 15:18:50.173 UTC [497] ERROR:  permission denied for table document_versions
+2026-11-03T15:18:54.3633794Z  2026-11-03 15:18:50.173 UTC [497] STATEMENT:  UPDATE document_versions SET version_no=3 WHERE id=$1
+2026-11-03T15:18:54.3634310Z  2026-11-03 15:18:50.174 UTC [497] ERROR:  permission denied for table submission_items
+2026-11-03T15:18:54.3634806Z  2026-11-03 15:18:50.174 UTC [497] STATEMENT:  DELETE FROM submission_items WHERE attempt_id=$1
+2026-11-03T15:18:54.3635305Z  2026-11-03 15:18:50.174 UTC [497] ERROR:  permission denied for table approval_decisions
+2026-11-03T15:18:54.3635943Z  2026-11-03 15:18:50.174 UTC [497] STATEMENT:  UPDATE approval_decisions SET comment=$1
+2026-11-03T15:18:54.3636402Z  The database cluster will be initialized with locale "en_US.utf8".
+2026-11-03T15:18:54.3636823Z  The default database encoding has accordingly been set to "UTF8".
+2026-11-03T15:18:54.3637240Z  The default text search configuration will be set to "english".
+2026-11-03T15:18:54.3637558Z  
+2026-11-03T15:18:54.3637842Z  Data page checksums are disabled.
+2026-11-03T15:18:54.3638083Z  
+2026-11-03T15:18:54.3638371Z  fixing permissions on existing directory /var/lib/postgresql/data ... ok
+2026-11-03T15:18:54.3638749Z  creating subdirectories ... ok
+2026-11-03T15:18:54.3639058Z  selecting dynamic shared memory implementation ... posix
+2026-11-03T15:18:54.3639411Z  selecting default max_connections ... 100
+2026-11-03T15:18:54.3639700Z  selecting default shared_buffers ... 128MB
+2026-11-03T15:18:54.3639989Z  selecting default time zone ... Etc/UTC
+2026-11-03T15:18:54.3640275Z  creating configuration files ... ok
+2026-11-03T15:18:54.3640542Z  running bootstrap script ... ok
+2026-11-03T15:18:54.3640833Z  performing post-bootstrap initialization ... ok
+2026-11-03T15:18:54.3641136Z  syncing data to disk ... ok
+2026-11-03T15:18:54.3641372Z  
+2026-11-03T15:18:54.3641541Z  
+2026-11-03T15:18:54.3641770Z  Success. You can now start the database server using:
+2026-11-03T15:18:54.3642066Z  
+2026-11-03T15:18:54.3642306Z      pg_ctl -D /var/lib/postgresql/data -l logfile start
+2026-11-03T15:18:54.3642593Z  
+2026-11-03T15:18:54.3643198Z  waiting for server to start....2026-11-03 15:18:07.841 UTC [47] LOG:  starting PostgreSQL 16.15 (Debian 16.15-1.pgdg13+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit
+2026-11-03T15:18:54.3644079Z  2026-11-03 15:18:07.842 UTC [47] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+2026-11-03T15:18:54.3644608Z  2026-11-03 15:18:07.845 UTC [50] LOG:  database system was shut down at 2026-11-03 15:18:07 UTC
+2026-11-03T15:18:54.3645090Z  2026-11-03 15:18:07.848 UTC [47] LOG:  database system is ready to accept connections
+2026-11-03T15:18:54.3645606Z   done
+2026-11-03T15:18:54.3645795Z  server started
+2026-11-03T15:18:54.3645998Z  CREATE DATABASE
+2026-11-03T15:18:54.3646200Z  
+2026-11-03T15:18:54.3646367Z  
+2026-11-03T15:18:54.3646674Z  /usr/local/bin/docker-entrypoint.sh: ignoring /docker-entrypoint-initdb.d/*
+2026-11-03T15:18:54.3647055Z  
+2026-11-03T15:18:54.3647302Z  2026-11-03 15:18:08.011 UTC [47] LOG:  received fast shutdown request
+2026-11-03T15:18:54.3647788Z  waiting for server to shut down....2026-11-03 15:18:08.012 UTC [47] LOG:  aborting any active transactions
+2026-11-03T15:18:54.3648428Z  2026-11-03 15:18:08.015 UTC [47] LOG:  background worker "logical replication launcher" (PID 53) exited with exit code 1
+2026-11-03T15:18:54.3649002Z  2026-11-03 15:18:08.015 UTC [48] LOG:  shutting down
+2026-11-03T15:18:54.3649505Z  2026-11-03 15:18:08.016 UTC [48] LOG:  checkpoint starting: shutdown immediate
+2026-11-03T15:18:54.3650517Z  2026-11-03 15:18:08.030 UTC [48] LOG:  checkpoint complete: wrote 926 buffers (5.7%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.009 s, sync=0.005 s, total=0.015 s; sync files=301, longest=0.003 s, average=0.001 s; distance=4273 kB, estimate=4273 kB; lsn=0/191F0F0, redo lsn=0/191F0F0
+2026-11-03T15:18:54.3651489Z  2026-11-03 15:18:08.034 UTC [47] LOG:  database system is shut down
+2026-11-03T15:18:54.3651799Z   done
+2026-11-03T15:18:54.3651984Z  server stopped
+2026-11-03T15:18:54.3652173Z  
+2026-11-03T15:18:54.3652405Z  PostgreSQL init process complete; ready for start up.
+2026-11-03T15:18:54.3652697Z  
+2026-11-03T15:18:54.3659325Z Stop and remove container: 6ca0b3282a734c3991a5158480ae8b4e_postgres16_70aeb6
+2026-11-03T15:18:54.3664185Z ##[command]/usr/bin/docker rm --force 65660f7620ef6c4aa68c307a12069d195e4103074334484ba4f993c8580d9668
+2026-11-03T15:18:54.5221149Z 65660f7620ef6c4aa68c307a12069d195e4103074334484ba4f993c8580d9668
+2026-11-03T15:18:54.5237129Z Remove container network: github_network_b7220cc5e4854f799bdccaf74f979fa7
+2026-11-03T15:18:54.5241808Z ##[command]/usr/bin/docker network rm github_network_b7220cc5e4854f799bdccaf74f979fa7
+2026-11-03T15:18:54.5917272Z github_network_b7220cc5e4854f799bdccaf74f979fa7
+2026-11-03T15:18:54.5997508Z Cleaning up orphan processes
+2026-11-03T15:18:54.6400259Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-python@v5, actions/upload-artifact@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

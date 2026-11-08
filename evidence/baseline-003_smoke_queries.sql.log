@@ -1,0 +1,11 @@
+  display_name  | total_marks |           breakdown            | scheme_version | mode_code | release_no 
+----------------+-------------+--------------------------------+----------------+-----------+------------
+ Demo Student A |       86.00 | {"team": 52, "individual": 34} |              1 | COMBINED  |          1
+ Demo Student B |       82.00 | {"team": 52, "individual": 30} |              1 | COMBINED  |          1
+(2 rows)
+
+    component    | number_of_tables 
+-----------------+------------------
+ schema-and-seed |               36
+(1 row)
+

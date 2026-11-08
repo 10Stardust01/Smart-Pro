@@ -1,0 +1,69 @@
+{
+  "steps": [
+    {
+      "stage": "migrations-and-sql",
+      "command": [
+        "C:\\Users\\DELL\\Documents\\Codex\\2026-11-03\\perform-an-independent-aquacrop-ospy-3\\work\\smartpro-venv\\Scripts\\python.exe",
+        "db_setup.py",
+        "--legacy-tests",
+        "--create-test-login"
+      ],
+      "exit_code": 0,
+      "seconds": 1.2457051000092179
+    },
+    {
+      "stage": "pytest",
+      "command": [
+        "C:\\Users\\DELL\\Documents\\Codex\\2026-11-03\\perform-an-independent-aquacrop-ospy-3\\work\\smartpro-venv\\Scripts\\python.exe",
+        "-m",
+        "pytest",
+        "tests",
+        "workflow-poc/tests",
+        "-q",
+        "--junitxml=C:\\Users\\DELL\\Documents\\Codex\\2026-11-03\\perform-an-independent-aquacrop-ospy-3\\outputs\\smartpro\\evidence\\acceptance.xml",
+        "-p",
+        "no:cacheprovider",
+        "-s"
+      ],
+      "exit_code": 0,
+      "seconds": 92.23976780008525
+    },
+    {
+      "stage": "lint",
+      "command": [
+        "C:\\Users\\DELL\\Documents\\Codex\\2026-11-03\\perform-an-independent-aquacrop-ospy-3\\work\\smartpro-venv\\Scripts\\python.exe",
+        "-m",
+        "ruff",
+        "check",
+        ".",
+        "--select",
+        "F,E9",
+        "--no-cache"
+      ],
+      "exit_code": 0,
+      "seconds": 0.18728429998736829
+    },
+    {
+      "stage": "sql-static",
+      "command": [
+        "C:\\Users\\DELL\\Documents\\Codex\\2026-11-03\\perform-an-independent-aquacrop-ospy-3\\work\\smartpro-venv\\Scripts\\python.exe",
+        "database-v1.5/tests/static_lint.py"
+      ],
+      "exit_code": 0,
+      "seconds": 0.14769459993112832
+    },
+    {
+      "stage": "python-ast",
+      "files": 12,
+      "exit_code": 0
+    }
+  ],
+  "status": "PASSED",
+  "tests": {
+    "tests": 95,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 4,
+    "passed": 91
+  }
+}

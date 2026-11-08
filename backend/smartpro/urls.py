@@ -1,0 +1,77 @@
+from . import health
+from django.urls import path
+from .views import read_case
+from . import student_views, team_views, membership_views, project_views, staff_views
+from . import academic_views
+from . import evaluation_views
+from . import demo_views
+from . import document_views
+from . import setup_views
+from . import operation_views, lifecycle_views
+from . import course_views
+
+urlpatterns = [
+    path("health/live", health.live),
+    path("health/ready", health.ready),
+    path('api/v1/faculty-reference/departments/<uuid:department_id>', demo_views.faculty_reference),
+    path('api/v1/me/course-notifications', course_views.notifications),
+    path('api/v1/staff/departments/<uuid:department_id>/leadership', setup_views.leadership),
+    path('api/v1/staff/departments/<uuid:department_id>/records/<uuid:person_id>', setup_views.department_record),
+    path('api/v1/staff/departments/<uuid:department_id>/appointment-candidates', setup_views.appointment_candidates),
+    path('api/v1/staff/departments/<uuid:department_id>/intake', setup_views.intake),
+    path('api/v1/courses/departments/<uuid:department_id>', course_views.catalog),
+    path('api/v1/courses/offerings/<uuid:offering_id>/coordinators', course_views.appointments),
+    path('api/v1/courses/offerings/<uuid:offering_id>/commands', course_views.command),
+    path('api/v1/courses/offerings/<uuid:offering_id>/evaluation-queue', course_views.evaluation_queue),
+    path('api/v1/courses/offerings/<uuid:offering_id>/details', course_views.details),
+    path('api/v1/academic/departments/<uuid:department_id>/reviews/<uuid:review_id>/management', lifecycle_views.review_management),
+    path('api/v1/projects/<uuid:project_id>/proposal-details', lifecycle_views.revise_proposal),
+    path('api/v1/staff/departments/<uuid:department_id>/document-requirements', lifecycle_views.document_requirements),
+    path('api/v1/staff/departments/<uuid:department_id>/assignment-management', lifecycle_views.assignments),
+    path('api/v1/staff/departments/<uuid:department_id>/configuration-management', lifecycle_views.configuration),
+    path('api/v1/staff/departments/<uuid:department_id>/offering-management', lifecycle_views.offerings),
+    path('api/v1/staff/departments/<uuid:department_id>/projects/<uuid:project_id>/guide', operation_views.guide),
+    path('api/v1/staff/departments/<uuid:department_id>/coordinator-operations', operation_views.delegate),
+    path('api/v1/academic/departments/<uuid:department_id>/reviews/<uuid:review_id>/schedule', operation_views.schedule),
+    path('api/v1/curriculum-offerings/<uuid:offering_id>/proposal', project_views.proposal_offering),
+    path('api/v1/ui/context', demo_views.context),
+    path('api/v1/workspace', demo_views.application_workspace),
+    path('api/v1/staff/departments/<uuid:department_id>/setup', setup_views.setup),
+    path('api/v1/documents/departments/<uuid:department_id>', document_views.workspace),
+    path('api/v1/documents/departments/<uuid:department_id>/projects/<uuid:project_id>/uploads', document_views.upload),
+    path('api/v1/document-versions/<uuid:version_id>/content', document_views.content),
+    path('', demo_views.asset),
+    path('demo-assets/<str:name>', demo_views.asset),
+    path('api/v1/demo/workspace', demo_views.workspace),
+    path('api/v1/demo/enrollment', demo_views.enroll),
+    path('api/v1/academic/departments/<uuid:department_id>/reviews', evaluation_views.assign),
+    path('api/v1/academic/departments/<uuid:department_id>/assessments/<uuid:assessment_id>/draft', evaluation_views.save),
+    path('api/v1/academic/departments/<uuid:department_id>/assessments/<uuid:assessment_id>/finalize', evaluation_views.finalize),
+    path('api/v1/academic/departments/<uuid:department_id>/reviews/<uuid:review_id>/policy', academic_views.bind_review),
+    path('api/v1/academic/departments/<uuid:department_id>/reviews/<uuid:review_id>/roster', academic_views.roster),
+    path('api/v1/academic/departments/<uuid:department_id>/reviews/<uuid:review_id>/evaluations', academic_views.evaluate),
+    path('api/v1/academic/departments/<uuid:department_id>/reviews/<uuid:review_id>/publish', academic_views.publish),
+    path('api/v1/academic/departments/<uuid:department_id>/reviews/<uuid:review_id>/results', academic_views.results),
+    path('api/v1/academic/departments/<uuid:department_id>/coordinators', academic_views.appoint),
+    path('api/v1/academic/departments/<uuid:department_id>/coordinators/revoke', academic_views.revoke_coordinator),
+    path('api/v1/academic/departments/<uuid:department_id>/delegations', academic_views.delegate),
+    path('api/v1/academic/departments/<uuid:department_id>/delegations/revoke', academic_views.revoke_delegation),
+    path('api/v1/academic/departments/<uuid:department_id>/policies', academic_views.policy),
+    path('api/v1/submission-cases/<uuid:case_id>', read_case),
+    path('api/v1/me/profile', student_views.profile),
+    path('api/v1/me/curriculum-offerings', student_views.offerings),
+    path('api/v1/teams', team_views.create),
+    path('api/v1/curriculum-offerings/<uuid:offering_id>/teams', team_views.discover),
+    path('api/v1/teams/<uuid:team_id>/memberships', membership_views.join),
+    path('api/v1/me/memberships', membership_views.current),
+    path('api/v1/memberships/<uuid:membership_id>/end', membership_views.leave),
+    path('api/v1/memberships/<uuid:membership_id>/transfer', membership_views.transfer),
+    path('api/v1/projects', project_views.register),
+    path('api/v1/me/projects', project_views.current),
+    path('api/v1/staff/departments/<uuid:department_id>/policies', staff_views.policies),
+    path('api/v1/staff/departments/<uuid:department_id>/projects', staff_views.projects),
+    path('api/v1/staff/departments/<uuid:department_id>/offerings/<uuid:offering_id>/publication', staff_views.publication),
+    path('api/v1/staff/departments/<uuid:department_id>/offerings/<uuid:offering_id>/team-policy', staff_views.team_policy),
+    path('api/v1/staff/departments/<uuid:department_id>/offerings/<uuid:offering_id>/registration-policy', staff_views.registration_policy),
+    path('api/v1/staff/departments/<uuid:department_id>/projects/<uuid:project_id>/title', staff_views.correct_title),
+]

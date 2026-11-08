@@ -1,0 +1,23 @@
+{
+  "START_HERE.txt": "ce873d52203998b07a65435ea6df6537a1e09890f9c218e806440b33863e6b93",
+  "database-v1.5/.github/workflows/database-contracts.yml": "db03f5d2d102a82f3f399393f924e43fa26ac06d25eaaa949a7475292c5f2e36",
+  "database-v1.5/README.md": "d8325a88f5bc786e466bf6f4c5f8e7b3a32159ef68fa606375a4b668ee22c576",
+  "database-v1.5/compose.yaml": "2e2cb5aaf22cb6149785f0e962d37a4a8a73c613f584b8236103192f8f81083a",
+  "database-v1.5/migrations/001_core.sql": "9d23e31ac2f8a4f0117c6fb78b52acff31d5face15725c41c8cac45322f61464",
+  "database-v1.5/migrations/002_documents.sql": "b3a386be6f7e71eea5861278a6991f3eb199ed6e600a84c134be21745def0f11",
+  "database-v1.5/migrations/003_evaluation.sql": "dab635c6062505a9124661b4992cfd3998e7b47f51efb7c30477bc8d283a9b94",
+  "database-v1.5/migrations/004_operations_and_guards.sql": "b8a9e870ac506ffb9ab6eef770f191d2146c6e9c82fad82bbe4616ab2503e208",
+  "database-v1.5/run-tests.sh": "2c012688df35f443ff4fcafd9a315efaefda6fa7d77751c10ea55fca3011f0fc",
+  "database-v1.5/tests/001_seed.sql": "6714e35015140f906e70e4b938f064ff1d90f5a2da15cb5987ed15a11b714991",
+  "database-v1.5/tests/002_constraints.sql": "e1b6293ce1a2bf2533db417557b8cc90cfa5a9c2e8d20de82349d39d96671f87",
+  "database-v1.5/tests/003_smoke_queries.sql": "b67b6e8d74f5117884d3ac1c344470cf4740c5b05bb03087508ecd24084df61b",
+  "database-v1.5/tests/static_lint.py": "be66b0db99d410ace46429c3a61ecb4109b2ed3840d4ddc707017fc7d282aed6",
+  "workflow-poc/POSTGRES_SCHEMA_REVIEW.md": "0a369ee538cc2e19c0e5511e8aabfe6bd1cc4383b90c5ee5ce02efb5a6835c7f",
+  "workflow-poc/README.md": "716bbf42335588d378b57528a2d0cade4d652144611587dfd9149d2210567295",
+  "workflow-poc/app.py": "304a25be3012133964e1feb23d260ed76eb9b2d301947b3286cb18f9befa9244",
+  "workflow-poc/openapi.json": "b8774a15a06fed71d54ea473b4f6a1612dba59806d9836070e2bedae1877056d",
+  "workflow-poc/postgres-static-checks.txt": "df55a78956bfd7aae6de9909e275aeb0c15d2bfcb48125ba66a1ef4046525dcc",
+  "workflow-poc/requirements.txt": "982fc23bde938a9b73f6c73174155b56f04a2527a851e1e0ed5796e727f59ac6",
+  "workflow-poc/test-results.txt": "cc6c1eb034877ab838c9264aaa14de962131969b1279ab520e9a918c1c48b884",
+  "workflow-poc/tests/test_workflow.py": "b16311219e5d1db0bda9c82952c0d207c4c080a5b0f103e18bc8e6f7537cc828"
+}

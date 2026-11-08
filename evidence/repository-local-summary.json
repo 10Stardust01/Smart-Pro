@@ -1,0 +1,69 @@
+{
+  "steps": [
+    {
+      "stage": "migrations-and-sql",
+      "command": [
+        "C:\\Users\\DELL\\Documents\\Codex\\2026-11-03\\perform-an-independent-aquacrop-ospy-3\\work\\smartpro-venv\\Scripts\\python.exe",
+        "db_setup.py",
+        "--legacy-tests",
+        "--create-test-login"
+      ],
+      "exit_code": 0,
+      "seconds": 1.1612445999635383
+    },
+    {
+      "stage": "pytest",
+      "command": [
+        "C:\\Users\\DELL\\Documents\\Codex\\2026-11-03\\perform-an-independent-aquacrop-ospy-3\\work\\smartpro-venv\\Scripts\\python.exe",
+        "-m",
+        "pytest",
+        "tests",
+        "workflow-poc/tests",
+        "-q",
+        "--junitxml=C:\\Users\\DELL\\Documents\\Codex\\2026-11-03\\referenced-chatgpt-conversation-this-is-an-2\\outputs\\SMART-PRO\\evidence\\repository-local.xml",
+        "-p",
+        "no:cacheprovider",
+        "-s"
+      ],
+      "exit_code": 0,
+      "seconds": 93.0253037000075
+    },
+    {
+      "stage": "lint",
+      "command": [
+        "C:\\Users\\DELL\\Documents\\Codex\\2026-11-03\\perform-an-independent-aquacrop-ospy-3\\work\\smartpro-venv\\Scripts\\python.exe",
+        "-m",
+        "ruff",
+        "check",
+        ".",
+        "--select",
+        "F,E9",
+        "--no-cache"
+      ],
+      "exit_code": 0,
+      "seconds": 0.1481679999269545
+    },
+    {
+      "stage": "sql-static",
+      "command": [
+        "C:\\Users\\DELL\\Documents\\Codex\\2026-11-03\\perform-an-independent-aquacrop-ospy-3\\work\\smartpro-venv\\Scripts\\python.exe",
+        "database-v1.5/tests/static_lint.py"
+      ],
+      "exit_code": 0,
+      "seconds": 0.10101139999460429
+    },
+    {
+      "stage": "python-ast",
+      "files": 12,
+      "exit_code": 0
+    }
+  ],
+  "status": "PASSED",
+  "tests": {
+    "tests": 95,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 4,
+    "passed": 91
+  }
+}

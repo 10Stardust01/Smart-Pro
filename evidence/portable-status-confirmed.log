@@ -1,0 +1,2 @@
+pg_ctl: server is running (PID: 30068)
+C:/Users/DELL/Documents/Codex/2026-11-03/perform-an-independent-aquacrop-ospy-3/work/smartpro-tools/pgsql/bin/postgres.exe "-D" "C:/Users/DELL/Documents/Codex/2026-11-03/perform-an-independent-aquacrop-ospy-3/work/smartpro-pgdata" "-h" "127.0.0.1" "-p" "55439"

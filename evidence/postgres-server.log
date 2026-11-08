@@ -1,0 +1,1514 @@
+2026-11-03 19:28:27.201 IST [30068] LOG:  starting PostgreSQL 16.15, compiled by Visual C++ build 1944, 64-bit
+2026-11-03 19:28:27.203 IST [30068] LOG:  listening on IPv4 address "127.0.0.1", port 55439
+2026-11-03 19:28:27.287 IST [24888] LOG:  database system was shut down at 2026-11-03 19:28:19 IST
+2026-11-03 19:28:27.329 IST [30068] LOG:  database system is ready to accept connections
+2026-11-03 19:29:35.841 IST [572] ERROR:  cannot edit finalized assessment
+2026-11-03 19:29:35.841 IST [572] CONTEXT:  PL/pgSQL function smartpro_validate_score() line 14 at RAISE
+	SQL statement "INSERT INTO team_criterion_scores(assessment_id,scheme_mode_id,mode_criterion_id,marks)
+	    VALUES('29000000-0000-4000-8000-000000000001','24000000-0000-4000-8000-000000000003',
+	           '25000000-0000-4000-8000-000000000006',12)"
+	PL/pgSQL function inline_code_block line 30 at SQL statement
+2026-11-03 19:29:35.841 IST [572] STATEMENT:  DO $tests$
+	DECLARE rejected boolean;
+	BEGIN
+	  -- 1. Cross-project documents cannot be attached to an existing submission.
+	  INSERT INTO projects(id,department_id,cycle_id,team_id,project_type,policy_version_id,project_code,title)
+	  VALUES('15000000-0000-4000-8000-000000000002','10000000-0000-4000-8000-000000000001',
+	         '11000000-0000-4000-8000-000000000001','13000000-0000-4000-8000-000000000001',
+	         'MAJOR','12000000-0000-4000-8000-000000000001','DEMO-P02','Another Project');
+	  INSERT INTO file_assets(id,storage_key,sha256,size_bytes,mime_type,upload_status,uploaded_by)
+	  VALUES('17000000-0000-4000-8000-000000000002','demo/project2/file',repeat('b',64),1,'application/pdf','READY','00000000-0000-4000-8000-000000000001');
+	  INSERT INTO documents(id,project_id,document_type,label)
+	  VALUES('16000000-0000-4000-8000-000000000002','15000000-0000-4000-8000-000000000002','SYNOPSIS','Other synopsis');
+	  INSERT INTO document_versions(id,project_id,document_id,version_no,file_asset_id,uploaded_by)
+	  VALUES('18000000-0000-4000-8000-000000000002','15000000-0000-4000-8000-000000000002',
+	         '16000000-0000-4000-8000-000000000002',1,'17000000-0000-4000-8000-000000000002',
+	         '00000000-0000-4000-8000-000000000001');
+	  rejected:=false;
+	  BEGIN
+	    INSERT INTO submission_items(attempt_id,project_id,document_id,document_version_id)
+	    VALUES('1a000000-0000-4000-8000-000000000001','15000000-0000-4000-8000-000000000001',
+	           '16000000-0000-4000-8000-000000000002','18000000-0000-4000-8000-000000000002');
+	  EXCEPTION WHEN foreign_key_violation THEN rejected:=true;
+	  END;
+	  IF NOT rejected THEN RAISE EXCEPTION 'FAIL: cross-project file permitted'; END IF;
+	  RAISE NOTICE 'PASS cross-project submission blocked';
+	
+	  -- 2. Combined-mode student criterion cannot be submitted as a team score.
+	  rejected:=false;
+	  BEGIN
+	    INSERT INTO team_criterion_scores(assessment_id,scheme_mode_id,mode_criterion_id,marks)
+	    VALUES('29000000-0000-4000-8000-000000000001','24000000-0000-4000-8000-000000000003',
+	           '25000000-0000-4000-8000-000000000006',12);
+	  EXCEPTION WHEN foreign_key_violation THEN rejected:=true;
+	  END;
+	  IF NOT rejected THEN RAISE EXCEPTION 'FAIL: wrong scoring scope permitted'; END IF;
+	  RAISE NOTICE 'PASS wrong criterion scope blocked';
+	
+	  -- 3. Score ceiling protected on a DRAFT assessment (not merely the finalized-score lock).
+	  INSERT INTO evaluator_assignments(id,review_id,faculty_user_id)
+	  VALUES('28000000-0000-4000-8000-000000000002','26000000-0000-4000-8000-000000000001',
+	         '00000000-0000-4000-8000-000000000004');
+	  INSERT INTO assessments(id,review_id,scheme_mode_id,evaluator_assignment_id)
+	  VALUES('29000000-0000-4000-8000-000000000002','26000000-0000-4000-8000-000000000001',
+	         '24000000-0000-4000-8000-000000000003','28000000-0000-4000-8000-000000000002');
+	  rejected:=false;
+	  BEGIN
+	    INSERT INTO team_criterion_scores(assessment_id,scheme_mode_id,mode_criterion_id,marks)
+	    VALUES('29000000-0000-4000-8000-000000000002','24000000-0000-4000-8000-000000000003',
+	           '25000000-0000-4000-8000-000000000005',61);
+	  EXCEPTION WHEN check_violation THEN rejected:=true;
+	  END;
+	  IF NOT rejected THEN RAISE EXCEPTION 'FAIL: over-maximum marks permitted in draft'; END IF;
+	  RAISE NOTICE 'PASS over-maximum marks blocked in draft';
+	
+	  -- 3b. Incomplete draft assessments cannot be finalized.
+	  rejected:=false;
+	  BEGIN
+	    UPDATE assessments SET state='FINALIZED'
+	    WHERE id='29000000-0000-4000-8000-000000000002';
+	  EXCEPTION WHEN check_violation THEN rejected:=true;
+	  END;
+	  IF NOT rejected THEN RAISE EXCEPTION 'FAIL: incomplete assessment finalized'; END IF;
+	  RAISE NOTICE 'PASS incomplete assessment finalization blocked';
+	
+	  -- 4. Finalized assessment scores cannot be changed.
+	  rejected:=false;
+	  BEGIN
+	    UPDATE team_criterion_scores SET marks=51
+	    WHERE assessment_id='29000000-0000-4000-8000-000000000001';
+	  EXCEPTION WHEN check_violation THEN rejected:=true;
+	  END;
+	  IF NOT rejected THEN RAISE EXCEPTION 'FAIL: finalized marks changed'; END IF;
+	  RAISE NOTICE 'PASS finalized assessment protected';
+	
+	  -- 5. Activated rubrics cannot be changed directly.
+	  rejected:=false;
+	  BEGIN
+	    UPDATE rubric_criteria SET maximum=65
+	    WHERE id='23000000-0000-4000-8000-000000000001';
+	  EXCEPTION WHEN check_violation THEN rejected:=true;
+	  END;
+	  IF NOT rejected THEN RAISE EXCEPTION 'FAIL: locked rubric changed'; END IF;
+	  RAISE NOTICE 'PASS approved rubric locked';
+	
+	  -- 5b. Once assessment begins, switching modes must not orphan scores.
+	  rejected:=false;
+	  BEGIN
+	    UPDATE project_reviews SET scheme_mode_id='24000000-0000-4000-8000-000000000001'
+	    WHERE id='26000000-0000-4000-8000-000000000001';
+	  EXCEPTION WHEN check_violation THEN rejected:=true;
+	  END;
+	  IF NOT rejected THEN RAISE EXCEPTION 'FAIL: review mode changed after assessment'; END IF;
+	  RAISE NOTICE 'PASS review mode fixed after assessment';
+	
+	  -- 6. Locked roster cannot be edited.
+	  rejected:=false;
+	  BEGIN
+	    DELETE FROM review_roster_members WHERE id='27000000-0000-4000-8000-000000000001';
+	  EXCEPTION WHEN check_violation THEN rejected:=true;
+	  END;
+	  IF NOT rejected THEN RAISE EXCEPTION 'FAIL: locked review roster altered'; END IF;
+	  RAISE NOTICE 'PASS review roster locked';
+	
+	  -- 7. A release is immutable (corrections create a new release).
+	  rejected:=false;
+	  BEGIN
+	    UPDATE result_student_scores SET total_marks=100
+	    WHERE release_id='2a000000-0000-4000-8000-000000000001';
+	  EXCEPTION WHEN check_violation THEN rejected:=true;
+	  END;
+	  IF NOT rejected THEN RAISE EXCEPTION 'FAIL: released result changed'; END IF;
+	  RAISE NOTICE 'PASS published result immutable';
+	
+	  -- 8. Historical document versions cannot be overwritten.
+	  rejected:=false;
+	  BEGIN
+	    UPDATE document_versions SET version_no=9
+	    WHERE id='18000000-0000-4000-8000-000000000001';
+	  EXCEPTION WHEN check_violation THEN rejected:=true;
+	  END;
+	  IF NOT rejected THEN RAISE EXCEPTION 'FAIL: document version overwritten'; END IF;
+	  RAISE NOTICE 'PASS document version immutable';
+	
+	  -- 8b. Referenced file identity (object key/checksum) cannot be rewritten.
+	  rejected:=false;
+	  BEGIN
+	    UPDATE file_assets SET storage_key='demo/changed-file-object'
+	    WHERE id='17000000-0000-4000-8000-000000000001';
+	  EXCEPTION WHEN check_violation THEN rejected:=true;
+	  END;
+	  IF NOT rejected THEN RAISE EXCEPTION 'FAIL: referenced stored object identity changed'; END IF;
+	  RAISE NOTICE 'PASS referenced object identity immutable';
+	
+	  -- 9. Replayed idempotency keys cannot create a second record.
+	  INSERT INTO idempotency_records(actor_id,operation,key,request_sha256,state)
+	  VALUES('00000000-0000-4000-8000-000000000001','submit_synopsis','idempo-1',repeat('a',64),'IN_PROGRESS');
+	  rejected:=false;
+	  BEGIN
+	    INSERT INTO idempotency_records(actor_id,operation,key,request_sha256,state)
+	    VALUES('00000000-0000-4000-8000-000000000001','submit_synopsis','idempo-1',repeat('a',64),'IN_PROGRESS');
+	  EXCEPTION WHEN unique_violation THEN rejected:=true;
+	  END;
+	  IF NOT rejected THEN RAISE EXCEPTION 'FAIL: duplicate idempotency key permitted'; END IF;
+	  RAISE NOTICE 'PASS duplicate idempotency key blocked';
+	
+	  -- 10. Version-conditional update must reject stale clients.
+	  UPDATE submission_cases SET row_version=row_version+1
+	   WHERE id='19000000-0000-4000-8000-000000000001' AND row_version=999;
+	  IF FOUND THEN RAISE EXCEPTION 'FAIL: stale version wrote data'; END IF;
+	  RAISE NOTICE 'PASS stale version refused';
+	
+	  -- 11. Roster membership must belong to the exact review (not another round).
+	  INSERT INTO project_reviews(id,project_id,cycle_id,policy_version_id,review_definition_id,
+	                              round_no,scheme_version_id,scheme_mode_id,review_state)
+	  VALUES ('26000000-0000-4000-8000-000000000002','15000000-0000-4000-8000-000000000001',
+	          '11000000-0000-4000-8000-000000000001','12000000-0000-4000-8000-000000000001',
+	          '20000000-0000-4000-8000-000000000001',2,'22000000-0000-4000-8000-000000000001',
+	          '24000000-0000-4000-8000-000000000003','SCHEDULED');
+	  INSERT INTO review_roster_members(id,review_id,project_id,team_id,membership_id,student_user_id)
+	  VALUES('27000000-0000-4000-8000-000000000003','26000000-0000-4000-8000-000000000002',
+	         '15000000-0000-4000-8000-000000000001','13000000-0000-4000-8000-000000000001',
+	         '14000000-0000-4000-8000-000000000001','00000000-0000-4000-8000-000000000001');
+	  rejected:=false;
+	  BEGIN
+	    INSERT INTO student_criterion_scores(assessment_id,review_id,scheme_mode_id,roster_member_id,mode_criterion_id,marks)
+	    VALUES ('29000000-0000-4000-8000-000000000001','26000000-0000-4000-8000-000000000001',
+	            '24000000-0000-4000-8000-000000000003','27000000-0000-4000-8000-000000000003',
+	            '25000000-0000-4000-8000-000000000006',20);
+	  EXCEPTION WHEN foreign_key_violation THEN rejected:=true;
+	  END;
+	  IF NOT rejected THEN RAISE EXCEPTION 'FAIL: different review roster accepted'; END IF;
+	  RAISE NOTICE 'PASS wrong review roster blocked';
+	
+	  -- 12. Newly approved schemes cannot omit required rubric mappings.
+	  INSERT INTO scheme_versions(id,scheme_id,cycle_id,review_definition_id,version_no)
+	  VALUES('22000000-0000-4000-8000-000000000002','21000000-0000-4000-8000-000000000001',
+	         '11000000-0000-4000-8000-000000000001','20000000-0000-4000-8000-000000000001',2);
+	  rejected:=false;
+	  BEGIN
+	    UPDATE scheme_versions SET state='APPROVED',approved_by='00000000-0000-4000-8000-000000000004',approved_at=now()
+	    WHERE id='22000000-0000-4000-8000-000000000002';
+	  EXCEPTION WHEN check_violation THEN rejected:=true;
+	  END;
+	  IF NOT rejected THEN RAISE EXCEPTION 'FAIL: empty scheme approved'; END IF;
+	  RAISE NOTICE 'PASS incomplete scheme approval blocked';
+	
+	  -- 13. A pending/unverified file cannot be formally submitted.
+	  INSERT INTO file_assets(id,storage_key,sha256,size_bytes,mime_type,upload_status,uploaded_by)
+	  VALUES('17000000-0000-4000-8000-000000000003','demo/project1/unverified',repeat('c',64),1,
+	         'application/pdf','PENDING','00000000-0000-4000-8000-000000000001');
+	  INSERT INTO documents(id,project_id,document_type,label)
+	  VALUES('16000000-0000-4000-8000-000000000003','15000000-0000-4000-8000-000000000001',
+	         'OTHER','Draft attachment');
+	  INSERT INTO document_versions(id,project_id,document_id,version_no,file_asset_id,uploaded_by)
+	  VALUES('18000000-0000-4000-8000-000000000003','15000000-0000-4000-8000-000000000001',
+	         '16000000-0000-4000-8000-000000000003',1,'17000000-0000-4000-8000-000000000003',
+	         '00000000-0000-4000-8000-000000000001');
+	  rejected:=false;
+	  BEGIN
+	    INSERT INTO submission_items(attempt_id,project_id,document_id,document_version_id)
+	    VALUES('1a000000-0000-4000-8000-000000000001','15000000-0000-4000-8000-000000000001',
+	           '16000000-0000-4000-8000-000000000003','18000000-0000-4000-8000-000000000003');
+	  EXCEPTION WHEN check_violation THEN rejected:=true;
+	  END;
+	  IF NOT rejected THEN RAISE EXCEPTION 'FAIL: unverified file submitted'; END IF;
+	  RAISE NOTICE 'PASS pending file rejected';
+	
+	  -- 14. Historical approved academic policy cannot be overwritten.
+	  rejected:=false;
+	  BEGIN
+	    UPDATE project_policy_versions SET policy_data='{"changed":true}'::jsonb
+	    WHERE id='12000000-0000-4000-8000-000000000001';
+	  EXCEPTION WHEN check_violation THEN rejected:=true;
+	  END;
+	  IF NOT rejected THEN RAISE EXCEPTION 'FAIL: approved academic policy changed'; END IF;
+	  RAISE NOTICE 'PASS approved policy locked';
+	
+	  -- 15. Correct demo results 52+34 and 52+30, and one source assessment.
+	  IF (SELECT total_marks FROM result_student_scores
+	      WHERE roster_member_id='27000000-0000-4000-8000-000000000001') <> 86 OR
+	     (SELECT total_marks FROM result_student_scores
+	      WHERE roster_member_id='27000000-0000-4000-8000-000000000002') <> 82 THEN
+	    RAISE EXCEPTION 'FAIL: unexpected demo grade totals';
+	  END IF;
+	  IF (SELECT count(*) FROM result_source_assessments
+	      WHERE release_id='2a000000-0000-4000-8000-000000000001') <> 1 THEN
+	    RAISE EXCEPTION 'FAIL: source assessment missing';
+	  END IF;
+	  RAISE NOTICE 'PASS synthetic published-score baseline';
+	END
+	$tests$;
+2026-11-03 19:33:27.281 IST [11088] LOG:  checkpoint starting: time
+2026-11-03 19:35:53.457 IST [11088] LOG:  checkpoint complete: wrote 1358 buffers (8.3%); 0 WAL file(s) added, 0 removed, 0 recycled; write=145.595 s, sync=0.566 s, total=146.177 s; sync files=519, longest=0.008 s, average=0.002 s; distance=6209 kB, estimate=6209 kB; lsn=0/1B888B0, redo lsn=0/1B88878
+2026-11-03 19:43:27.486 IST [11088] LOG:  checkpoint starting: time
+2026-11-03 19:44:10.128 IST [18800] ERROR:  permission denied for table team_memberships
+2026-11-03 19:44:10.128 IST [18800] STATEMENT:  SELECT m.id FROM projects p JOIN team_memberships m ON m.team_id=p.team_id
+	          JOIN department_role_assignments r ON r.department_id=p.department_id AND r.user_id=m.user_id
+	          JOIN users u ON u.id=m.user_id WHERE p.id=$1 AND m.user_id=$2 AND r.role_code='STUDENT'
+	          AND m.joined_at<=statement_timestamp() AND (m.left_at IS NULL OR statement_timestamp()<m.left_at)
+	          AND r.valid_from<=statement_timestamp() AND (r.valid_until IS NULL OR statement_timestamp()<r.valid_until)
+	          AND u.account_status='ACTIVE' LIMIT 1 FOR SHARE OF m,r,u
+2026-11-03 19:44:11.702 IST [9104] ERROR:  permission denied for table team_memberships
+2026-11-03 19:44:11.702 IST [9104] STATEMENT:  SELECT m.id FROM projects p JOIN team_memberships m ON m.team_id=p.team_id
+	          JOIN department_role_assignments r ON r.department_id=p.department_id AND r.user_id=m.user_id
+	          JOIN users u ON u.id=m.user_id WHERE p.id=$1 AND m.user_id=$2 AND r.role_code='STUDENT'
+	          AND m.joined_at<=statement_timestamp() AND (m.left_at IS NULL OR statement_timestamp()<m.left_at)
+	          AND r.valid_from<=statement_timestamp() AND (r.valid_until IS NULL OR statement_timestamp()<r.valid_until)
+	          AND u.account_status='ACTIVE' LIMIT 1 FOR SHARE OF m,r,u
+2026-11-03 19:44:13.034 IST [3124] ERROR:  permission denied for table team_memberships
+2026-11-03 19:44:13.034 IST [3124] STATEMENT:  SELECT m.id FROM projects p JOIN team_memberships m ON m.team_id=p.team_id
+	          JOIN department_role_assignments r ON r.department_id=p.department_id AND r.user_id=m.user_id
+	          JOIN users u ON u.id=m.user_id WHERE p.id=$1 AND m.user_id=$2 AND r.role_code='STUDENT'
+	          AND m.joined_at<=statement_timestamp() AND (m.left_at IS NULL OR statement_timestamp()<m.left_at)
+	          AND r.valid_from<=statement_timestamp() AND (r.valid_until IS NULL OR statement_timestamp()<r.valid_until)
+	          AND u.account_status='ACTIVE' LIMIT 1 FOR SHARE OF m,r,u
+2026-11-03 19:44:14.358 IST [28696] ERROR:  permission denied for table team_memberships
+2026-11-03 19:44:14.358 IST [28696] STATEMENT:  SELECT m.id FROM projects p JOIN team_memberships m ON m.team_id=p.team_id
+	          JOIN department_role_assignments r ON r.department_id=p.department_id AND r.user_id=m.user_id
+	          JOIN users u ON u.id=m.user_id WHERE p.id=$1 AND m.user_id=$2 AND r.role_code='STUDENT'
+	          AND m.joined_at<=statement_timestamp() AND (m.left_at IS NULL OR statement_timestamp()<m.left_at)
+	          AND r.valid_from<=statement_timestamp() AND (r.valid_until IS NULL OR statement_timestamp()<r.valid_until)
+	          AND u.account_status='ACTIVE' LIMIT 1 FOR SHARE OF m,r,u
+2026-11-03 19:44:14.470 IST [23404] ERROR:  permission denied for table team_memberships
+2026-11-03 19:44:14.470 IST [23404] STATEMENT:  SELECT m.id FROM projects p JOIN team_memberships m ON m.team_id=p.team_id
+	          JOIN department_role_assignments r ON r.department_id=p.department_id AND r.user_id=m.user_id
+	          JOIN users u ON u.id=m.user_id WHERE p.id=$1 AND m.user_id=$2 AND r.role_code='STUDENT'
+	          AND m.joined_at<=statement_timestamp() AND (m.left_at IS NULL OR statement_timestamp()<m.left_at)
+	          AND r.valid_from<=statement_timestamp() AND (r.valid_until IS NULL OR statement_timestamp()<r.valid_until)
+	          AND u.account_status='ACTIVE' LIMIT 1 FOR SHARE OF m,r,u
+2026-11-03 19:44:15.776 IST [22488] ERROR:  permission denied for table team_memberships
+2026-11-03 19:44:15.776 IST [22488] STATEMENT:  SELECT m.id FROM projects p JOIN team_memberships m ON m.team_id=p.team_id
+	          JOIN department_role_assignments r ON r.department_id=p.department_id AND r.user_id=m.user_id
+	          JOIN users u ON u.id=m.user_id WHERE p.id=$1 AND m.user_id=$2 AND r.role_code='STUDENT'
+	          AND m.joined_at<=statement_timestamp() AND (m.left_at IS NULL OR statement_timestamp()<m.left_at)
+	          AND r.valid_from<=statement_timestamp() AND (r.valid_until IS NULL OR statement_timestamp()<r.valid_until)
+	          AND u.account_status='ACTIVE' LIMIT 1 FOR SHARE OF m,r,u
+2026-11-03 19:44:17.033 IST [30528] ERROR:  permission denied for table team_memberships
+2026-11-03 19:44:17.033 IST [30528] STATEMENT:  SELECT m.id FROM projects p JOIN team_memberships m ON m.team_id=p.team_id
+	          JOIN department_role_assignments r ON r.department_id=p.department_id AND r.user_id=m.user_id
+	          JOIN users u ON u.id=m.user_id WHERE p.id=$1 AND m.user_id=$2 AND r.role_code='STUDENT'
+	          AND m.joined_at<=statement_timestamp() AND (m.left_at IS NULL OR statement_timestamp()<m.left_at)
+	          AND r.valid_from<=statement_timestamp() AND (r.valid_until IS NULL OR statement_timestamp()<r.valid_until)
+	          AND u.account_status='ACTIVE' LIMIT 1 FOR SHARE OF m,r,u
+2026-11-03 19:44:18.286 IST [18180] ERROR:  permission denied for table team_memberships
+2026-11-03 19:44:18.286 IST [18180] STATEMENT:  SELECT m.id FROM projects p JOIN team_memberships m ON m.team_id=p.team_id
+	          JOIN department_role_assignments r ON r.department_id=p.department_id AND r.user_id=m.user_id
+	          JOIN users u ON u.id=m.user_id WHERE p.id=$1 AND m.user_id=$2 AND r.role_code='STUDENT'
+	          AND m.joined_at<=statement_timestamp() AND (m.left_at IS NULL OR statement_timestamp()<m.left_at)
+	          AND r.valid_from<=statement_timestamp() AND (r.valid_until IS NULL OR statement_timestamp()<r.valid_until)
+	          AND u.account_status='ACTIVE' LIMIT 1 FOR SHARE OF m,r,u
+2026-11-03 19:44:19.649 IST [27620] ERROR:  permission denied for table team_memberships
+2026-11-03 19:44:19.649 IST [27620] STATEMENT:  SELECT m.id FROM projects p JOIN team_memberships m ON m.team_id=p.team_id
+	          JOIN department_role_assignments r ON r.department_id=p.department_id AND r.user_id=m.user_id
+	          JOIN users u ON u.id=m.user_id WHERE p.id=$1 AND m.user_id=$2 AND r.role_code='STUDENT'
+	          AND m.joined_at<=statement_timestamp() AND (m.left_at IS NULL OR statement_timestamp()<m.left_at)
+	          AND r.valid_from<=statement_timestamp() AND (r.valid_until IS NULL OR statement_timestamp()<r.valid_until)
+	          AND u.account_status='ACTIVE' LIMIT 1 FOR SHARE OF m,r,u
+2026-11-03 19:44:20.943 IST [16864] ERROR:  permission denied for table team_memberships
+2026-11-03 19:44:20.943 IST [16864] STATEMENT:  SELECT m.id FROM projects p JOIN team_memberships m ON m.team_id=p.team_id
+	          JOIN department_role_assignments r ON r.department_id=p.department_id AND r.user_id=m.user_id
+	          JOIN users u ON u.id=m.user_id WHERE p.id=$1 AND m.user_id=$2 AND r.role_code='STUDENT'
+	          AND m.joined_at<=statement_timestamp() AND (m.left_at IS NULL OR statement_timestamp()<m.left_at)
+	          AND r.valid_from<=statement_timestamp() AND (r.valid_until IS NULL OR statement_timestamp()<r.valid_until)
+	          AND u.account_status='ACTIVE' LIMIT 1 FOR SHARE OF m,r,u
+2026-11-03 19:44:22.239 IST [28000] ERROR:  permission denied for table team_memberships
+2026-11-03 19:44:22.239 IST [28000] STATEMENT:  SELECT m.id FROM projects p JOIN team_memberships m ON m.team_id=p.team_id
+	          JOIN department_role_assignments r ON r.department_id=p.department_id AND r.user_id=m.user_id
+	          JOIN users u ON u.id=m.user_id WHERE p.id=$1 AND m.user_id=$2 AND r.role_code='STUDENT'
+	          AND m.joined_at<=statement_timestamp() AND (m.left_at IS NULL OR statement_timestamp()<m.left_at)
+	          AND r.valid_from<=statement_timestamp() AND (r.valid_until IS NULL OR statement_timestamp()<r.valid_until)
+	          AND u.account_status='ACTIVE' LIMIT 1 FOR SHARE OF m,r,u
+2026-11-03 19:44:23.571 IST [20372] ERROR:  permission denied for table team_memberships
+2026-11-03 19:44:23.571 IST [20372] STATEMENT:  SELECT m.id FROM projects p JOIN team_memberships m ON m.team_id=p.team_id
+	          JOIN department_role_assignments r ON r.department_id=p.department_id AND r.user_id=m.user_id
+	          JOIN users u ON u.id=m.user_id WHERE p.id=$1 AND m.user_id=$2 AND r.role_code='STUDENT'
+	          AND m.joined_at<=statement_timestamp() AND (m.left_at IS NULL OR statement_timestamp()<m.left_at)
+	          AND r.valid_from<=statement_timestamp() AND (r.valid_until IS NULL OR statement_timestamp()<r.valid_until)
+	          AND u.account_status='ACTIVE' LIMIT 1 FOR SHARE OF m,r,u
+2026-11-03 19:44:25.040 IST [26716] ERROR:  permission denied for table team_memberships
+2026-11-03 19:44:25.040 IST [26716] STATEMENT:  SELECT m.id FROM projects p JOIN team_memberships m ON m.team_id=p.team_id
+	          JOIN department_role_assignments r ON r.department_id=p.department_id AND r.user_id=m.user_id
+	          JOIN users u ON u.id=m.user_id WHERE p.id=$1 AND m.user_id=$2 AND r.role_code='STUDENT'
+	          AND m.joined_at<=statement_timestamp() AND (m.left_at IS NULL OR statement_timestamp()<m.left_at)
+	          AND r.valid_from<=statement_timestamp() AND (r.valid_until IS NULL OR statement_timestamp()<r.valid_until)
+	          AND u.account_status='ACTIVE' LIMIT 1 FOR SHARE OF m,r,u
+2026-11-03 19:44:26.401 IST [35232] ERROR:  permission denied for table team_memberships
+2026-11-03 19:44:26.401 IST [35232] STATEMENT:  SELECT m.id FROM projects p JOIN team_memberships m ON m.team_id=p.team_id
+	          JOIN department_role_assignments r ON r.department_id=p.department_id AND r.user_id=m.user_id
+	          JOIN users u ON u.id=m.user_id WHERE p.id=$1 AND m.user_id=$2 AND r.role_code='STUDENT'
+	          AND m.joined_at<=statement_timestamp() AND (m.left_at IS NULL OR statement_timestamp()<m.left_at)
+	          AND r.valid_from<=statement_timestamp() AND (r.valid_until IS NULL OR statement_timestamp()<r.valid_until)
+	          AND u.account_status='ACTIVE' LIMIT 1 FOR SHARE OF m,r,u
+2026-11-03 19:45:39.259 IST [24996] ERROR:  permission denied for table team_memberships
+2026-11-03 19:45:39.259 IST [24996] STATEMENT:  SELECT m.id FROM projects p JOIN team_memberships m ON m.team_id=p.team_id
+	          JOIN department_role_assignments r ON r.department_id=p.department_id AND r.user_id=m.user_id
+	          JOIN users u ON u.id=m.user_id WHERE p.id=$1 AND m.user_id=$2 AND r.role_code='STUDENT'
+	          AND m.joined_at<=statement_timestamp() AND (m.left_at IS NULL OR statement_timestamp()<m.left_at)
+	          AND r.valid_from<=statement_timestamp() AND (r.valid_until IS NULL OR statement_timestamp()<r.valid_until)
+	          AND u.account_status='ACTIVE' LIMIT 1 FOR SHARE OF m,r,u
+2026-11-03 19:45:53.447 IST [11088] LOG:  checkpoint complete: wrote 1098 buffers (6.7%); 0 WAL file(s) added, 0 removed, 1 recycled; write=144.758 s, sync=1.173 s, total=145.961 s; sync files=3382, longest=0.013 s, average=0.001 s; distance=6234 kB, estimate=6234 kB; lsn=0/3B1D198, redo lsn=0/219F3E8
+2026-11-03 19:46:23.656 IST [9060] ERROR:  permission denied for table document_versions
+2026-11-03 19:46:23.656 IST [9060] STATEMENT:  UPDATE document_versions SET version_no=3 WHERE id=$1
+2026-11-03 19:46:23.658 IST [9060] ERROR:  permission denied for table submission_items
+2026-11-03 19:46:23.658 IST [9060] STATEMENT:  DELETE FROM submission_items WHERE attempt_id=$1
+2026-11-03 19:46:23.662 IST [9060] ERROR:  permission denied for table approval_decisions
+2026-11-03 19:46:23.662 IST [9060] STATEMENT:  UPDATE approval_decisions SET comment=$1
+2026-11-03 19:52:37.340 IST [11088] LOG:  checkpoint starting: time
+2026-11-03 19:56:16.066 IST [12924] ERROR:  update or delete on table "projects" violates foreign key constraint "project_reviews_project_id_cycle_id_policy_version_id_fkey" on table "project_reviews"
+2026-11-03 19:56:16.066 IST [12924] DETAIL:  Key (id, cycle_id, policy_version_id)=(15000000-0000-4000-8000-000000000001, 11000000-0000-4000-8000-000000000001, 12000000-0000-4000-8000-000000000001) is still referenced from table "project_reviews".
+2026-11-03 19:56:16.066 IST [12924] STATEMENT:  UPDATE projects SET cycle_id=$1 WHERE id=$2
+2026-11-03 19:56:16.739 IST [36388] ERROR:  new project binding requires approved scoped policy
+2026-11-03 19:56:16.739 IST [36388] CONTEXT:  PL/pgSQL function smartpro_project_policy_binding() line 8 at RAISE
+2026-11-03 19:56:16.739 IST [36388] STATEMENT:  INSERT INTO projects(department_id,cycle_id,team_id,project_type,policy_version_id,project_code,title)
+	      SELECT department_id,cycle_id,team_id,project_type,$1,'DRAFT-P','Invalid' FROM projects WHERE id=$2
+2026-11-03 19:56:17.484 IST [36724] ERROR:  duplicate key value violates unique constraint "document_versions_file_asset_id_key"
+2026-11-03 19:56:17.484 IST [36724] DETAIL:  Key (file_asset_id)=(17000000-0000-4000-8000-000000000001) already exists.
+2026-11-03 19:56:17.484 IST [36724] STATEMENT:  INSERT INTO document_versions(project_id,document_id,version_no,file_asset_id,uploaded_by)
+	      SELECT project_id,document_id,version_no,file_asset_id,uploaded_by FROM document_versions LIMIT 1
+2026-11-03 19:56:18.362 IST [36020] ERROR:  submitted item references are immutable
+2026-11-03 19:56:18.362 IST [36020] CONTEXT:  PL/pgSQL function smartpro_submission_item_set() line 4 at RAISE
+2026-11-03 19:56:18.362 IST [36020] STATEMENT:  DELETE FROM submission_items
+2026-11-03 19:56:19.092 IST [36100] ERROR:  submitted item references are immutable
+2026-11-03 19:56:19.092 IST [36100] CONTEXT:  PL/pgSQL function smartpro_submission_item_set() line 4 at RAISE
+2026-11-03 19:56:19.092 IST [36100] STATEMENT:  UPDATE submission_items SET document_version_id=document_version_id
+2026-11-03 19:56:19.918 IST [36008] ERROR:  sealed attempt cannot accept additional items
+2026-11-03 19:56:19.918 IST [36008] CONTEXT:  PL/pgSQL function smartpro_submission_item_set() line 6 at RAISE
+2026-11-03 19:56:19.918 IST [36008] STATEMENT:  INSERT INTO submission_items VALUES($1,$2,$3,$4)
+2026-11-03 19:56:20.689 IST [19184] ERROR:  formal attempt requires sealed nonempty item set at commit
+2026-11-03 19:56:20.689 IST [19184] CONTEXT:  PL/pgSQL function smartpro_attempt_complete() line 5 at RAISE
+2026-11-03 19:56:20.689 IST [19184] STATEMENT:  SET CONSTRAINTS ALL IMMEDIATE
+2026-11-03 19:56:21.317 IST [36748] ERROR:  finalized assessment immutable
+2026-11-03 19:56:21.317 IST [36748] CONTEXT:  PL/pgSQL function smartpro_assessment_identity() line 15 at RAISE
+2026-11-03 19:56:21.317 IST [36748] STATEMENT:  UPDATE assessments SET finalized_at=now()+interval '1 day' WHERE id=$1
+2026-11-03 19:56:22.122 IST [36328] ERROR:  finalized assessment immutable
+2026-11-03 19:56:22.122 IST [36328] CONTEXT:  PL/pgSQL function smartpro_assessment_identity() line 15 at RAISE
+2026-11-03 19:56:22.122 IST [36328] STATEMENT:  UPDATE assessments SET row_version=row_version+1 WHERE id=$1
+2026-11-03 19:56:22.720 IST [19924] ERROR:  finalized assessment immutable
+2026-11-03 19:56:22.720 IST [19924] CONTEXT:  PL/pgSQL function smartpro_assessment_identity() line 15 at RAISE
+2026-11-03 19:56:22.720 IST [19924] STATEMENT:  UPDATE assessments SET state='DRAFT' WHERE id=$1
+2026-11-03 19:56:23.313 IST [36024] ERROR:  finalized assessment immutable
+2026-11-03 19:56:23.313 IST [36024] CONTEXT:  PL/pgSQL function smartpro_assessment_identity() line 15 at RAISE
+2026-11-03 19:56:23.313 IST [36024] STATEMENT:  UPDATE assessments SET evaluator_assignment_id='28000000-0000-4000-8000-000000000001' WHERE id=$1
+2026-11-03 19:56:23.942 IST [13884] ERROR:  finalized assessment immutable
+2026-11-03 19:56:23.942 IST [13884] CONTEXT:  PL/pgSQL function smartpro_assessment_identity() line 15 at RAISE
+2026-11-03 19:56:23.942 IST [13884] STATEMENT:  UPDATE assessments SET review_id=review_id WHERE id=$1
+2026-11-03 19:56:24.661 IST [10800] ERROR:  assessment must start DRAFT
+2026-11-03 19:56:24.661 IST [10800] CONTEXT:  PL/pgSQL function smartpro_assessment_identity() line 11 at RAISE
+2026-11-03 19:56:24.661 IST [10800] STATEMENT:  INSERT INTO assessments(review_id,scheme_mode_id,evaluator_assignment_id,state)
+	      SELECT review_id,$1,id,'FINALIZED' FROM evaluator_assignments WHERE review_id=$2
+2026-11-03 19:56:25.390 IST [36460] ERROR:  approved configuration identity and metadata are immutable
+2026-11-03 19:56:25.390 IST [36460] CONTEXT:  PL/pgSQL function smartpro_immutable_configuration() line 16 at RAISE
+2026-11-03 19:56:25.390 IST [36460] STATEMENT:  UPDATE scheme_versions SET version_no=99 WHERE id=$1
+2026-11-03 19:56:26.092 IST [36520] ERROR:  approved configuration identity and metadata are immutable
+2026-11-03 19:56:26.092 IST [36520] CONTEXT:  PL/pgSQL function smartpro_immutable_configuration() line 16 at RAISE
+2026-11-03 19:56:26.092 IST [36520] STATEMENT:  UPDATE scheme_versions SET created_at=now()+interval '1 day' WHERE id=$1
+2026-11-03 19:56:27.045 IST [2324] ERROR:  invalid scheme state transition
+2026-11-03 19:56:27.045 IST [2324] CONTEXT:  PL/pgSQL function smartpro_scheme_transition() line 20 at RAISE
+2026-11-03 19:56:27.045 IST [2324] STATEMENT:  UPDATE scheme_versions SET state='DRAFT' WHERE id=$1
+2026-11-03 19:56:27.982 IST [23136] ERROR:  scheme must start DRAFT and pass approval validation
+2026-11-03 19:56:27.982 IST [23136] CONTEXT:  PL/pgSQL function smartpro_immutable_configuration() line 9 at RAISE
+2026-11-03 19:56:27.982 IST [23136] STATEMENT:  INSERT INTO scheme_versions(scheme_id,cycle_id,review_definition_id,version_no,state) SELECT scheme_id,cycle_id,review_definition_id,99,'APPROVED' FROM scheme_versions LIMIT 1
+2026-11-03 19:56:28.891 IST [36540] ERROR:  marks outside finite criterion range
+2026-11-03 19:56:28.891 IST [36540] CONTEXT:  PL/pgSQL function smartpro_validate_score() line 18 at RAISE
+2026-11-03 19:56:28.891 IST [36540] STATEMENT:  INSERT INTO team_criterion_scores(assessment_id,scheme_mode_id,mode_criterion_id,marks) VALUES($1,$2,$3,$4)
+2026-11-03 19:56:29.861 IST [36100] ERROR:  marks outside finite criterion range
+2026-11-03 19:56:29.861 IST [36100] CONTEXT:  PL/pgSQL function smartpro_validate_score() line 18 at RAISE
+2026-11-03 19:56:29.861 IST [36100] STATEMENT:  INSERT INTO team_criterion_scores(assessment_id,scheme_mode_id,mode_criterion_id,marks) VALUES($1,$2,$3,$4)
+2026-11-03 19:56:30.784 IST [35860] ERROR:  marks outside finite criterion range
+2026-11-03 19:56:30.784 IST [35860] CONTEXT:  PL/pgSQL function smartpro_validate_score() line 18 at RAISE
+2026-11-03 19:56:30.784 IST [35860] STATEMENT:  INSERT INTO team_criterion_scores(assessment_id,scheme_mode_id,mode_criterion_id,marks) VALUES($1,$2,$3,$4)
+2026-11-03 19:56:34.529 IST [36528] ERROR:  assessment scores incomplete
+2026-11-03 19:56:34.529 IST [36528] CONTEXT:  PL/pgSQL function smartpro_finalize_assessment() line 20 at RAISE
+2026-11-03 19:56:34.529 IST [36528] STATEMENT:  UPDATE assessments SET state='FINALIZED' WHERE id=$1
+2026-11-03 19:56:35.456 IST [26132] ERROR:  assessment scores incomplete
+2026-11-03 19:56:35.456 IST [26132] CONTEXT:  PL/pgSQL function smartpro_finalize_assessment() line 20 at RAISE
+2026-11-03 19:56:35.456 IST [26132] STATEMENT:  UPDATE assessments SET state='FINALIZED' WHERE id=$1
+2026-11-03 19:56:36.307 IST [30152] ERROR:  assessment scores incomplete
+2026-11-03 19:56:36.307 IST [30152] CONTEXT:  PL/pgSQL function smartpro_finalize_assessment() line 20 at RAISE
+2026-11-03 19:56:36.307 IST [30152] STATEMENT:  UPDATE assessments SET state='FINALIZED' WHERE id=$1
+2026-11-03 19:56:37.161 IST [16872] ERROR:  assessment scoring identity cannot be reparented
+2026-11-03 19:56:37.161 IST [16872] CONTEXT:  PL/pgSQL function smartpro_assessment_identity() line 18 at RAISE
+2026-11-03 19:56:37.161 IST [16872] STATEMENT:  UPDATE assessments SET scheme_mode_id=$1 WHERE id=$2
+2026-11-03 19:56:38.033 IST [5304] ERROR:  duplicate key value violates unique constraint "assessments_evaluator_assignment_id_key"
+2026-11-03 19:56:38.033 IST [5304] DETAIL:  Key (evaluator_assignment_id)=(28000000-0000-4000-8000-000000000001) already exists.
+2026-11-03 19:56:38.033 IST [5304] STATEMENT:  INSERT INTO assessments(review_id,scheme_mode_id,evaluator_assignment_id) VALUES($1,$2,$3)
+2026-11-03 19:56:39.686 IST [36220] ERROR:  invalid assessment/criterion scope
+2026-11-03 19:56:39.686 IST [36220] CONTEXT:  PL/pgSQL function smartpro_validate_score() line 9 at RAISE
+2026-11-03 19:56:39.686 IST [36220] STATEMENT:  INSERT INTO team_criterion_scores(assessment_id,scheme_mode_id,mode_criterion_id,marks) VALUES($1,$2,$3,1)
+2026-11-03 19:56:40.530 IST [36628] ERROR:  invalid assessment/criterion scope
+2026-11-03 19:56:40.530 IST [36628] CONTEXT:  PL/pgSQL function smartpro_validate_score() line 9 at RAISE
+2026-11-03 19:56:40.530 IST [36628] STATEMENT:  INSERT INTO student_criterion_scores(assessment_id,review_id,scheme_mode_id,roster_member_id,mode_criterion_id,marks) VALUES($1,$2,$3,$4,$5,1)
+2026-11-03 19:56:41.587 IST [16808] ERROR:  student score outside exact review roster
+2026-11-03 19:56:41.587 IST [16808] CONTEXT:  PL/pgSQL function smartpro_validate_score() line 12 at RAISE
+2026-11-03 19:56:41.587 IST [16808] STATEMENT:  INSERT INTO student_criterion_scores(assessment_id,review_id,scheme_mode_id,roster_member_id,mode_criterion_id,marks) VALUES($1,$2,$3,$4,$5,1)
+2026-11-03 19:56:42.502 IST [17492] ERROR:  membership edit would falsify frozen eligibility
+2026-11-03 19:56:42.502 IST [17492] CONTEXT:  PL/pgSQL function smartpro_membership_history() line 9 at RAISE
+2026-11-03 19:56:42.502 IST [17492] STATEMENT:  UPDATE team_memberships SET joined_at=now()+interval '1 day' WHERE id=$1
+2026-11-03 19:56:43.429 IST [35932] ERROR:  roster student not eligible at freeze instant
+2026-11-03 19:56:43.429 IST [35932] CONTEXT:  PL/pgSQL function smartpro_roster_freeze_eligibility() line 10 at RAISE
+2026-11-03 19:56:43.429 IST [35932] STATEMENT:  UPDATE project_reviews SET review_state='OPEN',roster_locked_at=clock_timestamp() WHERE id=$1
+2026-11-03 19:56:44.235 IST [3980] ERROR:  faculty assignment requires scoped faculty role
+2026-11-03 19:56:44.235 IST [3980] CONTEXT:  PL/pgSQL function smartpro_assignment_integrity() line 22 at RAISE
+2026-11-03 19:56:44.235 IST [3980] STATEMENT:  INSERT INTO evaluator_assignments(review_id,faculty_user_id) VALUES($1,$2)
+2026-11-03 19:56:45.038 IST [21256] ERROR:  release history immutable
+2026-11-03 19:56:45.038 IST [21256] CONTEXT:  PL/pgSQL function smartpro_release_guard() line 4 at RAISE
+2026-11-03 19:56:45.038 IST [21256] STATEMENT:  DELETE FROM result_releases
+2026-11-03 19:56:45.826 IST [30152] ERROR:  academic evidence is append-only: result_student_scores
+2026-11-03 19:56:45.826 IST [30152] CONTEXT:  PL/pgSQL function smartpro_forbid_mutation() line 3 at RAISE
+2026-11-03 19:56:45.826 IST [30152] STATEMENT:  DELETE FROM result_student_scores
+2026-11-03 19:56:46.593 IST [36108] ERROR:  academic evidence is append-only: result_source_assessments
+2026-11-03 19:56:46.593 IST [36108] CONTEXT:  PL/pgSQL function smartpro_forbid_mutation() line 3 at RAISE
+2026-11-03 19:56:46.593 IST [36108] STATEMENT:  DELETE FROM result_source_assessments
+2026-11-03 19:56:47.367 IST [13240] ERROR:  academic evidence is append-only: audit_events
+2026-11-03 19:56:47.367 IST [13240] CONTEXT:  PL/pgSQL function smartpro_forbid_mutation() line 3 at RAISE
+2026-11-03 19:56:47.367 IST [13240] STATEMENT:  DELETE FROM audit_events
+2026-11-03 19:56:48.164 IST [12208] ERROR:  academic evidence is append-only: approval_decisions
+2026-11-03 19:56:48.164 IST [12208] CONTEXT:  PL/pgSQL function smartpro_forbid_mutation() line 3 at RAISE
+2026-11-03 19:56:48.164 IST [12208] STATEMENT:  DELETE FROM approval_decisions
+2026-11-03 19:56:48.903 IST [22332] ERROR:  academic evidence is append-only: document_versions
+2026-11-03 19:56:48.903 IST [22332] CONTEXT:  PL/pgSQL function smartpro_forbid_mutation() line 3 at RAISE
+2026-11-03 19:56:48.903 IST [22332] STATEMENT:  DELETE FROM document_versions
+2026-11-03 19:56:49.763 IST [36400] ERROR:  insert or update on table "result_source_assessments" violates foreign key constraint "result_source_assessments_assessment_id_review_id_fkey"
+2026-11-03 19:56:49.763 IST [36400] DETAIL:  Key (assessment_id, review_id)=(e1755df8-736e-4e73-bc81-19f42fc6c902, 26000000-0000-4000-8000-000000000001) is not present in table "assessments".
+2026-11-03 19:56:49.763 IST [36400] STATEMENT:  INSERT INTO result_source_assessments(release_id,review_id,assessment_id) VALUES($1,$2,$3)
+2026-11-03 19:56:49.768 IST [36400] ERROR:  assessment requires open frozen review
+2026-11-03 19:56:49.768 IST [36400] CONTEXT:  PL/pgSQL function smartpro_assessment_identity() line 13 at RAISE
+2026-11-03 19:56:49.768 IST [36400] STATEMENT:  INSERT INTO assessments(review_id,scheme_mode_id,evaluator_assignment_id) VALUES($1,$2,$3)
+2026-11-03 19:56:51.355 IST [36608] ERROR:  publication/correction requires explicit scoped grant
+2026-11-03 19:56:51.355 IST [36608] CONTEXT:  PL/pgSQL function smartpro_release_guard() line 27 at RAISE
+2026-11-03 19:56:51.355 IST [36608] STATEMENT:  INSERT INTO result_releases(id,review_id,release_no,scheme_version_id,scheme_mode_id,calculation_snapshot,
+	      released_by,supersedes_id,correction_reason) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)
+2026-11-03 19:56:52.167 IST [6344] ERROR:  release must be sealed before commit
+2026-11-03 19:56:52.167 IST [6344] CONTEXT:  PL/pgSQL function smartpro_release_complete() line 6 at RAISE
+2026-11-03 19:56:52.167 IST [6344] STATEMENT:  SET CONSTRAINTS ALL IMMEDIATE
+2026-11-03 19:56:52.981 IST [2460] ERROR:  academic evidence is append-only: result_student_scores
+2026-11-03 19:56:52.981 IST [2460] CONTEXT:  PL/pgSQL function smartpro_forbid_mutation() line 3 at RAISE
+2026-11-03 19:56:52.981 IST [2460] STATEMENT:  UPDATE result_student_scores SET total_marks=100 WHERE release_id=$1
+2026-11-03 19:56:53.785 IST [36100] ERROR:  permission denied for table department_role_assignments
+2026-11-03 19:56:53.785 IST [36100] STATEMENT:  UPDATE department_role_assignments SET role_code='HOD'
+2026-11-03 19:56:53.786 IST [36100] ERROR:  permission denied for table audit_events
+2026-11-03 19:56:53.786 IST [36100] STATEMENT:  TRUNCATE audit_events
+2026-11-03 19:56:53.787 IST [36100] ERROR:  permission denied for table academic_action_grants
+2026-11-03 19:56:53.787 IST [36100] STATEMENT:  INSERT INTO academic_action_grants(user_id,department_id,action_code) VALUES($1,$2,'CORRECT_RESULTS')
+2026-11-03 19:56:54.673 IST [36480] ERROR:  cannot edit finalized assessment
+2026-11-03 19:56:54.673 IST [36480] CONTEXT:  PL/pgSQL function smartpro_validate_score() line 16 at RAISE
+2026-11-03 19:56:54.673 IST [36480] STATEMENT:  UPDATE team_criterion_scores SET marks=1 WHERE assessment_id=$1
+2026-11-03 19:57:01.984 IST [11088] LOG:  checkpoint complete: wrote 2110 buffers (12.9%); 0 WAL file(s) added, 2 removed, 1 recycled; write=261.341 s, sync=2.424 s, total=264.645 s; sync files=14109, longest=0.009 s, average=0.001 s; distance=50823 kB, estimate=50823 kB; lsn=0/B19D4F0, redo lsn=0/53411E0
+2026-11-03 19:57:37.998 IST [11088] LOG:  checkpoint starting: time
+2026-11-03 19:58:54.328 IST [17888] ERROR:  synthetic commit failure
+2026-11-03 19:58:54.328 IST [17888] CONTEXT:  PL/pgSQL function test_fail_at_commit() line 2 at RAISE
+2026-11-03 19:58:54.328 IST [17888] STATEMENT:  COMMIT
+2026-11-03 20:01:03.665 IST [13844] ERROR:  update or delete on table "projects" violates foreign key constraint "project_reviews_project_id_cycle_id_policy_version_id_fkey" on table "project_reviews"
+2026-11-03 20:01:03.665 IST [13844] DETAIL:  Key (id, cycle_id, policy_version_id)=(15000000-0000-4000-8000-000000000001, 11000000-0000-4000-8000-000000000001, 12000000-0000-4000-8000-000000000001) is still referenced from table "project_reviews".
+2026-11-03 20:01:03.665 IST [13844] STATEMENT:  UPDATE projects SET cycle_id=$1 WHERE id=$2
+2026-11-03 20:01:04.384 IST [24176] ERROR:  new project binding requires approved scoped policy
+2026-11-03 20:01:04.384 IST [24176] CONTEXT:  PL/pgSQL function smartpro_project_policy_binding() line 8 at RAISE
+2026-11-03 20:01:04.384 IST [24176] STATEMENT:  INSERT INTO projects(department_id,cycle_id,team_id,project_type,policy_version_id,project_code,title)
+	      SELECT department_id,cycle_id,team_id,project_type,$1,'DRAFT-P','Invalid' FROM projects WHERE id=$2
+2026-11-03 20:01:05.041 IST [21820] ERROR:  duplicate key value violates unique constraint "document_versions_file_asset_id_key"
+2026-11-03 20:01:05.041 IST [21820] DETAIL:  Key (file_asset_id)=(17000000-0000-4000-8000-000000000001) already exists.
+2026-11-03 20:01:05.041 IST [21820] STATEMENT:  INSERT INTO document_versions(project_id,document_id,version_no,file_asset_id,uploaded_by)
+	      SELECT project_id,document_id,version_no,file_asset_id,uploaded_by FROM document_versions LIMIT 1
+2026-11-03 20:01:05.763 IST [8864] ERROR:  submitted item references are immutable
+2026-11-03 20:01:05.763 IST [8864] CONTEXT:  PL/pgSQL function smartpro_submission_item_set() line 4 at RAISE
+2026-11-03 20:01:05.763 IST [8864] STATEMENT:  DELETE FROM submission_items
+2026-11-03 20:01:06.439 IST [20824] ERROR:  submitted item references are immutable
+2026-11-03 20:01:06.439 IST [20824] CONTEXT:  PL/pgSQL function smartpro_submission_item_set() line 4 at RAISE
+2026-11-03 20:01:06.439 IST [20824] STATEMENT:  UPDATE submission_items SET document_version_id=document_version_id
+2026-11-03 20:01:07.194 IST [16176] ERROR:  sealed attempt cannot accept additional items
+2026-11-03 20:01:07.194 IST [16176] CONTEXT:  PL/pgSQL function smartpro_submission_item_set() line 6 at RAISE
+2026-11-03 20:01:07.194 IST [16176] STATEMENT:  INSERT INTO submission_items VALUES($1,$2,$3,$4)
+2026-11-03 20:01:07.902 IST [33924] ERROR:  formal attempt requires sealed nonempty item set at commit
+2026-11-03 20:01:07.902 IST [33924] CONTEXT:  PL/pgSQL function smartpro_attempt_complete() line 5 at RAISE
+2026-11-03 20:01:07.902 IST [33924] STATEMENT:  SET CONSTRAINTS ALL IMMEDIATE
+2026-11-03 20:01:08.574 IST [30332] ERROR:  finalized assessment immutable
+2026-11-03 20:01:08.574 IST [30332] CONTEXT:  PL/pgSQL function smartpro_assessment_identity() line 15 at RAISE
+2026-11-03 20:01:08.574 IST [30332] STATEMENT:  UPDATE assessments SET finalized_at=now()+interval '1 day' WHERE id=$1
+2026-11-03 20:01:09.311 IST [13652] ERROR:  finalized assessment immutable
+2026-11-03 20:01:09.311 IST [13652] CONTEXT:  PL/pgSQL function smartpro_assessment_identity() line 15 at RAISE
+2026-11-03 20:01:09.311 IST [13652] STATEMENT:  UPDATE assessments SET row_version=row_version+1 WHERE id=$1
+2026-11-03 20:01:10.092 IST [24384] ERROR:  finalized assessment immutable
+2026-11-03 20:01:10.092 IST [24384] CONTEXT:  PL/pgSQL function smartpro_assessment_identity() line 15 at RAISE
+2026-11-03 20:01:10.092 IST [24384] STATEMENT:  UPDATE assessments SET state='DRAFT' WHERE id=$1
+2026-11-03 20:01:10.882 IST [7316] ERROR:  finalized assessment immutable
+2026-11-03 20:01:10.882 IST [7316] CONTEXT:  PL/pgSQL function smartpro_assessment_identity() line 15 at RAISE
+2026-11-03 20:01:10.882 IST [7316] STATEMENT:  UPDATE assessments SET evaluator_assignment_id='28000000-0000-4000-8000-000000000001' WHERE id=$1
+2026-11-03 20:01:11.642 IST [32988] ERROR:  finalized assessment immutable
+2026-11-03 20:01:11.642 IST [32988] CONTEXT:  PL/pgSQL function smartpro_assessment_identity() line 15 at RAISE
+2026-11-03 20:01:11.642 IST [32988] STATEMENT:  UPDATE assessments SET review_id=review_id WHERE id=$1
+2026-11-03 20:01:12.516 IST [1100] ERROR:  assessment must start DRAFT
+2026-11-03 20:01:12.516 IST [1100] CONTEXT:  PL/pgSQL function smartpro_assessment_identity() line 11 at RAISE
+2026-11-03 20:01:12.516 IST [1100] STATEMENT:  INSERT INTO assessments(review_id,scheme_mode_id,evaluator_assignment_id,state)
+	      SELECT review_id,$1,id,'FINALIZED' FROM evaluator_assignments WHERE review_id=$2
+2026-11-03 20:01:13.277 IST [24240] ERROR:  approved configuration identity and metadata are immutable
+2026-11-03 20:01:13.277 IST [24240] CONTEXT:  PL/pgSQL function smartpro_immutable_configuration() line 16 at RAISE
+2026-11-03 20:01:13.277 IST [24240] STATEMENT:  UPDATE scheme_versions SET version_no=99 WHERE id=$1
+2026-11-03 20:01:13.974 IST [23164] ERROR:  approved configuration identity and metadata are immutable
+2026-11-03 20:01:13.974 IST [23164] CONTEXT:  PL/pgSQL function smartpro_immutable_configuration() line 16 at RAISE
+2026-11-03 20:01:13.974 IST [23164] STATEMENT:  UPDATE scheme_versions SET created_at=now()+interval '1 day' WHERE id=$1
+2026-11-03 20:01:14.715 IST [35988] ERROR:  invalid scheme state transition
+2026-11-03 20:01:14.715 IST [35988] CONTEXT:  PL/pgSQL function smartpro_scheme_transition() line 20 at RAISE
+2026-11-03 20:01:14.715 IST [35988] STATEMENT:  UPDATE scheme_versions SET state='DRAFT' WHERE id=$1
+2026-11-03 20:01:15.516 IST [17956] ERROR:  scheme must start DRAFT and pass approval validation
+2026-11-03 20:01:15.516 IST [17956] CONTEXT:  PL/pgSQL function smartpro_immutable_configuration() line 9 at RAISE
+2026-11-03 20:01:15.516 IST [17956] STATEMENT:  INSERT INTO scheme_versions(scheme_id,cycle_id,review_definition_id,version_no,state) SELECT scheme_id,cycle_id,review_definition_id,99,'APPROVED' FROM scheme_versions LIMIT 1
+2026-11-03 20:01:16.302 IST [2136] ERROR:  marks outside finite criterion range
+2026-11-03 20:01:16.302 IST [2136] CONTEXT:  PL/pgSQL function smartpro_validate_score() line 18 at RAISE
+2026-11-03 20:01:16.302 IST [2136] STATEMENT:  INSERT INTO team_criterion_scores(assessment_id,scheme_mode_id,mode_criterion_id,marks) VALUES($1,$2,$3,$4)
+2026-11-03 20:01:17.117 IST [12700] ERROR:  marks outside finite criterion range
+2026-11-03 20:01:17.117 IST [12700] CONTEXT:  PL/pgSQL function smartpro_validate_score() line 18 at RAISE
+2026-11-03 20:01:17.117 IST [12700] STATEMENT:  INSERT INTO team_criterion_scores(assessment_id,scheme_mode_id,mode_criterion_id,marks) VALUES($1,$2,$3,$4)
+2026-11-03 20:01:18.026 IST [18164] ERROR:  marks outside finite criterion range
+2026-11-03 20:01:18.026 IST [18164] CONTEXT:  PL/pgSQL function smartpro_validate_score() line 18 at RAISE
+2026-11-03 20:01:18.026 IST [18164] STATEMENT:  INSERT INTO team_criterion_scores(assessment_id,scheme_mode_id,mode_criterion_id,marks) VALUES($1,$2,$3,$4)
+2026-11-03 20:01:21.296 IST [4004] ERROR:  assessment scores incomplete
+2026-11-03 20:01:21.296 IST [4004] CONTEXT:  PL/pgSQL function smartpro_finalize_assessment() line 20 at RAISE
+2026-11-03 20:01:21.296 IST [4004] STATEMENT:  UPDATE assessments SET state='FINALIZED' WHERE id=$1
+2026-11-03 20:01:22.088 IST [25136] ERROR:  assessment scores incomplete
+2026-11-03 20:01:22.088 IST [25136] CONTEXT:  PL/pgSQL function smartpro_finalize_assessment() line 20 at RAISE
+2026-11-03 20:01:22.088 IST [25136] STATEMENT:  UPDATE assessments SET state='FINALIZED' WHERE id=$1
+2026-11-03 20:01:22.867 IST [29208] ERROR:  assessment scores incomplete
+2026-11-03 20:01:22.867 IST [29208] CONTEXT:  PL/pgSQL function smartpro_finalize_assessment() line 20 at RAISE
+2026-11-03 20:01:22.867 IST [29208] STATEMENT:  UPDATE assessments SET state='FINALIZED' WHERE id=$1
+2026-11-03 20:01:23.766 IST [12592] ERROR:  assessment scoring identity cannot be reparented
+2026-11-03 20:01:23.766 IST [12592] CONTEXT:  PL/pgSQL function smartpro_assessment_identity() line 18 at RAISE
+2026-11-03 20:01:23.766 IST [12592] STATEMENT:  UPDATE assessments SET scheme_mode_id=$1 WHERE id=$2
+2026-11-03 20:01:24.597 IST [20384] ERROR:  duplicate key value violates unique constraint "assessments_evaluator_assignment_id_key"
+2026-11-03 20:01:24.597 IST [20384] DETAIL:  Key (evaluator_assignment_id)=(28000000-0000-4000-8000-000000000001) already exists.
+2026-11-03 20:01:24.597 IST [20384] STATEMENT:  INSERT INTO assessments(review_id,scheme_mode_id,evaluator_assignment_id) VALUES($1,$2,$3)
+2026-11-03 20:01:25.387 IST [34616] ERROR:  invalid assessment/criterion scope
+2026-11-03 20:01:25.387 IST [34616] CONTEXT:  PL/pgSQL function smartpro_validate_score() line 9 at RAISE
+2026-11-03 20:01:25.387 IST [34616] STATEMENT:  INSERT INTO team_criterion_scores(assessment_id,scheme_mode_id,mode_criterion_id,marks) VALUES($1,$2,$3,1)
+2026-11-03 20:01:26.194 IST [8540] ERROR:  invalid assessment/criterion scope
+2026-11-03 20:01:26.194 IST [8540] CONTEXT:  PL/pgSQL function smartpro_validate_score() line 9 at RAISE
+2026-11-03 20:01:26.194 IST [8540] STATEMENT:  INSERT INTO student_criterion_scores(assessment_id,review_id,scheme_mode_id,roster_member_id,mode_criterion_id,marks) VALUES($1,$2,$3,$4,$5,1)
+2026-11-03 20:01:27.011 IST [19152] ERROR:  student score outside exact review roster
+2026-11-03 20:01:27.011 IST [19152] CONTEXT:  PL/pgSQL function smartpro_validate_score() line 12 at RAISE
+2026-11-03 20:01:27.011 IST [19152] STATEMENT:  INSERT INTO student_criterion_scores(assessment_id,review_id,scheme_mode_id,roster_member_id,mode_criterion_id,marks) VALUES($1,$2,$3,$4,$5,1)
+2026-11-03 20:01:27.767 IST [29624] ERROR:  membership edit would falsify frozen eligibility
+2026-11-03 20:01:27.767 IST [29624] CONTEXT:  PL/pgSQL function smartpro_membership_history() line 9 at RAISE
+2026-11-03 20:01:27.767 IST [29624] STATEMENT:  UPDATE team_memberships SET joined_at=now()+interval '1 day' WHERE id=$1
+2026-11-03 20:01:27.773 IST [29624] ERROR:  membership edit would falsify frozen eligibility
+2026-11-03 20:01:27.773 IST [29624] CONTEXT:  PL/pgSQL function smartpro_membership_history() line 9 at RAISE
+2026-11-03 20:01:27.773 IST [29624] STATEMENT:  UPDATE team_memberships SET left_at=(SELECT roster_locked_at FROM project_reviews WHERE id=$1)-interval '1 microsecond' WHERE id=$2
+2026-11-03 20:01:28.574 IST [16972] ERROR:  roster student not eligible at freeze instant
+2026-11-03 20:01:28.574 IST [16972] CONTEXT:  PL/pgSQL function smartpro_roster_freeze_eligibility() line 10 at RAISE
+2026-11-03 20:01:28.574 IST [16972] STATEMENT:  UPDATE project_reviews SET review_state='OPEN',roster_locked_at=clock_timestamp() WHERE id=$1
+2026-11-03 20:01:29.324 IST [29328] ERROR:  faculty assignment requires scoped faculty role
+2026-11-03 20:01:29.324 IST [29328] CONTEXT:  PL/pgSQL function smartpro_assignment_integrity() line 22 at RAISE
+2026-11-03 20:01:29.324 IST [29328] STATEMENT:  INSERT INTO evaluator_assignments(review_id,faculty_user_id) VALUES($1,$2)
+2026-11-03 20:01:30.074 IST [18688] ERROR:  release history immutable
+2026-11-03 20:01:30.074 IST [18688] CONTEXT:  PL/pgSQL function smartpro_release_guard() line 4 at RAISE
+2026-11-03 20:01:30.074 IST [18688] STATEMENT:  DELETE FROM result_releases
+2026-11-03 20:01:30.884 IST [35524] ERROR:  academic evidence is append-only: result_student_scores
+2026-11-03 20:01:30.884 IST [35524] CONTEXT:  PL/pgSQL function smartpro_forbid_mutation() line 3 at RAISE
+2026-11-03 20:01:30.884 IST [35524] STATEMENT:  DELETE FROM result_student_scores
+2026-11-03 20:01:31.664 IST [10628] ERROR:  academic evidence is append-only: result_source_assessments
+2026-11-03 20:01:31.664 IST [10628] CONTEXT:  PL/pgSQL function smartpro_forbid_mutation() line 3 at RAISE
+2026-11-03 20:01:31.664 IST [10628] STATEMENT:  DELETE FROM result_source_assessments
+2026-11-03 20:01:32.449 IST [20676] ERROR:  academic evidence is append-only: audit_events
+2026-11-03 20:01:32.449 IST [20676] CONTEXT:  PL/pgSQL function smartpro_forbid_mutation() line 3 at RAISE
+2026-11-03 20:01:32.449 IST [20676] STATEMENT:  DELETE FROM audit_events
+2026-11-03 20:01:33.237 IST [28880] ERROR:  academic evidence is append-only: approval_decisions
+2026-11-03 20:01:33.237 IST [28880] CONTEXT:  PL/pgSQL function smartpro_forbid_mutation() line 3 at RAISE
+2026-11-03 20:01:33.237 IST [28880] STATEMENT:  DELETE FROM approval_decisions
+2026-11-03 20:01:34.114 IST [32756] ERROR:  academic evidence is append-only: document_versions
+2026-11-03 20:01:34.114 IST [32756] CONTEXT:  PL/pgSQL function smartpro_forbid_mutation() line 3 at RAISE
+2026-11-03 20:01:34.114 IST [32756] STATEMENT:  DELETE FROM document_versions
+2026-11-03 20:01:34.922 IST [31796] ERROR:  insert or update on table "result_source_assessments" violates foreign key constraint "result_source_assessments_assessment_id_review_id_fkey"
+2026-11-03 20:01:34.922 IST [31796] DETAIL:  Key (assessment_id, review_id)=(a81f44d9-e90e-46b9-9c19-e040e7930029, 26000000-0000-4000-8000-000000000001) is not present in table "assessments".
+2026-11-03 20:01:34.922 IST [31796] STATEMENT:  INSERT INTO result_source_assessments(release_id,review_id,assessment_id) VALUES($1,$2,$3)
+2026-11-03 20:01:34.927 IST [31796] ERROR:  assessment requires open frozen review
+2026-11-03 20:01:34.927 IST [31796] CONTEXT:  PL/pgSQL function smartpro_assessment_identity() line 13 at RAISE
+2026-11-03 20:01:34.927 IST [31796] STATEMENT:  INSERT INTO assessments(review_id,scheme_mode_id,evaluator_assignment_id) VALUES($1,$2,$3)
+2026-11-03 20:01:36.662 IST [22556] ERROR:  publication/correction requires explicit scoped grant
+2026-11-03 20:01:36.662 IST [22556] CONTEXT:  PL/pgSQL function smartpro_release_guard() line 27 at RAISE
+2026-11-03 20:01:36.662 IST [22556] STATEMENT:  INSERT INTO result_releases(id,review_id,release_no,scheme_version_id,scheme_mode_id,calculation_snapshot,
+	      released_by,supersedes_id,correction_reason) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)
+2026-11-03 20:01:37.442 IST [30628] ERROR:  release must be sealed before commit
+2026-11-03 20:01:37.442 IST [30628] CONTEXT:  PL/pgSQL function smartpro_release_complete() line 6 at RAISE
+2026-11-03 20:01:37.442 IST [30628] STATEMENT:  SET CONSTRAINTS ALL IMMEDIATE
+2026-11-03 20:01:38.292 IST [14412] ERROR:  academic evidence is append-only: result_student_scores
+2026-11-03 20:01:38.292 IST [14412] CONTEXT:  PL/pgSQL function smartpro_forbid_mutation() line 3 at RAISE
+2026-11-03 20:01:38.292 IST [14412] STATEMENT:  UPDATE result_student_scores SET total_marks=100 WHERE release_id=$1
+2026-11-03 20:01:39.057 IST [21916] ERROR:  permission denied for table department_role_assignments
+2026-11-03 20:01:39.057 IST [21916] STATEMENT:  UPDATE department_role_assignments SET role_code='HOD'
+2026-11-03 20:01:39.058 IST [21916] ERROR:  permission denied for table audit_events
+2026-11-03 20:01:39.058 IST [21916] STATEMENT:  TRUNCATE audit_events
+2026-11-03 20:01:39.059 IST [21916] ERROR:  permission denied for table academic_action_grants
+2026-11-03 20:01:39.059 IST [21916] STATEMENT:  INSERT INTO academic_action_grants(user_id,department_id,action_code) VALUES($1,$2,'CORRECT_RESULTS')
+2026-11-03 20:01:40.017 IST [5320] ERROR:  cannot edit finalized assessment
+2026-11-03 20:01:40.017 IST [5320] CONTEXT:  PL/pgSQL function smartpro_validate_score() line 16 at RAISE
+2026-11-03 20:01:40.017 IST [5320] STATEMENT:  UPDATE team_criterion_scores SET marks=1 WHERE assessment_id=$1
+2026-11-03 20:01:47.954 IST [20568] ERROR:  synthetic commit failure
+2026-11-03 20:01:47.954 IST [20568] CONTEXT:  PL/pgSQL function test_fail_at_commit() line 2 at RAISE
+2026-11-03 20:01:47.954 IST [20568] STATEMENT:  COMMIT
+2026-11-03 20:02:06.006 IST [33732] ERROR:  permission denied for table document_versions
+2026-11-03 20:02:06.006 IST [33732] STATEMENT:  UPDATE document_versions SET version_no=3 WHERE id=$1
+2026-11-03 20:02:06.008 IST [33732] ERROR:  permission denied for table submission_items
+2026-11-03 20:02:06.008 IST [33732] STATEMENT:  DELETE FROM submission_items WHERE attempt_id=$1
+2026-11-03 20:02:06.011 IST [33732] ERROR:  permission denied for table approval_decisions
+2026-11-03 20:02:06.011 IST [33732] STATEMENT:  UPDATE approval_decisions SET comment=$1
+2026-11-03 20:02:11.928 IST [11088] LOG:  checkpoint complete: wrote 4300 buffers (26.2%); 0 WAL file(s) added, 3 removed, 3 recycled; write=268.980 s, sync=3.727 s, total=273.930 s; sync files=19147, longest=0.007 s, average=0.001 s; distance=99253 kB, estimate=99253 kB; lsn=0/15C99498, redo lsn=0/B42E838
+2026-11-03 20:02:37.937 IST [11088] LOG:  checkpoint starting: time
+2026-11-03 20:04:57.381 IST [16176] ERROR:  published score/breakdown differs from finalized source marks
+2026-11-03 20:04:57.381 IST [16176] CONTEXT:  PL/pgSQL function smartpro_release_complete() line 24 at RAISE
+2026-11-03 20:04:57.381 IST [16176] STATEMENT:  SET CONSTRAINTS ALL IMMEDIATE
+2026-11-03 20:04:58.184 IST [3696] ERROR:  review finalization requires complete finalized assessments
+2026-11-03 20:04:58.184 IST [3696] CONTEXT:  PL/pgSQL function smartpro_review_terminal_state() line 14 at RAISE
+2026-11-03 20:04:58.184 IST [3696] STATEMENT:  UPDATE project_reviews SET review_state='FINALIZED' WHERE id=$1
+2026-11-03 20:04:58.965 IST [6316] ERROR:  conflicting key value violates exclusion constraint "same_team_membership_no_overlap"
+2026-11-03 20:04:58.965 IST [6316] DETAIL:  Key (team_id, user_id, tstzrange(joined_at, left_at, '[)'::text))=(13000000-0000-4000-8000-000000000001, 00000000-0000-4000-8000-000000000001, ["2026-11-03 20:04:58.81812+05:30","2026-11-04 20:04:58.81812+05:30")) conflicts with existing key (team_id, user_id, tstzrange(joined_at, left_at, '[)'::text))=(13000000-0000-4000-8000-000000000001, 00000000-0000-4000-8000-000000000001, ["2026-11-03 20:04:58.81812+05:30",)).
+2026-11-03 20:04:58.965 IST [6316] STATEMENT:  INSERT INTO team_memberships(team_id,user_id,joined_at,left_at)
+	      SELECT team_id,user_id,joined_at,joined_at+interval '1 day' FROM team_memberships WHERE id=$1
+2026-11-03 20:04:59.754 IST [13104] ERROR:  membership edit would falsify historical eligibility
+2026-11-03 20:04:59.754 IST [13104] CONTEXT:  PL/pgSQL function smartpro_membership_history() line 10 at RAISE
+2026-11-03 20:04:59.754 IST [13104] STATEMENT:  UPDATE team_memberships SET joined_at=joined_at-interval '1 day' WHERE id=$1
+2026-11-03 20:07:09.497 IST [11088] LOG:  checkpoint complete: wrote 4119 buffers (25.1%); 0 WAL file(s) added, 0 removed, 10 recycled; write=269.155 s, sync=0.430 s, total=271.561 s; sync files=2969, longest=0.009 s, average=0.001 s; distance=172476 kB, estimate=172476 kB; lsn=0/17834C78, redo lsn=0/15C9DA58
+2026-11-03 20:07:49.247 IST [22332] ERROR:  update or delete on table "projects" violates foreign key constraint "project_reviews_project_id_cycle_id_policy_version_id_fkey" on table "project_reviews"
+2026-11-03 20:07:49.247 IST [22332] DETAIL:  Key (id, cycle_id, policy_version_id)=(15000000-0000-4000-8000-000000000001, 11000000-0000-4000-8000-000000000001, 12000000-0000-4000-8000-000000000001) is still referenced from table "project_reviews".
+2026-11-03 20:07:49.247 IST [22332] STATEMENT:  UPDATE projects SET cycle_id=$1 WHERE id=$2
+2026-11-03 20:07:50.001 IST [32724] ERROR:  new project binding requires approved scoped policy
+2026-11-03 20:07:50.001 IST [32724] CONTEXT:  PL/pgSQL function smartpro_project_policy_binding() line 8 at RAISE
+2026-11-03 20:07:50.001 IST [32724] STATEMENT:  UPDATE projects SET department_id=$1 WHERE id=$2
+2026-11-03 20:07:50.017 IST [32724] ERROR:  faculty assignment requires scoped faculty role
+2026-11-03 20:07:50.017 IST [32724] CONTEXT:  PL/pgSQL function smartpro_assignment_integrity() line 22 at RAISE
+2026-11-03 20:07:50.017 IST [32724] STATEMENT:  INSERT INTO evaluator_assignments(review_id,faculty_user_id) VALUES($1,$2)
+2026-11-03 20:07:51.724 IST [36576] ERROR:  new project binding requires approved scoped policy
+2026-11-03 20:07:51.724 IST [36576] CONTEXT:  PL/pgSQL function smartpro_project_policy_binding() line 8 at RAISE
+2026-11-03 20:07:51.724 IST [36576] STATEMENT:  INSERT INTO projects(department_id,cycle_id,team_id,project_type,policy_version_id,project_code,title)
+	      SELECT department_id,cycle_id,team_id,project_type,$1,'DRAFT-P','Invalid' FROM projects WHERE id=$2
+2026-11-03 20:07:52.496 IST [25920] ERROR:  duplicate key value violates unique constraint "document_versions_file_asset_id_key"
+2026-11-03 20:07:52.496 IST [25920] DETAIL:  Key (file_asset_id)=(17000000-0000-4000-8000-000000000001) already exists.
+2026-11-03 20:07:52.496 IST [25920] STATEMENT:  INSERT INTO document_versions(project_id,document_id,version_no,file_asset_id,uploaded_by)
+	      SELECT project_id,document_id,version_no,file_asset_id,uploaded_by FROM document_versions LIMIT 1
+2026-11-03 20:07:53.268 IST [30088] ERROR:  submitted item references are immutable
+2026-11-03 20:07:53.268 IST [30088] CONTEXT:  PL/pgSQL function smartpro_submission_item_set() line 4 at RAISE
+2026-11-03 20:07:53.268 IST [30088] STATEMENT:  DELETE FROM submission_items
+2026-11-03 20:07:54.099 IST [20500] ERROR:  submitted item references are immutable
+2026-11-03 20:07:54.099 IST [20500] CONTEXT:  PL/pgSQL function smartpro_submission_item_set() line 4 at RAISE
+2026-11-03 20:07:54.099 IST [20500] STATEMENT:  UPDATE submission_items SET document_version_id=document_version_id
+2026-11-03 20:07:54.921 IST [5248] ERROR:  sealed attempt cannot accept additional items
+2026-11-03 20:07:54.921 IST [5248] CONTEXT:  PL/pgSQL function smartpro_submission_item_set() line 6 at RAISE
+2026-11-03 20:07:54.921 IST [5248] STATEMENT:  INSERT INTO submission_items VALUES($1,$2,$3,$4)
+2026-11-03 20:07:55.799 IST [18452] ERROR:  formal attempt requires sealed nonempty item set at commit
+2026-11-03 20:07:55.799 IST [18452] CONTEXT:  PL/pgSQL function smartpro_attempt_complete() line 5 at RAISE
+2026-11-03 20:07:55.799 IST [18452] STATEMENT:  SET CONSTRAINTS ALL IMMEDIATE
+2026-11-03 20:07:56.567 IST [22824] ERROR:  finalized assessment immutable
+2026-11-03 20:07:56.567 IST [22824] CONTEXT:  PL/pgSQL function smartpro_assessment_identity() line 15 at RAISE
+2026-11-03 20:07:56.567 IST [22824] STATEMENT:  UPDATE assessments SET finalized_at=now()+interval '1 day' WHERE id=$1
+2026-11-03 20:07:57.369 IST [35864] ERROR:  finalized assessment immutable
+2026-11-03 20:07:57.369 IST [35864] CONTEXT:  PL/pgSQL function smartpro_assessment_identity() line 15 at RAISE
+2026-11-03 20:07:57.369 IST [35864] STATEMENT:  UPDATE assessments SET row_version=row_version+1 WHERE id=$1
+2026-11-03 20:07:58.395 IST [25120] ERROR:  finalized assessment immutable
+2026-11-03 20:07:58.395 IST [25120] CONTEXT:  PL/pgSQL function smartpro_assessment_identity() line 15 at RAISE
+2026-11-03 20:07:58.395 IST [25120] STATEMENT:  UPDATE assessments SET state='DRAFT' WHERE id=$1
+2026-11-03 20:07:59.192 IST [22180] ERROR:  finalized assessment immutable
+2026-11-03 20:07:59.192 IST [22180] CONTEXT:  PL/pgSQL function smartpro_assessment_identity() line 15 at RAISE
+2026-11-03 20:07:59.192 IST [22180] STATEMENT:  UPDATE assessments SET evaluator_assignment_id='28000000-0000-4000-8000-000000000001' WHERE id=$1
+2026-11-03 20:08:00.020 IST [20208] ERROR:  finalized assessment immutable
+2026-11-03 20:08:00.020 IST [20208] CONTEXT:  PL/pgSQL function smartpro_assessment_identity() line 15 at RAISE
+2026-11-03 20:08:00.020 IST [20208] STATEMENT:  UPDATE assessments SET review_id=review_id WHERE id=$1
+2026-11-03 20:08:00.930 IST [23592] ERROR:  cannot edit finalized assessment
+2026-11-03 20:08:00.930 IST [23592] CONTEXT:  PL/pgSQL function smartpro_validate_score() line 16 at RAISE
+2026-11-03 20:08:00.930 IST [23592] STATEMENT:  UPDATE team_criterion_scores SET marks=0
+2026-11-03 20:08:01.911 IST [6996] ERROR:  cannot edit finalized assessment
+2026-11-03 20:08:01.911 IST [6996] CONTEXT:  PL/pgSQL function smartpro_validate_score() line 16 at RAISE
+2026-11-03 20:08:01.911 IST [6996] STATEMENT:  UPDATE student_criterion_scores SET marks=0
+2026-11-03 20:08:02.812 IST [14092] ERROR:  finalized assessment scores cannot be deleted
+2026-11-03 20:08:02.812 IST [14092] CONTEXT:  PL/pgSQL function smartpro_guard_score_delete() line 5 at RAISE
+2026-11-03 20:08:02.812 IST [14092] STATEMENT:  DELETE FROM team_criterion_scores
+2026-11-03 20:08:03.729 IST [11316] ERROR:  finalized assessment scores cannot be deleted
+2026-11-03 20:08:03.729 IST [11316] CONTEXT:  PL/pgSQL function smartpro_guard_score_delete() line 5 at RAISE
+2026-11-03 20:08:03.729 IST [11316] STATEMENT:  DELETE FROM student_criterion_scores
+2026-11-03 20:08:04.593 IST [36432] ERROR:  assessment must start DRAFT
+2026-11-03 20:08:04.593 IST [36432] CONTEXT:  PL/pgSQL function smartpro_assessment_identity() line 11 at RAISE
+2026-11-03 20:08:04.593 IST [36432] STATEMENT:  INSERT INTO assessments(review_id,scheme_mode_id,evaluator_assignment_id,state)
+	      SELECT review_id,$1,id,'FINALIZED' FROM evaluator_assignments WHERE review_id=$2
+2026-11-03 20:08:05.353 IST [13844] ERROR:  approved configuration identity and metadata are immutable
+2026-11-03 20:08:05.353 IST [13844] CONTEXT:  PL/pgSQL function smartpro_immutable_configuration() line 16 at RAISE
+2026-11-03 20:08:05.353 IST [13844] STATEMENT:  UPDATE scheme_versions SET version_no=99 WHERE id=$1
+2026-11-03 20:08:06.159 IST [34340] ERROR:  approved configuration identity and metadata are immutable
+2026-11-03 20:08:06.159 IST [34340] CONTEXT:  PL/pgSQL function smartpro_immutable_configuration() line 16 at RAISE
+2026-11-03 20:08:06.159 IST [34340] STATEMENT:  UPDATE scheme_versions SET created_at=now()+interval '1 day' WHERE id=$1
+2026-11-03 20:08:06.975 IST [21692] ERROR:  invalid scheme state transition
+2026-11-03 20:08:06.975 IST [21692] CONTEXT:  PL/pgSQL function smartpro_scheme_transition() line 20 at RAISE
+2026-11-03 20:08:06.975 IST [21692] STATEMENT:  UPDATE scheme_versions SET state='DRAFT' WHERE id=$1
+2026-11-03 20:08:07.836 IST [25300] ERROR:  scheme must start DRAFT and pass approval validation
+2026-11-03 20:08:07.836 IST [25300] CONTEXT:  PL/pgSQL function smartpro_immutable_configuration() line 9 at RAISE
+2026-11-03 20:08:07.836 IST [25300] STATEMENT:  INSERT INTO scheme_versions(scheme_id,cycle_id,review_definition_id,version_no,state) SELECT scheme_id,cycle_id,review_definition_id,99,'APPROVED' FROM scheme_versions LIMIT 1
+2026-11-03 20:08:08.644 IST [22504] ERROR:  marks outside finite criterion range
+2026-11-03 20:08:08.644 IST [22504] CONTEXT:  PL/pgSQL function smartpro_validate_score() line 18 at RAISE
+2026-11-03 20:08:08.644 IST [22504] STATEMENT:  INSERT INTO team_criterion_scores(assessment_id,scheme_mode_id,mode_criterion_id,marks) VALUES($1,$2,$3,$4)
+2026-11-03 20:08:09.544 IST [36732] ERROR:  marks outside finite criterion range
+2026-11-03 20:08:09.544 IST [36732] CONTEXT:  PL/pgSQL function smartpro_validate_score() line 18 at RAISE
+2026-11-03 20:08:09.544 IST [36732] STATEMENT:  INSERT INTO team_criterion_scores(assessment_id,scheme_mode_id,mode_criterion_id,marks) VALUES($1,$2,$3,$4)
+2026-11-03 20:08:10.426 IST [36688] ERROR:  marks outside finite criterion range
+2026-11-03 20:08:10.426 IST [36688] CONTEXT:  PL/pgSQL function smartpro_validate_score() line 18 at RAISE
+2026-11-03 20:08:10.426 IST [36688] STATEMENT:  INSERT INTO team_criterion_scores(assessment_id,scheme_mode_id,mode_criterion_id,marks) VALUES($1,$2,$3,$4)
+2026-11-03 20:08:14.186 IST [9628] ERROR:  assessment scores incomplete
+2026-11-03 20:08:14.186 IST [9628] CONTEXT:  PL/pgSQL function smartpro_finalize_assessment() line 20 at RAISE
+2026-11-03 20:08:14.186 IST [9628] STATEMENT:  UPDATE assessments SET state='FINALIZED' WHERE id=$1
+2026-11-03 20:08:15.010 IST [13648] ERROR:  assessment scores incomplete
+2026-11-03 20:08:15.010 IST [13648] CONTEXT:  PL/pgSQL function smartpro_finalize_assessment() line 20 at RAISE
+2026-11-03 20:08:15.010 IST [13648] STATEMENT:  UPDATE assessments SET state='FINALIZED' WHERE id=$1
+2026-11-03 20:08:15.804 IST [35752] ERROR:  assessment scores incomplete
+2026-11-03 20:08:15.804 IST [35752] CONTEXT:  PL/pgSQL function smartpro_finalize_assessment() line 20 at RAISE
+2026-11-03 20:08:15.804 IST [35752] STATEMENT:  UPDATE assessments SET state='FINALIZED' WHERE id=$1
+2026-11-03 20:08:16.607 IST [7852] ERROR:  assessment scoring identity cannot be reparented
+2026-11-03 20:08:16.607 IST [7852] CONTEXT:  PL/pgSQL function smartpro_assessment_identity() line 18 at RAISE
+2026-11-03 20:08:16.607 IST [7852] STATEMENT:  UPDATE assessments SET scheme_mode_id=$1 WHERE id=$2
+2026-11-03 20:08:17.475 IST [17292] ERROR:  duplicate key value violates unique constraint "assessments_evaluator_assignment_id_key"
+2026-11-03 20:08:17.475 IST [17292] DETAIL:  Key (evaluator_assignment_id)=(28000000-0000-4000-8000-000000000001) already exists.
+2026-11-03 20:08:17.475 IST [17292] STATEMENT:  INSERT INTO assessments(review_id,scheme_mode_id,evaluator_assignment_id) VALUES($1,$2,$3)
+2026-11-03 20:08:18.336 IST [19296] ERROR:  invalid assessment/criterion scope
+2026-11-03 20:08:18.336 IST [19296] CONTEXT:  PL/pgSQL function smartpro_validate_score() line 9 at RAISE
+2026-11-03 20:08:18.336 IST [19296] STATEMENT:  INSERT INTO team_criterion_scores(assessment_id,scheme_mode_id,mode_criterion_id,marks) VALUES($1,$2,$3,1)
+2026-11-03 20:08:19.195 IST [9296] ERROR:  invalid assessment/criterion scope
+2026-11-03 20:08:19.195 IST [9296] CONTEXT:  PL/pgSQL function smartpro_validate_score() line 9 at RAISE
+2026-11-03 20:08:19.195 IST [9296] STATEMENT:  INSERT INTO student_criterion_scores(assessment_id,review_id,scheme_mode_id,roster_member_id,mode_criterion_id,marks) VALUES($1,$2,$3,$4,$5,1)
+2026-11-03 20:08:20.012 IST [23640] ERROR:  student score outside exact review roster
+2026-11-03 20:08:20.012 IST [23640] CONTEXT:  PL/pgSQL function smartpro_validate_score() line 12 at RAISE
+2026-11-03 20:08:20.012 IST [23640] STATEMENT:  INSERT INTO student_criterion_scores(assessment_id,review_id,scheme_mode_id,roster_member_id,mode_criterion_id,marks) VALUES($1,$2,$3,$4,$5,1)
+2026-11-03 20:08:20.792 IST [25424] ERROR:  membership edit would falsify historical eligibility
+2026-11-03 20:08:20.792 IST [25424] CONTEXT:  PL/pgSQL function smartpro_membership_history() line 10 at RAISE
+2026-11-03 20:08:20.792 IST [25424] STATEMENT:  UPDATE team_memberships SET joined_at=now()+interval '1 day' WHERE id=$1
+2026-11-03 20:08:20.797 IST [25424] ERROR:  membership edit would falsify historical eligibility
+2026-11-03 20:08:20.797 IST [25424] CONTEXT:  PL/pgSQL function smartpro_membership_history() line 10 at RAISE
+2026-11-03 20:08:20.797 IST [25424] STATEMENT:  UPDATE team_memberships SET left_at=(SELECT roster_locked_at FROM project_reviews WHERE id=$1)-interval '1 microsecond' WHERE id=$2
+2026-11-03 20:08:21.619 IST [36208] ERROR:  roster student not eligible at freeze instant
+2026-11-03 20:08:21.619 IST [36208] CONTEXT:  PL/pgSQL function smartpro_roster_freeze_eligibility() line 10 at RAISE
+2026-11-03 20:08:21.619 IST [36208] STATEMENT:  UPDATE project_reviews SET review_state='OPEN',roster_locked_at=clock_timestamp() WHERE id=$1
+2026-11-03 20:08:22.504 IST [12372] ERROR:  faculty assignment requires scoped faculty role
+2026-11-03 20:08:22.504 IST [12372] CONTEXT:  PL/pgSQL function smartpro_assignment_integrity() line 22 at RAISE
+2026-11-03 20:08:22.504 IST [12372] STATEMENT:  INSERT INTO evaluator_assignments(review_id,faculty_user_id) VALUES($1,$2)
+2026-11-03 20:08:23.323 IST [2364] ERROR:  release history immutable
+2026-11-03 20:08:23.323 IST [2364] CONTEXT:  PL/pgSQL function smartpro_release_guard() line 4 at RAISE
+2026-11-03 20:08:23.323 IST [2364] STATEMENT:  DELETE FROM result_releases
+2026-11-03 20:08:24.185 IST [36204] ERROR:  academic evidence is append-only: result_student_scores
+2026-11-03 20:08:24.185 IST [36204] CONTEXT:  PL/pgSQL function smartpro_forbid_mutation() line 3 at RAISE
+2026-11-03 20:08:24.185 IST [36204] STATEMENT:  DELETE FROM result_student_scores
+2026-11-03 20:08:25.009 IST [35788] ERROR:  academic evidence is append-only: result_source_assessments
+2026-11-03 20:08:25.009 IST [35788] CONTEXT:  PL/pgSQL function smartpro_forbid_mutation() line 3 at RAISE
+2026-11-03 20:08:25.009 IST [35788] STATEMENT:  DELETE FROM result_source_assessments
+2026-11-03 20:08:25.842 IST [9280] ERROR:  academic evidence is append-only: audit_events
+2026-11-03 20:08:25.842 IST [9280] CONTEXT:  PL/pgSQL function smartpro_forbid_mutation() line 3 at RAISE
+2026-11-03 20:08:25.842 IST [9280] STATEMENT:  DELETE FROM audit_events
+2026-11-03 20:08:26.683 IST [21724] ERROR:  academic evidence is append-only: approval_decisions
+2026-11-03 20:08:26.683 IST [21724] CONTEXT:  PL/pgSQL function smartpro_forbid_mutation() line 3 at RAISE
+2026-11-03 20:08:26.683 IST [21724] STATEMENT:  DELETE FROM approval_decisions
+2026-11-03 20:08:27.502 IST [22372] ERROR:  academic evidence is append-only: document_versions
+2026-11-03 20:08:27.502 IST [22372] CONTEXT:  PL/pgSQL function smartpro_forbid_mutation() line 3 at RAISE
+2026-11-03 20:08:27.502 IST [22372] STATEMENT:  DELETE FROM document_versions
+2026-11-03 20:08:28.552 IST [5140] ERROR:  insert or update on table "result_source_assessments" violates foreign key constraint "result_source_assessments_assessment_id_review_id_fkey"
+2026-11-03 20:08:28.552 IST [5140] DETAIL:  Key (assessment_id, review_id)=(bf35e7e1-3e05-4760-83ef-09325b9f05a3, 26000000-0000-4000-8000-000000000001) is not present in table "assessments".
+2026-11-03 20:08:28.552 IST [5140] STATEMENT:  INSERT INTO result_source_assessments(release_id,review_id,assessment_id) VALUES($1,$2,$3)
+2026-11-03 20:08:28.556 IST [5140] ERROR:  assessment requires open frozen review
+2026-11-03 20:08:28.556 IST [5140] CONTEXT:  PL/pgSQL function smartpro_assessment_identity() line 13 at RAISE
+2026-11-03 20:08:28.556 IST [5140] STATEMENT:  INSERT INTO assessments(review_id,scheme_mode_id,evaluator_assignment_id) VALUES($1,$2,$3)
+2026-11-03 20:08:30.366 IST [2640] ERROR:  publication/correction requires explicit scoped grant
+2026-11-03 20:08:30.366 IST [2640] CONTEXT:  PL/pgSQL function smartpro_release_guard() line 27 at RAISE
+2026-11-03 20:08:30.366 IST [2640] STATEMENT:  INSERT INTO result_releases(id,review_id,release_no,scheme_version_id,scheme_mode_id,calculation_snapshot,
+	      released_by,supersedes_id,correction_reason) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)
+2026-11-03 20:08:31.198 IST [19796] ERROR:  release must be sealed before commit
+2026-11-03 20:08:31.198 IST [19796] CONTEXT:  PL/pgSQL function smartpro_release_complete() line 6 at RAISE
+2026-11-03 20:08:31.198 IST [19796] STATEMENT:  SET CONSTRAINTS ALL IMMEDIATE
+2026-11-03 20:08:32.172 IST [11276] ERROR:  published score/breakdown differs from finalized source marks
+2026-11-03 20:08:32.172 IST [11276] CONTEXT:  PL/pgSQL function smartpro_release_complete() line 24 at RAISE
+2026-11-03 20:08:32.172 IST [11276] STATEMENT:  SET CONSTRAINTS ALL IMMEDIATE
+2026-11-03 20:08:32.994 IST [7864] ERROR:  review finalization requires complete finalized assessments
+2026-11-03 20:08:32.994 IST [7864] CONTEXT:  PL/pgSQL function smartpro_review_terminal_state() line 14 at RAISE
+2026-11-03 20:08:32.994 IST [7864] STATEMENT:  UPDATE project_reviews SET review_state='FINALIZED' WHERE id=$1
+2026-11-03 20:08:33.845 IST [29444] ERROR:  conflicting key value violates exclusion constraint "same_team_membership_no_overlap"
+2026-11-03 20:08:33.845 IST [29444] DETAIL:  Key (team_id, user_id, tstzrange(joined_at, left_at, '[)'::text))=(13000000-0000-4000-8000-000000000001, 00000000-0000-4000-8000-000000000001, ["2026-11-03 20:08:33.682363+05:30","2026-11-04 20:08:33.682363+05:30")) conflicts with existing key (team_id, user_id, tstzrange(joined_at, left_at, '[)'::text))=(13000000-0000-4000-8000-000000000001, 00000000-0000-4000-8000-000000000001, ["2026-11-03 20:08:33.682363+05:30",)).
+2026-11-03 20:08:33.845 IST [29444] STATEMENT:  INSERT INTO team_memberships(team_id,user_id,joined_at,left_at)
+	      SELECT team_id,user_id,joined_at,joined_at+interval '1 day' FROM team_memberships WHERE id=$1
+2026-11-03 20:08:34.691 IST [22768] ERROR:  membership edit would falsify historical eligibility
+2026-11-03 20:08:34.691 IST [22768] CONTEXT:  PL/pgSQL function smartpro_membership_history() line 10 at RAISE
+2026-11-03 20:08:34.691 IST [22768] STATEMENT:  UPDATE team_memberships SET joined_at=joined_at-interval '1 day' WHERE id=$1
+2026-11-03 20:08:35.494 IST [2100] ERROR:  permission denied for table department_role_assignments
+2026-11-03 20:08:35.494 IST [2100] STATEMENT:  UPDATE department_role_assignments SET role_code='HOD'
+2026-11-03 20:08:35.495 IST [2100] ERROR:  permission denied for table audit_events
+2026-11-03 20:08:35.495 IST [2100] STATEMENT:  TRUNCATE audit_events
+2026-11-03 20:08:35.496 IST [2100] ERROR:  permission denied for table academic_action_grants
+2026-11-03 20:08:35.496 IST [2100] STATEMENT:  INSERT INTO academic_action_grants(user_id,department_id,action_code) VALUES($1,$2,'CORRECT_RESULTS')
+2026-11-03 20:08:36.419 IST [29544] ERROR:  cannot edit finalized assessment
+2026-11-03 20:08:36.419 IST [29544] CONTEXT:  PL/pgSQL function smartpro_validate_score() line 16 at RAISE
+2026-11-03 20:08:36.419 IST [29544] STATEMENT:  UPDATE team_criterion_scores SET marks=1 WHERE assessment_id=$1
+2026-11-03 20:08:37.313 IST [34124] ERROR:  scheme 2b8f7143-623b-4781-af44-f58266a0c3d0 is locked in state APPROVED
+2026-11-03 20:08:37.313 IST [34124] CONTEXT:  PL/pgSQL function smartpro_guard_scheme_child() line 13 at RAISE
+2026-11-03 20:08:37.313 IST [34124] STATEMENT:  INSERT INTO rubric_criteria(scheme_version_id,code,label,maximum,sort_order) VALUES($1,'EXTRA','Unmapped',10,2)
+2026-11-03 20:08:48.842 IST [28960] ERROR:  synthetic commit failure
+2026-11-03 20:08:48.842 IST [28960] CONTEXT:  PL/pgSQL function test_fail_at_commit() line 2 at RAISE
+2026-11-03 20:08:48.842 IST [28960] STATEMENT:  COMMIT
+2026-11-03 20:09:08.183 IST [33936] ERROR:  permission denied for table document_versions
+2026-11-03 20:09:08.183 IST [33936] STATEMENT:  UPDATE document_versions SET version_no=3 WHERE id=$1
+2026-11-03 20:09:08.185 IST [33936] ERROR:  permission denied for table submission_items
+2026-11-03 20:09:08.185 IST [33936] STATEMENT:  DELETE FROM submission_items WHERE attempt_id=$1
+2026-11-03 20:09:08.188 IST [33936] ERROR:  permission denied for table approval_decisions
+2026-11-03 20:09:08.188 IST [33936] STATEMENT:  UPDATE approval_decisions SET comment=$1
+2026-11-03 20:12:10.019 IST [11088] LOG:  checkpoint starting: immediate force wait
+2026-11-03 20:12:10.111 IST [11088] LOG:  checkpoint complete: wrote 31 buffers (0.2%); 0 WAL file(s) added, 0 removed, 17 recycled; write=0.027 s, sync=0.013 s, total=0.093 s; sync files=16, longest=0.002 s, average=0.001 s; distance=275012 kB, estimate=275012 kB; lsn=0/2692EAB8, redo lsn=0/2692EA80
+2026-11-03 20:12:20.124 IST [33924] ERROR:  update or delete on table "projects" violates foreign key constraint "project_reviews_project_id_cycle_id_policy_version_id_fkey" on table "project_reviews"
+2026-11-03 20:12:20.124 IST [33924] DETAIL:  Key (id, cycle_id, policy_version_id)=(15000000-0000-4000-8000-000000000001, 11000000-0000-4000-8000-000000000001, 12000000-0000-4000-8000-000000000001) is still referenced from table "project_reviews".
+2026-11-03 20:12:20.124 IST [33924] STATEMENT:  UPDATE projects SET cycle_id=$1 WHERE id=$2
+2026-11-03 20:12:21.072 IST [29024] ERROR:  new project binding requires approved scoped policy
+2026-11-03 20:12:21.072 IST [29024] CONTEXT:  PL/pgSQL function smartpro_project_policy_binding() line 8 at RAISE
+2026-11-03 20:12:21.072 IST [29024] STATEMENT:  UPDATE projects SET department_id=$1 WHERE id=$2
+2026-11-03 20:12:21.086 IST [29024] ERROR:  faculty assignment requires scoped faculty role
+2026-11-03 20:12:21.086 IST [29024] CONTEXT:  PL/pgSQL function smartpro_assignment_integrity() line 22 at RAISE
+2026-11-03 20:12:21.086 IST [29024] STATEMENT:  INSERT INTO evaluator_assignments(review_id,faculty_user_id) VALUES($1,$2)
+2026-11-03 20:12:22.998 IST [34364] ERROR:  new project binding requires approved scoped policy
+2026-11-03 20:12:22.998 IST [34364] CONTEXT:  PL/pgSQL function smartpro_project_policy_binding() line 8 at RAISE
+2026-11-03 20:12:22.998 IST [34364] STATEMENT:  INSERT INTO projects(department_id,cycle_id,team_id,project_type,policy_version_id,project_code,title)
+	      SELECT department_id,cycle_id,team_id,project_type,$1,'DRAFT-P','Invalid' FROM projects WHERE id=$2
+2026-11-03 20:12:23.892 IST [6332] ERROR:  duplicate key value violates unique constraint "document_versions_file_asset_id_key"
+2026-11-03 20:12:23.892 IST [6332] DETAIL:  Key (file_asset_id)=(17000000-0000-4000-8000-000000000001) already exists.
+2026-11-03 20:12:23.892 IST [6332] STATEMENT:  INSERT INTO document_versions(project_id,document_id,version_no,file_asset_id,uploaded_by)
+	      SELECT project_id,document_id,version_no,file_asset_id,uploaded_by FROM document_versions LIMIT 1
+2026-11-03 20:12:24.818 IST [2516] ERROR:  submitted item references are immutable
+2026-11-03 20:12:24.818 IST [2516] CONTEXT:  PL/pgSQL function smartpro_submission_item_set() line 4 at RAISE
+2026-11-03 20:12:24.818 IST [2516] STATEMENT:  DELETE FROM submission_items
+2026-11-03 20:12:25.793 IST [29600] ERROR:  submitted item references are immutable
+2026-11-03 20:12:25.793 IST [29600] CONTEXT:  PL/pgSQL function smartpro_submission_item_set() line 4 at RAISE
+2026-11-03 20:12:25.793 IST [29600] STATEMENT:  UPDATE submission_items SET document_version_id=document_version_id
+2026-11-03 20:12:26.783 IST [28020] ERROR:  sealed attempt cannot accept additional items
+2026-11-03 20:12:26.783 IST [28020] CONTEXT:  PL/pgSQL function smartpro_submission_item_set() line 6 at RAISE
+2026-11-03 20:12:26.783 IST [28020] STATEMENT:  INSERT INTO submission_items VALUES($1,$2,$3,$4)
+2026-11-03 20:12:27.879 IST [5496] ERROR:  formal attempt requires sealed nonempty item set at commit
+2026-11-03 20:12:27.879 IST [5496] CONTEXT:  PL/pgSQL function smartpro_attempt_complete() line 5 at RAISE
+2026-11-03 20:12:27.879 IST [5496] STATEMENT:  SET CONSTRAINTS ALL IMMEDIATE
+2026-11-03 20:12:28.856 IST [22572] ERROR:  finalized assessment immutable
+2026-11-03 20:12:28.856 IST [22572] CONTEXT:  PL/pgSQL function smartpro_assessment_identity() line 15 at RAISE
+2026-11-03 20:12:28.856 IST [22572] STATEMENT:  UPDATE assessments SET finalized_at=now()+interval '1 day' WHERE id=$1
+2026-11-03 20:12:29.852 IST [26040] ERROR:  finalized assessment immutable
+2026-11-03 20:12:29.852 IST [26040] CONTEXT:  PL/pgSQL function smartpro_assessment_identity() line 15 at RAISE
+2026-11-03 20:12:29.852 IST [26040] STATEMENT:  UPDATE assessments SET row_version=row_version+1 WHERE id=$1
+2026-11-03 20:12:30.969 IST [12232] ERROR:  finalized assessment immutable
+2026-11-03 20:12:30.969 IST [12232] CONTEXT:  PL/pgSQL function smartpro_assessment_identity() line 15 at RAISE
+2026-11-03 20:12:30.969 IST [12232] STATEMENT:  UPDATE assessments SET state='DRAFT' WHERE id=$1
+2026-11-03 20:12:31.955 IST [14116] ERROR:  finalized assessment immutable
+2026-11-03 20:12:31.955 IST [14116] CONTEXT:  PL/pgSQL function smartpro_assessment_identity() line 15 at RAISE
+2026-11-03 20:12:31.955 IST [14116] STATEMENT:  UPDATE assessments SET evaluator_assignment_id='28000000-0000-4000-8000-000000000001' WHERE id=$1
+2026-11-03 20:12:32.956 IST [27028] ERROR:  finalized assessment immutable
+2026-11-03 20:12:32.956 IST [27028] CONTEXT:  PL/pgSQL function smartpro_assessment_identity() line 15 at RAISE
+2026-11-03 20:12:32.956 IST [27028] STATEMENT:  UPDATE assessments SET review_id=review_id WHERE id=$1
+2026-11-03 20:12:34.027 IST [15904] ERROR:  cannot edit finalized assessment
+2026-11-03 20:12:34.027 IST [15904] CONTEXT:  PL/pgSQL function smartpro_validate_score() line 16 at RAISE
+2026-11-03 20:12:34.027 IST [15904] STATEMENT:  UPDATE team_criterion_scores SET marks=0
+2026-11-03 20:12:35.037 IST [9192] ERROR:  cannot edit finalized assessment
+2026-11-03 20:12:35.037 IST [9192] CONTEXT:  PL/pgSQL function smartpro_validate_score() line 16 at RAISE
+2026-11-03 20:12:35.037 IST [9192] STATEMENT:  UPDATE student_criterion_scores SET marks=0
+2026-11-03 20:12:36.038 IST [23608] ERROR:  finalized assessment scores cannot be deleted
+2026-11-03 20:12:36.038 IST [23608] CONTEXT:  PL/pgSQL function smartpro_guard_score_delete() line 5 at RAISE
+2026-11-03 20:12:36.038 IST [23608] STATEMENT:  DELETE FROM team_criterion_scores
+2026-11-03 20:12:37.075 IST [35576] ERROR:  finalized assessment scores cannot be deleted
+2026-11-03 20:12:37.075 IST [35576] CONTEXT:  PL/pgSQL function smartpro_guard_score_delete() line 5 at RAISE
+2026-11-03 20:12:37.075 IST [35576] STATEMENT:  DELETE FROM student_criterion_scores
+2026-11-03 20:12:38.142 IST [32464] ERROR:  assessment must start DRAFT
+2026-11-03 20:12:38.142 IST [32464] CONTEXT:  PL/pgSQL function smartpro_assessment_identity() line 11 at RAISE
+2026-11-03 20:12:38.142 IST [32464] STATEMENT:  INSERT INTO assessments(review_id,scheme_mode_id,evaluator_assignment_id,state)
+	      SELECT review_id,$1,id,'FINALIZED' FROM evaluator_assignments WHERE review_id=$2
+2026-11-03 20:12:39.090 IST [26668] ERROR:  approved configuration identity and metadata are immutable
+2026-11-03 20:12:39.090 IST [26668] CONTEXT:  PL/pgSQL function smartpro_immutable_configuration() line 16 at RAISE
+2026-11-03 20:12:39.090 IST [26668] STATEMENT:  UPDATE scheme_versions SET version_no=99 WHERE id=$1
+2026-11-03 20:12:40.070 IST [36688] ERROR:  approved configuration identity and metadata are immutable
+2026-11-03 20:12:40.070 IST [36688] CONTEXT:  PL/pgSQL function smartpro_immutable_configuration() line 16 at RAISE
+2026-11-03 20:12:40.070 IST [36688] STATEMENT:  UPDATE scheme_versions SET created_at=now()+interval '1 day' WHERE id=$1
+2026-11-03 20:12:41.208 IST [6992] ERROR:  invalid scheme state transition
+2026-11-03 20:12:41.208 IST [6992] CONTEXT:  PL/pgSQL function smartpro_scheme_transition() line 20 at RAISE
+2026-11-03 20:12:41.208 IST [6992] STATEMENT:  UPDATE scheme_versions SET state='DRAFT' WHERE id=$1
+2026-11-03 20:12:42.270 IST [14876] ERROR:  scheme must start DRAFT and pass approval validation
+2026-11-03 20:12:42.270 IST [14876] CONTEXT:  PL/pgSQL function smartpro_immutable_configuration() line 9 at RAISE
+2026-11-03 20:12:42.270 IST [14876] STATEMENT:  INSERT INTO scheme_versions(scheme_id,cycle_id,review_definition_id,version_no,state) SELECT scheme_id,cycle_id,review_definition_id,99,'APPROVED' FROM scheme_versions LIMIT 1
+2026-11-03 20:12:43.266 IST [29312] ERROR:  marks outside finite criterion range
+2026-11-03 20:12:43.266 IST [29312] CONTEXT:  PL/pgSQL function smartpro_validate_score() line 18 at RAISE
+2026-11-03 20:12:43.266 IST [29312] STATEMENT:  INSERT INTO team_criterion_scores(assessment_id,scheme_mode_id,mode_criterion_id,marks) VALUES($1,$2,$3,$4)
+2026-11-03 20:12:44.698 IST [21348] ERROR:  marks outside finite criterion range
+2026-11-03 20:12:44.698 IST [21348] CONTEXT:  PL/pgSQL function smartpro_validate_score() line 18 at RAISE
+2026-11-03 20:12:44.698 IST [21348] STATEMENT:  INSERT INTO team_criterion_scores(assessment_id,scheme_mode_id,mode_criterion_id,marks) VALUES($1,$2,$3,$4)
+2026-11-03 20:12:45.679 IST [14820] ERROR:  marks outside finite criterion range
+2026-11-03 20:12:45.679 IST [14820] CONTEXT:  PL/pgSQL function smartpro_validate_score() line 18 at RAISE
+2026-11-03 20:12:45.679 IST [14820] STATEMENT:  INSERT INTO team_criterion_scores(assessment_id,scheme_mode_id,mode_criterion_id,marks) VALUES($1,$2,$3,$4)
+2026-11-03 20:12:50.275 IST [36788] ERROR:  assessment scores incomplete
+2026-11-03 20:12:50.275 IST [36788] CONTEXT:  PL/pgSQL function smartpro_finalize_assessment() line 20 at RAISE
+2026-11-03 20:12:50.275 IST [36788] STATEMENT:  UPDATE assessments SET state='FINALIZED' WHERE id=$1
+2026-11-03 20:12:51.426 IST [27328] ERROR:  assessment scores incomplete
+2026-11-03 20:12:51.426 IST [27328] CONTEXT:  PL/pgSQL function smartpro_finalize_assessment() line 20 at RAISE
+2026-11-03 20:12:51.426 IST [27328] STATEMENT:  UPDATE assessments SET state='FINALIZED' WHERE id=$1
+2026-11-03 20:12:52.521 IST [23296] ERROR:  assessment scores incomplete
+2026-11-03 20:12:52.521 IST [23296] CONTEXT:  PL/pgSQL function smartpro_finalize_assessment() line 20 at RAISE
+2026-11-03 20:12:52.521 IST [23296] STATEMENT:  UPDATE assessments SET state='FINALIZED' WHERE id=$1
+2026-11-03 20:12:53.542 IST [17496] ERROR:  assessment scoring identity cannot be reparented
+2026-11-03 20:12:53.542 IST [17496] CONTEXT:  PL/pgSQL function smartpro_assessment_identity() line 18 at RAISE
+2026-11-03 20:12:53.542 IST [17496] STATEMENT:  UPDATE assessments SET scheme_mode_id=$1 WHERE id=$2
+2026-11-03 20:12:54.558 IST [32284] ERROR:  duplicate key value violates unique constraint "assessments_evaluator_assignment_id_key"
+2026-11-03 20:12:54.558 IST [32284] DETAIL:  Key (evaluator_assignment_id)=(28000000-0000-4000-8000-000000000001) already exists.
+2026-11-03 20:12:54.558 IST [32284] STATEMENT:  INSERT INTO assessments(review_id,scheme_mode_id,evaluator_assignment_id) VALUES($1,$2,$3)
+2026-11-03 20:12:55.578 IST [35980] ERROR:  invalid assessment/criterion scope
+2026-11-03 20:12:55.578 IST [35980] CONTEXT:  PL/pgSQL function smartpro_validate_score() line 9 at RAISE
+2026-11-03 20:12:55.578 IST [35980] STATEMENT:  INSERT INTO team_criterion_scores(assessment_id,scheme_mode_id,mode_criterion_id,marks) VALUES($1,$2,$3,1)
+2026-11-03 20:12:56.547 IST [1896] ERROR:  invalid assessment/criterion scope
+2026-11-03 20:12:56.547 IST [1896] CONTEXT:  PL/pgSQL function smartpro_validate_score() line 9 at RAISE
+2026-11-03 20:12:56.547 IST [1896] STATEMENT:  INSERT INTO student_criterion_scores(assessment_id,review_id,scheme_mode_id,roster_member_id,mode_criterion_id,marks) VALUES($1,$2,$3,$4,$5,1)
+2026-11-03 20:12:57.525 IST [24964] ERROR:  student score outside exact review roster
+2026-11-03 20:12:57.525 IST [24964] CONTEXT:  PL/pgSQL function smartpro_validate_score() line 12 at RAISE
+2026-11-03 20:12:57.525 IST [24964] STATEMENT:  INSERT INTO student_criterion_scores(assessment_id,review_id,scheme_mode_id,roster_member_id,mode_criterion_id,marks) VALUES($1,$2,$3,$4,$5,1)
+2026-11-03 20:12:58.548 IST [12908] ERROR:  membership edit would falsify historical eligibility
+2026-11-03 20:12:58.548 IST [12908] CONTEXT:  PL/pgSQL function smartpro_membership_history() line 10 at RAISE
+2026-11-03 20:12:58.548 IST [12908] STATEMENT:  UPDATE team_memberships SET joined_at=now()+interval '1 day' WHERE id=$1
+2026-11-03 20:12:58.555 IST [12908] ERROR:  membership edit would falsify historical eligibility
+2026-11-03 20:12:58.555 IST [12908] CONTEXT:  PL/pgSQL function smartpro_membership_history() line 10 at RAISE
+2026-11-03 20:12:58.555 IST [12908] STATEMENT:  UPDATE team_memberships SET left_at=(SELECT roster_locked_at FROM project_reviews WHERE id=$1)-interval '1 microsecond' WHERE id=$2
+2026-11-03 20:12:59.556 IST [29716] ERROR:  roster student not eligible at freeze instant
+2026-11-03 20:12:59.556 IST [29716] CONTEXT:  PL/pgSQL function smartpro_roster_freeze_eligibility() line 10 at RAISE
+2026-11-03 20:12:59.556 IST [29716] STATEMENT:  UPDATE project_reviews SET review_state='OPEN',roster_locked_at=clock_timestamp() WHERE id=$1
+2026-11-03 20:13:00.581 IST [2076] ERROR:  faculty assignment requires scoped faculty role
+2026-11-03 20:13:00.581 IST [2076] CONTEXT:  PL/pgSQL function smartpro_assignment_integrity() line 22 at RAISE
+2026-11-03 20:13:00.581 IST [2076] STATEMENT:  INSERT INTO evaluator_assignments(review_id,faculty_user_id) VALUES($1,$2)
+2026-11-03 20:13:01.569 IST [20792] ERROR:  release history immutable
+2026-11-03 20:13:01.569 IST [20792] CONTEXT:  PL/pgSQL function smartpro_release_guard() line 4 at RAISE
+2026-11-03 20:13:01.569 IST [20792] STATEMENT:  DELETE FROM result_releases
+2026-11-03 20:13:02.524 IST [11040] ERROR:  academic evidence is append-only: result_student_scores
+2026-11-03 20:13:02.524 IST [11040] CONTEXT:  PL/pgSQL function smartpro_forbid_mutation() line 3 at RAISE
+2026-11-03 20:13:02.524 IST [11040] STATEMENT:  DELETE FROM result_student_scores
+2026-11-03 20:13:03.541 IST [14064] ERROR:  academic evidence is append-only: result_source_assessments
+2026-11-03 20:13:03.541 IST [14064] CONTEXT:  PL/pgSQL function smartpro_forbid_mutation() line 3 at RAISE
+2026-11-03 20:13:03.541 IST [14064] STATEMENT:  DELETE FROM result_source_assessments
+2026-11-03 20:13:04.502 IST [26284] ERROR:  academic evidence is append-only: audit_events
+2026-11-03 20:13:04.502 IST [26284] CONTEXT:  PL/pgSQL function smartpro_forbid_mutation() line 3 at RAISE
+2026-11-03 20:13:04.502 IST [26284] STATEMENT:  DELETE FROM audit_events
+2026-11-03 20:13:05.426 IST [19692] ERROR:  academic evidence is append-only: approval_decisions
+2026-11-03 20:13:05.426 IST [19692] CONTEXT:  PL/pgSQL function smartpro_forbid_mutation() line 3 at RAISE
+2026-11-03 20:13:05.426 IST [19692] STATEMENT:  DELETE FROM approval_decisions
+2026-11-03 20:13:06.364 IST [36380] ERROR:  academic evidence is append-only: document_versions
+2026-11-03 20:13:06.364 IST [36380] CONTEXT:  PL/pgSQL function smartpro_forbid_mutation() line 3 at RAISE
+2026-11-03 20:13:06.364 IST [36380] STATEMENT:  DELETE FROM document_versions
+2026-11-03 20:13:07.372 IST [9896] ERROR:  insert or update on table "result_source_assessments" violates foreign key constraint "result_source_assessments_assessment_id_review_id_fkey"
+2026-11-03 20:13:07.372 IST [9896] DETAIL:  Key (assessment_id, review_id)=(4a9ce144-df69-4898-a5ed-293980b7defe, 26000000-0000-4000-8000-000000000001) is not present in table "assessments".
+2026-11-03 20:13:07.372 IST [9896] STATEMENT:  INSERT INTO result_source_assessments(release_id,review_id,assessment_id) VALUES($1,$2,$3)
+2026-11-03 20:13:07.378 IST [9896] ERROR:  assessment requires open frozen review
+2026-11-03 20:13:07.378 IST [9896] CONTEXT:  PL/pgSQL function smartpro_assessment_identity() line 13 at RAISE
+2026-11-03 20:13:07.378 IST [9896] STATEMENT:  INSERT INTO assessments(review_id,scheme_mode_id,evaluator_assignment_id) VALUES($1,$2,$3)
+2026-11-03 20:13:09.429 IST [20940] ERROR:  publication/correction requires explicit scoped grant
+2026-11-03 20:13:09.429 IST [20940] CONTEXT:  PL/pgSQL function smartpro_release_guard() line 27 at RAISE
+2026-11-03 20:13:09.429 IST [20940] STATEMENT:  INSERT INTO result_releases(id,review_id,release_no,scheme_version_id,scheme_mode_id,calculation_snapshot,
+	      released_by,supersedes_id,correction_reason) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)
+2026-11-03 20:13:10.391 IST [23248] ERROR:  release must be sealed before commit
+2026-11-03 20:13:10.391 IST [23248] CONTEXT:  PL/pgSQL function smartpro_release_complete() line 6 at RAISE
+2026-11-03 20:13:10.391 IST [23248] STATEMENT:  SET CONSTRAINTS ALL IMMEDIATE
+2026-11-03 20:13:11.421 IST [25348] ERROR:  published score/breakdown differs from finalized source marks
+2026-11-03 20:13:11.421 IST [25348] CONTEXT:  PL/pgSQL function smartpro_release_complete() line 26 at RAISE
+2026-11-03 20:13:11.421 IST [25348] STATEMENT:  SET CONSTRAINTS ALL IMMEDIATE
+2026-11-03 20:13:12.374 IST [21684] ERROR:  review finalization requires complete finalized assessments
+2026-11-03 20:13:12.374 IST [21684] CONTEXT:  PL/pgSQL function smartpro_review_terminal_state() line 14 at RAISE
+2026-11-03 20:13:12.374 IST [21684] STATEMENT:  UPDATE project_reviews SET review_state='FINALIZED' WHERE id=$1
+2026-11-03 20:13:13.291 IST [34936] ERROR:  conflicting key value violates exclusion constraint "same_team_membership_no_overlap"
+2026-11-03 20:13:13.291 IST [34936] DETAIL:  Key (team_id, user_id, tstzrange(joined_at, left_at, '[)'::text))=(13000000-0000-4000-8000-000000000001, 00000000-0000-4000-8000-000000000001, ["2026-11-03 20:13:13.107532+05:30","2026-11-04 20:13:13.107532+05:30")) conflicts with existing key (team_id, user_id, tstzrange(joined_at, left_at, '[)'::text))=(13000000-0000-4000-8000-000000000001, 00000000-0000-4000-8000-000000000001, ["2026-11-03 20:13:13.107532+05:30",)).
+2026-11-03 20:13:13.291 IST [34936] STATEMENT:  INSERT INTO team_memberships(team_id,user_id,joined_at,left_at)
+	      SELECT team_id,user_id,joined_at,joined_at+interval '1 day' FROM team_memberships WHERE id=$1
+2026-11-03 20:13:14.283 IST [23636] ERROR:  membership edit would falsify historical eligibility
+2026-11-03 20:13:14.283 IST [23636] CONTEXT:  PL/pgSQL function smartpro_membership_history() line 10 at RAISE
+2026-11-03 20:13:14.283 IST [23636] STATEMENT:  UPDATE team_memberships SET joined_at=joined_at-interval '1 day' WHERE id=$1
+2026-11-03 20:13:15.249 IST [31368] ERROR:  permission denied for table department_role_assignments
+2026-11-03 20:13:15.249 IST [31368] STATEMENT:  UPDATE department_role_assignments SET role_code='HOD'
+2026-11-03 20:13:15.249 IST [31368] ERROR:  permission denied for table audit_events
+2026-11-03 20:13:15.249 IST [31368] STATEMENT:  TRUNCATE audit_events
+2026-11-03 20:13:15.250 IST [31368] ERROR:  permission denied for table academic_action_grants
+2026-11-03 20:13:15.250 IST [31368] STATEMENT:  INSERT INTO academic_action_grants(user_id,department_id,action_code) VALUES($1,$2,'CORRECT_RESULTS')
+2026-11-03 20:13:16.278 IST [23440] ERROR:  cannot edit finalized assessment
+2026-11-03 20:13:16.278 IST [23440] CONTEXT:  PL/pgSQL function smartpro_validate_score() line 16 at RAISE
+2026-11-03 20:13:16.278 IST [23440] STATEMENT:  UPDATE team_criterion_scores SET marks=1 WHERE assessment_id=$1
+2026-11-03 20:13:17.244 IST [22240] ERROR:  scheme c2356a08-4771-44eb-a90d-b7c0932b23da is locked in state APPROVED
+2026-11-03 20:13:17.244 IST [22240] CONTEXT:  PL/pgSQL function smartpro_guard_scheme_child() line 13 at RAISE
+2026-11-03 20:13:17.244 IST [22240] STATEMENT:  INSERT INTO rubric_criteria(scheme_version_id,code,label,maximum,sort_order) VALUES($1,'EXTRA','Unmapped',10,2)
+2026-11-03 20:13:30.562 IST [36264] ERROR:  synthetic commit failure
+2026-11-03 20:13:30.562 IST [36264] CONTEXT:  PL/pgSQL function test_fail_at_commit() line 2 at RAISE
+2026-11-03 20:13:30.562 IST [36264] STATEMENT:  COMMIT
+2026-11-03 20:13:53.208 IST [14536] ERROR:  permission denied for table document_versions
+2026-11-03 20:13:53.208 IST [14536] STATEMENT:  UPDATE document_versions SET version_no=3 WHERE id=$1
+2026-11-03 20:13:53.211 IST [14536] ERROR:  permission denied for table submission_items
+2026-11-03 20:13:53.211 IST [14536] STATEMENT:  DELETE FROM submission_items WHERE attempt_id=$1
+2026-11-03 20:13:53.215 IST [14536] ERROR:  permission denied for table approval_decisions
+2026-11-03 20:13:53.215 IST [14536] STATEMENT:  UPDATE approval_decisions SET comment=$1
+2026-11-03 20:16:17.741 IST [21404] ERROR:  cannot ALTER TABLE "submission_attempts" because it has pending trigger events
+2026-11-03 20:16:17.741 IST [21404] STATEMENT:  -- Additional gaps reproduced by edge-probes.xml before adding these guards.
+	BEGIN;
+	CREATE EXTENSION IF NOT EXISTS btree_gist;
+	ALTER TABLE team_memberships ADD CONSTRAINT same_team_membership_no_overlap
+	  EXCLUDE USING gist(team_id WITH =,user_id WITH =,tstzrange(joined_at,left_at,'[)') WITH &&);
+	-- This does NOT ban membership in different teams or multiple faculty guides.
+	ALTER TABLE submission_attempts ADD COLUMN submitted_membership_id uuid REFERENCES team_memberships(id);
+	ALTER TABLE submission_attempts DISABLE TRIGGER freeze_attempt_identity;
+	UPDATE submission_attempts a SET submitted_membership_id=m.id
+	  FROM projects p,team_memberships m WHERE p.id=a.project_id AND m.team_id=p.team_id
+	    AND m.user_id=a.submitted_by AND m.joined_at<=a.submitted_at
+	    AND (m.left_at IS NULL OR a.submitted_at<m.left_at);
+	ALTER TABLE submission_attempts ENABLE TRIGGER freeze_attempt_identity;
+	
+	CREATE FUNCTION smartpro_submitter_snapshot() RETURNS trigger LANGUAGE plpgsql AS $$
+	DECLARE kind text; dept uuid;
+	BEGIN
+	  NEW.submitted_at:=statement_timestamp();
+	  SELECT c.submission_type,p.department_id INTO kind,dept FROM submission_cases c JOIN projects p ON p.id=c.project_id
+	    WHERE c.id=NEW.case_id AND c.project_id=NEW.project_id;
+	  SELECT m.id INTO NEW.submitted_membership_id FROM projects p JOIN team_memberships m ON m.team_id=p.team_id
+	    WHERE p.id=NEW.project_id AND m.user_id=NEW.submitted_by AND m.joined_at<=NEW.submitted_at
+	      AND (m.left_at IS NULL OR NEW.submitted_at<m.left_at) FOR SHARE OF m;
+	  IF kind='SYNOPSIS' AND (NEW.submitted_membership_id IS NULL OR NOT smartpro_has_role(NEW.submitted_by,dept,'STUDENT',NEW.submitted_at)) THEN
+	    RAISE EXCEPTION 'synopsis submitter requires effective project membership and student role' USING ERRCODE='42501'; END IF;
+	  RETURN NEW;
+	END;
+	$$;
+	CREATE TRIGGER snapshot_submitter BEFORE INSERT ON submission_attempts
+	  FOR EACH ROW EXECUTE FUNCTION smartpro_submitter_snapshot();
+	ALTER FUNCTION smartpro_submitter_snapshot() SECURITY DEFINER;
+	ALTER FUNCTION smartpro_submitter_snapshot() SET search_path=pg_catalog,public,pg_temp;
+	
+	CREATE OR REPLACE FUNCTION smartpro_membership_history() RETURNS trigger LANGUAGE plpgsql AS $$
+	BEGIN
+	  IF EXISTS(SELECT 1 FROM review_roster_members WHERE membership_id=OLD.id)
+	    OR EXISTS(SELECT 1 FROM submission_attempts WHERE submitted_membership_id=OLD.id) THEN
+	    IF TG_OP='DELETE' THEN RAISE EXCEPTION 'membership is historical academic evidence' USING ERRCODE='23514'; END IF;
+	    IF (NEW.id,NEW.team_id,NEW.user_id,NEW.joined_at) IS DISTINCT FROM (OLD.id,OLD.team_id,OLD.user_id,OLD.joined_at)
+	      OR EXISTS(SELECT 1 FROM review_roster_members rm JOIN project_reviews r ON r.id=rm.review_id
+	        WHERE rm.membership_id=OLD.id AND r.roster_locked_at IS NOT NULL AND NEW.left_at IS NOT NULL AND NEW.left_at<=r.roster_locked_at)
+	      OR EXISTS(SELECT 1 FROM submission_attempts a WHERE a.submitted_membership_id=OLD.id AND NEW.left_at IS NOT NULL AND NEW.left_at<=a.submitted_at) THEN
+	      RAISE EXCEPTION 'membership edit would falsify historical eligibility' USING ERRCODE='23514'; END IF;
+	  END IF;
+	  IF TG_OP='DELETE' THEN RETURN OLD; END IF;
+	  RETURN NEW;
+	END;
+	$$;
+	
+	CREATE FUNCTION smartpro_review_terminal_state() RETURNS trigger LANGUAGE plpgsql AS $$
+	BEGIN
+	  IF OLD.review_state IN ('FINALIZED','RELEASED') AND
+	    (to_jsonb(NEW)-'review_state'-'row_version') IS DISTINCT FROM (to_jsonb(OLD)-'review_state'-'row_version') THEN
+	    RAISE EXCEPTION 'finalized review configuration is historical' USING ERRCODE='23514'; END IF;
+	  IF NEW.review_state IS DISTINCT FROM OLD.review_state AND NOT (
+	    (OLD.review_state='SCHEDULED' AND NEW.review_state IN ('OPEN','CANCELLED')) OR
+	    (OLD.review_state='OPEN' AND NEW.review_state IN ('FINALIZED','CANCELLED')) OR
+	    (OLD.review_state='FINALIZED' AND NEW.review_state='RELEASED')) THEN
+	    RAISE EXCEPTION 'invalid review state transition' USING ERRCODE='23514'; END IF;
+	  IF NEW.review_state='FINALIZED' AND OLD.review_state<>'FINALIZED' THEN
+	    IF NOT EXISTS(SELECT 1 FROM assessments WHERE review_id=OLD.id)
+	      OR EXISTS(SELECT 1 FROM assessments WHERE review_id=OLD.id AND state<>'FINALIZED') THEN
+	      RAISE EXCEPTION 'review finalization requires complete finalized assessments' USING ERRCODE='23514'; END IF;
+	  END IF;
+	  IF NEW.review_state='RELEASED' AND NOT EXISTS(SELECT 1 FROM result_releases WHERE review_id=OLD.id AND sealed_at IS NOT NULL) THEN
+	    RAISE EXCEPTION 'released review requires a sealed result version' USING ERRCODE='23514'; END IF;
+	  RETURN NEW;
+	END;
+	$$;
+	CREATE TRIGGER validate_review_terminal_state BEFORE UPDATE ON project_reviews
+	  FOR EACH ROW EXECUTE FUNCTION smartpro_review_terminal_state();
+	
+	CREATE FUNCTION smartpro_document_identity() RETURNS trigger LANGUAGE plpgsql AS $$
+	BEGIN
+	  IF EXISTS(SELECT 1 FROM document_versions WHERE document_id=OLD.id) AND
+	    (NEW.id,NEW.project_id,NEW.document_type,NEW.created_at) IS DISTINCT FROM (OLD.id,OLD.project_id,OLD.document_type,OLD.created_at) THEN
+	    RAISE EXCEPTION 'versioned document identity is historical' USING ERRCODE='23514'; END IF;
+	  RETURN NEW;
+	END;
+	$$;
+	CREATE TRIGGER freeze_document_identity BEFORE UPDATE ON documents
+	  FOR EACH ROW EXECUTE FUNCTION smartpro_document_identity();
+	
+	CREATE FUNCTION smartpro_review_definition_history() RETURNS trigger LANGUAGE plpgsql AS $$
+	BEGIN
+	  IF EXISTS(SELECT 1 FROM project_reviews WHERE review_definition_id=OLD.id)
+	     OR EXISTS(SELECT 1 FROM scheme_versions WHERE review_definition_id=OLD.id AND state<>'DRAFT') THEN
+	    RAISE EXCEPTION 'used review definition is historical configuration' USING ERRCODE='23514'; END IF;
+	  IF TG_OP='DELETE' THEN RETURN OLD; END IF;
+	  RETURN NEW;
+	END;
+	$$;
+	CREATE TRIGGER freeze_review_definition BEFORE UPDATE OR DELETE ON review_definitions
+	  FOR EACH ROW EXECUTE FUNCTION smartpro_review_definition_history();
+	COMMIT;
+2026-11-03 20:16:54.102 IST [11088] LOG:  checkpoint starting: immediate force wait
+2026-11-03 20:16:59.215 IST [11088] LOG:  checkpoint complete: wrote 8228 buffers (50.2%); 0 WAL file(s) added, 0 removed, 16 recycled; write=0.318 s, sync=2.800 s, total=5.114 s; sync files=20586, longest=0.011 s, average=0.001 s; distance=264125 kB, estimate=273923 kB; lsn=0/36B1DEE0, redo lsn=0/36B1DEA8
+2026-11-03 20:17:00.274 IST [19660] ERROR:  submitted item references are immutable
+2026-11-03 20:17:00.274 IST [19660] CONTEXT:  PL/pgSQL function smartpro_submission_item_set() line 4 at RAISE
+2026-11-03 20:17:00.274 IST [19660] STATEMENT:  DELETE FROM submission_items
+2026-11-03 20:17:16.222 IST [11088] LOG:  checkpoint starting: immediate force wait
+2026-11-03 20:17:16.716 IST [11088] LOG:  checkpoint complete: wrote 1385 buffers (8.5%); 0 WAL file(s) added, 0 removed, 1 recycled; write=0.211 s, sync=0.260 s, total=0.494 s; sync files=524, longest=0.004 s, average=0.001 s; distance=6954 kB, estimate=247226 kB; lsn=0/371E8700, redo lsn=0/371E86C8
+2026-11-03 20:17:21.442 IST [13132] ERROR:  update or delete on table "projects" violates foreign key constraint "project_reviews_project_id_cycle_id_policy_version_id_fkey" on table "project_reviews"
+2026-11-03 20:17:21.442 IST [13132] DETAIL:  Key (id, cycle_id, policy_version_id)=(15000000-0000-4000-8000-000000000001, 11000000-0000-4000-8000-000000000001, 12000000-0000-4000-8000-000000000001) is still referenced from table "project_reviews".
+2026-11-03 20:17:21.442 IST [13132] STATEMENT:  UPDATE projects SET cycle_id=$1 WHERE id=$2
+2026-11-03 20:17:22.219 IST [20696] ERROR:  new project binding requires approved scoped policy
+2026-11-03 20:17:22.219 IST [20696] CONTEXT:  PL/pgSQL function smartpro_project_policy_binding() line 8 at RAISE
+2026-11-03 20:17:22.219 IST [20696] STATEMENT:  UPDATE projects SET department_id=$1 WHERE id=$2
+2026-11-03 20:17:22.233 IST [20696] ERROR:  faculty assignment requires scoped faculty role
+2026-11-03 20:17:22.233 IST [20696] CONTEXT:  PL/pgSQL function smartpro_assignment_integrity() line 22 at RAISE
+2026-11-03 20:17:22.233 IST [20696] STATEMENT:  INSERT INTO evaluator_assignments(review_id,faculty_user_id) VALUES($1,$2)
+2026-11-03 20:17:23.853 IST [32352] ERROR:  new project binding requires approved scoped policy
+2026-11-03 20:17:23.853 IST [32352] CONTEXT:  PL/pgSQL function smartpro_project_policy_binding() line 8 at RAISE
+2026-11-03 20:17:23.853 IST [32352] STATEMENT:  INSERT INTO projects(department_id,cycle_id,team_id,project_type,policy_version_id,project_code,title)
+	      SELECT department_id,cycle_id,team_id,project_type,$1,'DRAFT-P','Invalid' FROM projects WHERE id=$2
+2026-11-03 20:17:24.653 IST [8736] ERROR:  duplicate key value violates unique constraint "document_versions_file_asset_id_key"
+2026-11-03 20:17:24.653 IST [8736] DETAIL:  Key (file_asset_id)=(17000000-0000-4000-8000-000000000001) already exists.
+2026-11-03 20:17:24.653 IST [8736] STATEMENT:  INSERT INTO document_versions(project_id,document_id,version_no,file_asset_id,uploaded_by)
+	      SELECT project_id,document_id,version_no,file_asset_id,uploaded_by FROM document_versions LIMIT 1
+2026-11-03 20:17:25.505 IST [23676] ERROR:  submitted item references are immutable
+2026-11-03 20:17:25.505 IST [23676] CONTEXT:  PL/pgSQL function smartpro_submission_item_set() line 4 at RAISE
+2026-11-03 20:17:25.505 IST [23676] STATEMENT:  DELETE FROM submission_items
+2026-11-03 20:17:26.365 IST [17356] ERROR:  submitted item references are immutable
+2026-11-03 20:17:26.365 IST [17356] CONTEXT:  PL/pgSQL function smartpro_submission_item_set() line 4 at RAISE
+2026-11-03 20:17:26.365 IST [17356] STATEMENT:  UPDATE submission_items SET document_version_id=document_version_id
+2026-11-03 20:17:27.344 IST [2364] ERROR:  sealed attempt cannot accept additional items
+2026-11-03 20:17:27.344 IST [2364] CONTEXT:  PL/pgSQL function smartpro_submission_item_set() line 6 at RAISE
+2026-11-03 20:17:27.344 IST [2364] STATEMENT:  INSERT INTO submission_items VALUES($1,$2,$3,$4)
+2026-11-03 20:17:28.200 IST [6628] ERROR:  formal attempt requires sealed nonempty item set at commit
+2026-11-03 20:17:28.200 IST [6628] CONTEXT:  PL/pgSQL function smartpro_attempt_complete() line 5 at RAISE
+2026-11-03 20:17:28.200 IST [6628] STATEMENT:  SET CONSTRAINTS ALL IMMEDIATE
+2026-11-03 20:17:29.031 IST [34440] ERROR:  finalized assessment immutable
+2026-11-03 20:17:29.031 IST [34440] CONTEXT:  PL/pgSQL function smartpro_assessment_identity() line 15 at RAISE
+2026-11-03 20:17:29.031 IST [34440] STATEMENT:  UPDATE assessments SET finalized_at=now()+interval '1 day' WHERE id=$1
+2026-11-03 20:17:29.910 IST [24208] ERROR:  finalized assessment immutable
+2026-11-03 20:17:29.910 IST [24208] CONTEXT:  PL/pgSQL function smartpro_assessment_identity() line 15 at RAISE
+2026-11-03 20:17:29.910 IST [24208] STATEMENT:  UPDATE assessments SET row_version=row_version+1 WHERE id=$1
+2026-11-03 20:17:30.860 IST [34468] ERROR:  finalized assessment immutable
+2026-11-03 20:17:30.860 IST [34468] CONTEXT:  PL/pgSQL function smartpro_assessment_identity() line 15 at RAISE
+2026-11-03 20:17:30.860 IST [34468] STATEMENT:  UPDATE assessments SET state='DRAFT' WHERE id=$1
+2026-11-03 20:17:31.682 IST [27620] ERROR:  finalized assessment immutable
+2026-11-03 20:17:31.682 IST [27620] CONTEXT:  PL/pgSQL function smartpro_assessment_identity() line 15 at RAISE
+2026-11-03 20:17:31.682 IST [27620] STATEMENT:  UPDATE assessments SET evaluator_assignment_id='28000000-0000-4000-8000-000000000001' WHERE id=$1
+2026-11-03 20:17:32.512 IST [32260] ERROR:  finalized assessment immutable
+2026-11-03 20:17:32.512 IST [32260] CONTEXT:  PL/pgSQL function smartpro_assessment_identity() line 15 at RAISE
+2026-11-03 20:17:32.512 IST [32260] STATEMENT:  UPDATE assessments SET review_id=review_id WHERE id=$1
+2026-11-03 20:17:33.342 IST [23024] ERROR:  cannot edit finalized assessment
+2026-11-03 20:17:33.342 IST [23024] CONTEXT:  PL/pgSQL function smartpro_validate_score() line 16 at RAISE
+2026-11-03 20:17:33.342 IST [23024] STATEMENT:  UPDATE team_criterion_scores SET marks=0
+2026-11-03 20:17:34.155 IST [31716] ERROR:  cannot edit finalized assessment
+2026-11-03 20:17:34.155 IST [31716] CONTEXT:  PL/pgSQL function smartpro_validate_score() line 16 at RAISE
+2026-11-03 20:17:34.155 IST [31716] STATEMENT:  UPDATE student_criterion_scores SET marks=0
+2026-11-03 20:17:34.950 IST [1884] ERROR:  finalized assessment scores cannot be deleted
+2026-11-03 20:17:34.950 IST [1884] CONTEXT:  PL/pgSQL function smartpro_guard_score_delete() line 5 at RAISE
+2026-11-03 20:17:34.950 IST [1884] STATEMENT:  DELETE FROM team_criterion_scores
+2026-11-03 20:17:35.733 IST [23556] ERROR:  finalized assessment scores cannot be deleted
+2026-11-03 20:17:35.733 IST [23556] CONTEXT:  PL/pgSQL function smartpro_guard_score_delete() line 5 at RAISE
+2026-11-03 20:17:35.733 IST [23556] STATEMENT:  DELETE FROM student_criterion_scores
+2026-11-03 20:17:36.658 IST [20028] ERROR:  assessment must start DRAFT
+2026-11-03 20:17:36.658 IST [20028] CONTEXT:  PL/pgSQL function smartpro_assessment_identity() line 11 at RAISE
+2026-11-03 20:17:36.658 IST [20028] STATEMENT:  INSERT INTO assessments(review_id,scheme_mode_id,evaluator_assignment_id,state)
+	      SELECT review_id,$1,id,'FINALIZED' FROM evaluator_assignments WHERE review_id=$2
+2026-11-03 20:17:37.463 IST [22216] ERROR:  approved configuration identity and metadata are immutable
+2026-11-03 20:17:37.463 IST [22216] CONTEXT:  PL/pgSQL function smartpro_immutable_configuration() line 16 at RAISE
+2026-11-03 20:17:37.463 IST [22216] STATEMENT:  UPDATE scheme_versions SET version_no=99 WHERE id=$1
+2026-11-03 20:17:38.266 IST [10928] ERROR:  approved configuration identity and metadata are immutable
+2026-11-03 20:17:38.266 IST [10928] CONTEXT:  PL/pgSQL function smartpro_immutable_configuration() line 16 at RAISE
+2026-11-03 20:17:38.266 IST [10928] STATEMENT:  UPDATE scheme_versions SET created_at=now()+interval '1 day' WHERE id=$1
+2026-11-03 20:17:39.057 IST [26720] ERROR:  invalid scheme state transition
+2026-11-03 20:17:39.057 IST [26720] CONTEXT:  PL/pgSQL function smartpro_scheme_transition() line 20 at RAISE
+2026-11-03 20:17:39.057 IST [26720] STATEMENT:  UPDATE scheme_versions SET state='DRAFT' WHERE id=$1
+2026-11-03 20:17:39.857 IST [2144] ERROR:  scheme must start DRAFT and pass approval validation
+2026-11-03 20:17:39.857 IST [2144] CONTEXT:  PL/pgSQL function smartpro_immutable_configuration() line 9 at RAISE
+2026-11-03 20:17:39.857 IST [2144] STATEMENT:  INSERT INTO scheme_versions(scheme_id,cycle_id,review_definition_id,version_no,state) SELECT scheme_id,cycle_id,review_definition_id,99,'APPROVED' FROM scheme_versions LIMIT 1
+2026-11-03 20:17:40.728 IST [9816] ERROR:  marks outside finite criterion range
+2026-11-03 20:17:40.728 IST [9816] CONTEXT:  PL/pgSQL function smartpro_validate_score() line 18 at RAISE
+2026-11-03 20:17:40.728 IST [9816] STATEMENT:  INSERT INTO team_criterion_scores(assessment_id,scheme_mode_id,mode_criterion_id,marks) VALUES($1,$2,$3,$4)
+2026-11-03 20:17:41.589 IST [33484] ERROR:  marks outside finite criterion range
+2026-11-03 20:17:41.589 IST [33484] CONTEXT:  PL/pgSQL function smartpro_validate_score() line 18 at RAISE
+2026-11-03 20:17:41.589 IST [33484] STATEMENT:  INSERT INTO team_criterion_scores(assessment_id,scheme_mode_id,mode_criterion_id,marks) VALUES($1,$2,$3,$4)
+2026-11-03 20:17:42.475 IST [33880] ERROR:  marks outside finite criterion range
+2026-11-03 20:17:42.475 IST [33880] CONTEXT:  PL/pgSQL function smartpro_validate_score() line 18 at RAISE
+2026-11-03 20:17:42.475 IST [33880] STATEMENT:  INSERT INTO team_criterion_scores(assessment_id,scheme_mode_id,mode_criterion_id,marks) VALUES($1,$2,$3,$4)
+2026-11-03 20:17:45.931 IST [36308] ERROR:  assessment scores incomplete
+2026-11-03 20:17:45.931 IST [36308] CONTEXT:  PL/pgSQL function smartpro_finalize_assessment() line 20 at RAISE
+2026-11-03 20:17:45.931 IST [36308] STATEMENT:  UPDATE assessments SET state='FINALIZED' WHERE id=$1
+2026-11-03 20:17:46.802 IST [24072] ERROR:  assessment scores incomplete
+2026-11-03 20:17:46.802 IST [24072] CONTEXT:  PL/pgSQL function smartpro_finalize_assessment() line 20 at RAISE
+2026-11-03 20:17:46.802 IST [24072] STATEMENT:  UPDATE assessments SET state='FINALIZED' WHERE id=$1
+2026-11-03 20:17:47.779 IST [11980] ERROR:  assessment scores incomplete
+2026-11-03 20:17:47.779 IST [11980] CONTEXT:  PL/pgSQL function smartpro_finalize_assessment() line 20 at RAISE
+2026-11-03 20:17:47.779 IST [11980] STATEMENT:  UPDATE assessments SET state='FINALIZED' WHERE id=$1
+2026-11-03 20:17:48.635 IST [28872] ERROR:  assessment scoring identity cannot be reparented
+2026-11-03 20:17:48.635 IST [28872] CONTEXT:  PL/pgSQL function smartpro_assessment_identity() line 18 at RAISE
+2026-11-03 20:17:48.635 IST [28872] STATEMENT:  UPDATE assessments SET scheme_mode_id=$1 WHERE id=$2
+2026-11-03 20:17:49.531 IST [32468] ERROR:  duplicate key value violates unique constraint "assessments_evaluator_assignment_id_key"
+2026-11-03 20:17:49.531 IST [32468] DETAIL:  Key (evaluator_assignment_id)=(28000000-0000-4000-8000-000000000001) already exists.
+2026-11-03 20:17:49.531 IST [32468] STATEMENT:  INSERT INTO assessments(review_id,scheme_mode_id,evaluator_assignment_id) VALUES($1,$2,$3)
+2026-11-03 20:17:50.472 IST [3108] ERROR:  invalid assessment/criterion scope
+2026-11-03 20:17:50.472 IST [3108] CONTEXT:  PL/pgSQL function smartpro_validate_score() line 9 at RAISE
+2026-11-03 20:17:50.472 IST [3108] STATEMENT:  INSERT INTO team_criterion_scores(assessment_id,scheme_mode_id,mode_criterion_id,marks) VALUES($1,$2,$3,1)
+2026-11-03 20:17:51.328 IST [24036] ERROR:  invalid assessment/criterion scope
+2026-11-03 20:17:51.328 IST [24036] CONTEXT:  PL/pgSQL function smartpro_validate_score() line 9 at RAISE
+2026-11-03 20:17:51.328 IST [24036] STATEMENT:  INSERT INTO student_criterion_scores(assessment_id,review_id,scheme_mode_id,roster_member_id,mode_criterion_id,marks) VALUES($1,$2,$3,$4,$5,1)
+2026-11-03 20:17:52.189 IST [18476] ERROR:  student score outside exact review roster
+2026-11-03 20:17:52.189 IST [18476] CONTEXT:  PL/pgSQL function smartpro_validate_score() line 12 at RAISE
+2026-11-03 20:17:52.189 IST [18476] STATEMENT:  INSERT INTO student_criterion_scores(assessment_id,review_id,scheme_mode_id,roster_member_id,mode_criterion_id,marks) VALUES($1,$2,$3,$4,$5,1)
+2026-11-03 20:17:53.032 IST [10348] ERROR:  membership edit would falsify historical eligibility
+2026-11-03 20:17:53.032 IST [10348] CONTEXT:  PL/pgSQL function smartpro_membership_history() line 10 at RAISE
+2026-11-03 20:17:53.032 IST [10348] STATEMENT:  UPDATE team_memberships SET joined_at=now()+interval '1 day' WHERE id=$1
+2026-11-03 20:17:53.038 IST [10348] ERROR:  membership edit would falsify historical eligibility
+2026-11-03 20:17:53.038 IST [10348] CONTEXT:  PL/pgSQL function smartpro_membership_history() line 10 at RAISE
+2026-11-03 20:17:53.038 IST [10348] STATEMENT:  UPDATE team_memberships SET left_at=(SELECT roster_locked_at FROM project_reviews WHERE id=$1)-interval '1 microsecond' WHERE id=$2
+2026-11-03 20:17:53.907 IST [34168] ERROR:  roster student not eligible at freeze instant
+2026-11-03 20:17:53.907 IST [34168] CONTEXT:  PL/pgSQL function smartpro_roster_freeze_eligibility() line 10 at RAISE
+2026-11-03 20:17:53.907 IST [34168] STATEMENT:  UPDATE project_reviews SET review_state='OPEN',roster_locked_at=clock_timestamp() WHERE id=$1
+2026-11-03 20:17:54.790 IST [11144] ERROR:  faculty assignment requires scoped faculty role
+2026-11-03 20:17:54.790 IST [11144] CONTEXT:  PL/pgSQL function smartpro_assignment_integrity() line 22 at RAISE
+2026-11-03 20:17:54.790 IST [11144] STATEMENT:  INSERT INTO evaluator_assignments(review_id,faculty_user_id) VALUES($1,$2)
+2026-11-03 20:17:55.688 IST [18964] ERROR:  release history immutable
+2026-11-03 20:17:55.688 IST [18964] CONTEXT:  PL/pgSQL function smartpro_release_guard() line 4 at RAISE
+2026-11-03 20:17:55.688 IST [18964] STATEMENT:  DELETE FROM result_releases
+2026-11-03 20:17:56.516 IST [33392] ERROR:  academic evidence is append-only: result_student_scores
+2026-11-03 20:17:56.516 IST [33392] CONTEXT:  PL/pgSQL function smartpro_forbid_mutation() line 3 at RAISE
+2026-11-03 20:17:56.516 IST [33392] STATEMENT:  DELETE FROM result_student_scores
+2026-11-03 20:17:57.339 IST [33860] ERROR:  academic evidence is append-only: result_source_assessments
+2026-11-03 20:17:57.339 IST [33860] CONTEXT:  PL/pgSQL function smartpro_forbid_mutation() line 3 at RAISE
+2026-11-03 20:17:57.339 IST [33860] STATEMENT:  DELETE FROM result_source_assessments
+2026-11-03 20:17:58.152 IST [16956] ERROR:  academic evidence is append-only: audit_events
+2026-11-03 20:17:58.152 IST [16956] CONTEXT:  PL/pgSQL function smartpro_forbid_mutation() line 3 at RAISE
+2026-11-03 20:17:58.152 IST [16956] STATEMENT:  DELETE FROM audit_events
+2026-11-03 20:17:58.967 IST [8916] ERROR:  academic evidence is append-only: approval_decisions
+2026-11-03 20:17:58.967 IST [8916] CONTEXT:  PL/pgSQL function smartpro_forbid_mutation() line 3 at RAISE
+2026-11-03 20:17:58.967 IST [8916] STATEMENT:  DELETE FROM approval_decisions
+2026-11-03 20:17:59.791 IST [16820] ERROR:  academic evidence is append-only: document_versions
+2026-11-03 20:17:59.791 IST [16820] CONTEXT:  PL/pgSQL function smartpro_forbid_mutation() line 3 at RAISE
+2026-11-03 20:17:59.791 IST [16820] STATEMENT:  DELETE FROM document_versions
+2026-11-03 20:18:00.672 IST [27564] ERROR:  insert or update on table "result_source_assessments" violates foreign key constraint "result_source_assessments_assessment_id_review_id_fkey"
+2026-11-03 20:18:00.672 IST [27564] DETAIL:  Key (assessment_id, review_id)=(a5ca1e5b-59a0-43f6-a88c-40a89fe84e5a, 26000000-0000-4000-8000-000000000001) is not present in table "assessments".
+2026-11-03 20:18:00.672 IST [27564] STATEMENT:  INSERT INTO result_source_assessments(release_id,review_id,assessment_id) VALUES($1,$2,$3)
+2026-11-03 20:18:00.679 IST [27564] ERROR:  assessment requires open frozen review
+2026-11-03 20:18:00.679 IST [27564] CONTEXT:  PL/pgSQL function smartpro_assessment_identity() line 13 at RAISE
+2026-11-03 20:18:00.679 IST [27564] STATEMENT:  INSERT INTO assessments(review_id,scheme_mode_id,evaluator_assignment_id) VALUES($1,$2,$3)
+2026-11-03 20:18:02.465 IST [30228] ERROR:  publication/correction requires explicit scoped grant
+2026-11-03 20:18:02.465 IST [30228] CONTEXT:  PL/pgSQL function smartpro_release_guard() line 27 at RAISE
+2026-11-03 20:18:02.465 IST [30228] STATEMENT:  INSERT INTO result_releases(id,review_id,release_no,scheme_version_id,scheme_mode_id,calculation_snapshot,
+	      released_by,supersedes_id,correction_reason) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)
+2026-11-03 20:18:03.364 IST [14116] ERROR:  release must be sealed before commit
+2026-11-03 20:18:03.364 IST [14116] CONTEXT:  PL/pgSQL function smartpro_release_complete() line 6 at RAISE
+2026-11-03 20:18:03.364 IST [14116] STATEMENT:  SET CONSTRAINTS ALL IMMEDIATE
+2026-11-03 20:18:04.228 IST [21468] ERROR:  published score/breakdown differs from finalized source marks
+2026-11-03 20:18:04.228 IST [21468] CONTEXT:  PL/pgSQL function smartpro_release_complete() line 26 at RAISE
+2026-11-03 20:18:04.228 IST [21468] STATEMENT:  SET CONSTRAINTS ALL IMMEDIATE
+2026-11-03 20:18:05.121 IST [16348] ERROR:  review finalization requires complete finalized assessments
+2026-11-03 20:18:05.121 IST [16348] CONTEXT:  PL/pgSQL function smartpro_review_terminal_state() line 14 at RAISE
+2026-11-03 20:18:05.121 IST [16348] STATEMENT:  UPDATE project_reviews SET review_state='FINALIZED' WHERE id=$1
+2026-11-03 20:18:05.980 IST [34232] ERROR:  conflicting key value violates exclusion constraint "same_team_membership_no_overlap"
+2026-11-03 20:18:05.980 IST [34232] DETAIL:  Key (team_id, user_id, tstzrange(joined_at, left_at, '[)'::text))=(13000000-0000-4000-8000-000000000001, 00000000-0000-4000-8000-000000000001, ["2026-11-03 20:18:05.810218+05:30","2026-11-04 20:18:05.810218+05:30")) conflicts with existing key (team_id, user_id, tstzrange(joined_at, left_at, '[)'::text))=(13000000-0000-4000-8000-000000000001, 00000000-0000-4000-8000-000000000001, ["2026-11-03 20:18:05.810218+05:30",)).
+2026-11-03 20:18:05.980 IST [34232] STATEMENT:  INSERT INTO team_memberships(team_id,user_id,joined_at,left_at)
+	      SELECT team_id,user_id,joined_at,joined_at+interval '1 day' FROM team_memberships WHERE id=$1
+2026-11-03 20:18:06.888 IST [31552] ERROR:  membership edit would falsify historical eligibility
+2026-11-03 20:18:06.888 IST [31552] CONTEXT:  PL/pgSQL function smartpro_membership_history() line 10 at RAISE
+2026-11-03 20:18:06.888 IST [31552] STATEMENT:  UPDATE team_memberships SET joined_at=joined_at-interval '1 day' WHERE id=$1
+2026-11-03 20:18:07.769 IST [34360] ERROR:  permission denied for table department_role_assignments
+2026-11-03 20:18:07.769 IST [34360] STATEMENT:  UPDATE department_role_assignments SET role_code='HOD'
+2026-11-03 20:18:07.770 IST [34360] ERROR:  permission denied for table audit_events
+2026-11-03 20:18:07.770 IST [34360] STATEMENT:  TRUNCATE audit_events
+2026-11-03 20:18:07.771 IST [34360] ERROR:  permission denied for table academic_action_grants
+2026-11-03 20:18:07.771 IST [34360] STATEMENT:  INSERT INTO academic_action_grants(user_id,department_id,action_code) VALUES($1,$2,'CORRECT_RESULTS')
+2026-11-03 20:18:08.794 IST [34032] ERROR:  cannot edit finalized assessment
+2026-11-03 20:18:08.794 IST [34032] CONTEXT:  PL/pgSQL function smartpro_validate_score() line 16 at RAISE
+2026-11-03 20:18:08.794 IST [34032] STATEMENT:  UPDATE team_criterion_scores SET marks=1 WHERE assessment_id=$1
+2026-11-03 20:18:09.847 IST [34732] ERROR:  scheme f26a318c-c3c3-4c17-b631-6a75cf633354 is locked in state APPROVED
+2026-11-03 20:18:09.847 IST [34732] CONTEXT:  PL/pgSQL function smartpro_guard_scheme_child() line 13 at RAISE
+2026-11-03 20:18:09.847 IST [34732] STATEMENT:  INSERT INTO rubric_criteria(scheme_version_id,code,label,maximum,sort_order) VALUES($1,'EXTRA','Unmapped',10,2)
+2026-11-03 20:18:21.379 IST [15792] ERROR:  synthetic commit failure
+2026-11-03 20:18:21.379 IST [15792] CONTEXT:  PL/pgSQL function test_fail_at_commit() line 2 at RAISE
+2026-11-03 20:18:21.379 IST [15792] STATEMENT:  COMMIT
+2026-11-03 20:18:40.322 IST [33700] ERROR:  permission denied for table document_versions
+2026-11-03 20:18:40.322 IST [33700] STATEMENT:  UPDATE document_versions SET version_no=3 WHERE id=$1
+2026-11-03 20:18:40.324 IST [33700] ERROR:  permission denied for table submission_items
+2026-11-03 20:18:40.324 IST [33700] STATEMENT:  DELETE FROM submission_items WHERE attempt_id=$1
+2026-11-03 20:18:40.326 IST [33700] ERROR:  permission denied for table approval_decisions
+2026-11-03 20:18:40.326 IST [33700] STATEMENT:  UPDATE approval_decisions SET comment=$1
+2026-11-03 20:22:16.282 IST [11088] LOG:  checkpoint starting: time
+2026-11-03 20:23:29.994 IST [11088] LOG:  checkpoint complete: wrote 1891 buffers (11.5%); 0 WAL file(s) added, 0 removed, 15 recycled; write=73.650 s, sync=0.014 s, total=73.713 s; sync files=23, longest=0.001 s, average=0.001 s; distance=257568 kB, estimate=257568 kB; lsn=0/4746FA08, redo lsn=0/46D70A78
+2026-11-03 20:23:30.000 IST [11088] LOG:  checkpoint starting: immediate force wait
+2026-11-03 20:23:30.028 IST [11088] LOG:  checkpoint complete: wrote 5 buffers (0.0%); 0 WAL file(s) added, 0 removed, 1 recycled; write=0.003 s, sync=0.003 s, total=0.029 s; sync files=4, longest=0.001 s, average=0.001 s; distance=7164 kB, estimate=232528 kB; lsn=0/4746FAB8, redo lsn=0/4746FA80
+2026-11-03 20:23:37.404 IST [21724] ERROR:  update or delete on table "projects" violates foreign key constraint "project_reviews_project_id_cycle_id_policy_version_id_fkey" on table "project_reviews"
+2026-11-03 20:23:37.404 IST [21724] DETAIL:  Key (id, cycle_id, policy_version_id)=(15000000-0000-4000-8000-000000000001, 11000000-0000-4000-8000-000000000001, 12000000-0000-4000-8000-000000000001) is still referenced from table "project_reviews".
+2026-11-03 20:23:37.404 IST [21724] STATEMENT:  UPDATE projects SET cycle_id=$1 WHERE id=$2
+2026-11-03 20:23:38.267 IST [35568] ERROR:  new project binding requires approved scoped policy
+2026-11-03 20:23:38.267 IST [35568] CONTEXT:  PL/pgSQL function smartpro_project_policy_binding() line 8 at RAISE
+2026-11-03 20:23:38.267 IST [35568] STATEMENT:  UPDATE projects SET department_id=$1 WHERE id=$2
+2026-11-03 20:23:38.282 IST [35568] ERROR:  faculty assignment requires scoped faculty role
+2026-11-03 20:23:38.282 IST [35568] CONTEXT:  PL/pgSQL function smartpro_assignment_integrity() line 22 at RAISE
+2026-11-03 20:23:38.282 IST [35568] STATEMENT:  INSERT INTO evaluator_assignments(review_id,faculty_user_id) VALUES($1,$2)
+2026-11-03 20:23:40.121 IST [32508] ERROR:  new project binding requires approved scoped policy
+2026-11-03 20:23:40.121 IST [32508] CONTEXT:  PL/pgSQL function smartpro_project_policy_binding() line 8 at RAISE
+2026-11-03 20:23:40.121 IST [32508] STATEMENT:  INSERT INTO projects(department_id,cycle_id,team_id,project_type,policy_version_id,project_code,title)
+	      SELECT department_id,cycle_id,team_id,project_type,$1,'DRAFT-P','Invalid' FROM projects WHERE id=$2
+2026-11-03 20:23:41.004 IST [12308] ERROR:  duplicate key value violates unique constraint "document_versions_file_asset_id_key"
+2026-11-03 20:23:41.004 IST [12308] DETAIL:  Key (file_asset_id)=(17000000-0000-4000-8000-000000000001) already exists.
+2026-11-03 20:23:41.004 IST [12308] STATEMENT:  INSERT INTO document_versions(project_id,document_id,version_no,file_asset_id,uploaded_by)
+	      SELECT project_id,document_id,version_no,file_asset_id,uploaded_by FROM document_versions LIMIT 1
+2026-11-03 20:23:41.873 IST [20620] ERROR:  submitted item references are immutable
+2026-11-03 20:23:41.873 IST [20620] CONTEXT:  PL/pgSQL function smartpro_submission_item_set() line 4 at RAISE
+2026-11-03 20:23:41.873 IST [20620] STATEMENT:  DELETE FROM submission_items
+2026-11-03 20:23:42.821 IST [13616] ERROR:  submitted item references are immutable
+2026-11-03 20:23:42.821 IST [13616] CONTEXT:  PL/pgSQL function smartpro_submission_item_set() line 4 at RAISE
+2026-11-03 20:23:42.821 IST [13616] STATEMENT:  UPDATE submission_items SET document_version_id=document_version_id
+2026-11-03 20:23:43.772 IST [664] ERROR:  sealed attempt cannot accept additional items
+2026-11-03 20:23:43.772 IST [664] CONTEXT:  PL/pgSQL function smartpro_submission_item_set() line 6 at RAISE
+2026-11-03 20:23:43.772 IST [664] STATEMENT:  INSERT INTO submission_items VALUES($1,$2,$3,$4)
+2026-11-03 20:23:44.685 IST [13924] ERROR:  formal attempt requires sealed nonempty item set at commit
+2026-11-03 20:23:44.685 IST [13924] CONTEXT:  PL/pgSQL function smartpro_attempt_complete() line 5 at RAISE
+2026-11-03 20:23:44.685 IST [13924] STATEMENT:  SET CONSTRAINTS ALL IMMEDIATE
+2026-11-03 20:23:45.588 IST [28196] ERROR:  finalized assessment immutable
+2026-11-03 20:23:45.588 IST [28196] CONTEXT:  PL/pgSQL function smartpro_assessment_identity() line 15 at RAISE
+2026-11-03 20:23:45.588 IST [28196] STATEMENT:  UPDATE assessments SET finalized_at=now()+interval '1 day' WHERE id=$1
+2026-11-03 20:23:46.496 IST [12484] ERROR:  finalized assessment immutable
+2026-11-03 20:23:46.496 IST [12484] CONTEXT:  PL/pgSQL function smartpro_assessment_identity() line 15 at RAISE
+2026-11-03 20:23:46.496 IST [12484] STATEMENT:  UPDATE assessments SET row_version=row_version+1 WHERE id=$1
+2026-11-03 20:23:47.396 IST [8876] ERROR:  finalized assessment immutable
+2026-11-03 20:23:47.396 IST [8876] CONTEXT:  PL/pgSQL function smartpro_assessment_identity() line 15 at RAISE
+2026-11-03 20:23:47.396 IST [8876] STATEMENT:  UPDATE assessments SET state='DRAFT' WHERE id=$1
+2026-11-03 20:23:48.474 IST [23836] ERROR:  finalized assessment immutable
+2026-11-03 20:23:48.474 IST [23836] CONTEXT:  PL/pgSQL function smartpro_assessment_identity() line 15 at RAISE
+2026-11-03 20:23:48.474 IST [23836] STATEMENT:  UPDATE assessments SET evaluator_assignment_id='28000000-0000-4000-8000-000000000001' WHERE id=$1
+2026-11-03 20:23:49.328 IST [29940] ERROR:  finalized assessment immutable
+2026-11-03 20:23:49.328 IST [29940] CONTEXT:  PL/pgSQL function smartpro_assessment_identity() line 15 at RAISE
+2026-11-03 20:23:49.328 IST [29940] STATEMENT:  UPDATE assessments SET review_id=review_id WHERE id=$1
+2026-11-03 20:23:50.207 IST [17332] ERROR:  cannot edit finalized assessment
+2026-11-03 20:23:50.207 IST [17332] CONTEXT:  PL/pgSQL function smartpro_validate_score() line 16 at RAISE
+2026-11-03 20:23:50.207 IST [17332] STATEMENT:  UPDATE team_criterion_scores SET marks=0
+2026-11-03 20:23:51.036 IST [27468] ERROR:  cannot edit finalized assessment
+2026-11-03 20:23:51.036 IST [27468] CONTEXT:  PL/pgSQL function smartpro_validate_score() line 16 at RAISE
+2026-11-03 20:23:51.036 IST [27468] STATEMENT:  UPDATE student_criterion_scores SET marks=0
+2026-11-03 20:23:51.884 IST [10900] ERROR:  finalized assessment scores cannot be deleted
+2026-11-03 20:23:51.884 IST [10900] CONTEXT:  PL/pgSQL function smartpro_guard_score_delete() line 5 at RAISE
+2026-11-03 20:23:51.884 IST [10900] STATEMENT:  DELETE FROM team_criterion_scores
+2026-11-03 20:23:52.760 IST [18532] ERROR:  finalized assessment scores cannot be deleted
+2026-11-03 20:23:52.760 IST [18532] CONTEXT:  PL/pgSQL function smartpro_guard_score_delete() line 5 at RAISE
+2026-11-03 20:23:52.760 IST [18532] STATEMENT:  DELETE FROM student_criterion_scores
+2026-11-03 20:23:53.700 IST [36076] ERROR:  assessment must start DRAFT
+2026-11-03 20:23:53.700 IST [36076] CONTEXT:  PL/pgSQL function smartpro_assessment_identity() line 11 at RAISE
+2026-11-03 20:23:53.700 IST [36076] STATEMENT:  INSERT INTO assessments(review_id,scheme_mode_id,evaluator_assignment_id,state)
+	      SELECT review_id,$1,id,'FINALIZED' FROM evaluator_assignments WHERE review_id=$2
+2026-11-03 20:23:54.642 IST [33688] ERROR:  approved configuration identity and metadata are immutable
+2026-11-03 20:23:54.642 IST [33688] CONTEXT:  PL/pgSQL function smartpro_immutable_configuration() line 16 at RAISE
+2026-11-03 20:23:54.642 IST [33688] STATEMENT:  UPDATE scheme_versions SET version_no=99 WHERE id=$1
+2026-11-03 20:23:55.554 IST [29512] ERROR:  approved configuration identity and metadata are immutable
+2026-11-03 20:23:55.554 IST [29512] CONTEXT:  PL/pgSQL function smartpro_immutable_configuration() line 16 at RAISE
+2026-11-03 20:23:55.554 IST [29512] STATEMENT:  UPDATE scheme_versions SET created_at=now()+interval '1 day' WHERE id=$1
+2026-11-03 20:23:56.491 IST [17280] ERROR:  invalid scheme state transition
+2026-11-03 20:23:56.491 IST [17280] CONTEXT:  PL/pgSQL function smartpro_scheme_transition() line 20 at RAISE
+2026-11-03 20:23:56.491 IST [17280] STATEMENT:  UPDATE scheme_versions SET state='DRAFT' WHERE id=$1
+2026-11-03 20:23:57.416 IST [36356] ERROR:  scheme must start DRAFT and pass approval validation
+2026-11-03 20:23:57.416 IST [36356] CONTEXT:  PL/pgSQL function smartpro_immutable_configuration() line 9 at RAISE
+2026-11-03 20:23:57.416 IST [36356] STATEMENT:  INSERT INTO scheme_versions(scheme_id,cycle_id,review_definition_id,version_no,state) SELECT scheme_id,cycle_id,review_definition_id,99,'APPROVED' FROM scheme_versions LIMIT 1
+2026-11-03 20:23:58.404 IST [23024] ERROR:  marks outside finite criterion range
+2026-11-03 20:23:58.404 IST [23024] CONTEXT:  PL/pgSQL function smartpro_validate_score() line 18 at RAISE
+2026-11-03 20:23:58.404 IST [23024] STATEMENT:  INSERT INTO team_criterion_scores(assessment_id,scheme_mode_id,mode_criterion_id,marks) VALUES($1,$2,$3,$4)
+2026-11-03 20:23:59.393 IST [23928] ERROR:  marks outside finite criterion range
+2026-11-03 20:23:59.393 IST [23928] CONTEXT:  PL/pgSQL function smartpro_validate_score() line 18 at RAISE
+2026-11-03 20:23:59.393 IST [23928] STATEMENT:  INSERT INTO team_criterion_scores(assessment_id,scheme_mode_id,mode_criterion_id,marks) VALUES($1,$2,$3,$4)
+2026-11-03 20:24:00.356 IST [13300] ERROR:  marks outside finite criterion range
+2026-11-03 20:24:00.356 IST [13300] CONTEXT:  PL/pgSQL function smartpro_validate_score() line 18 at RAISE
+2026-11-03 20:24:00.356 IST [13300] STATEMENT:  INSERT INTO team_criterion_scores(assessment_id,scheme_mode_id,mode_criterion_id,marks) VALUES($1,$2,$3,$4)
+2026-11-03 20:24:04.296 IST [1848] ERROR:  assessment scores incomplete
+2026-11-03 20:24:04.296 IST [1848] CONTEXT:  PL/pgSQL function smartpro_finalize_assessment() line 20 at RAISE
+2026-11-03 20:24:04.296 IST [1848] STATEMENT:  UPDATE assessments SET state='FINALIZED' WHERE id=$1
+2026-11-03 20:24:05.243 IST [32920] ERROR:  assessment scores incomplete
+2026-11-03 20:24:05.243 IST [32920] CONTEXT:  PL/pgSQL function smartpro_finalize_assessment() line 20 at RAISE
+2026-11-03 20:24:05.243 IST [32920] STATEMENT:  UPDATE assessments SET state='FINALIZED' WHERE id=$1
+2026-11-03 20:24:06.141 IST [21776] ERROR:  assessment scores incomplete
+2026-11-03 20:24:06.141 IST [21776] CONTEXT:  PL/pgSQL function smartpro_finalize_assessment() line 20 at RAISE
+2026-11-03 20:24:06.141 IST [21776] STATEMENT:  UPDATE assessments SET state='FINALIZED' WHERE id=$1
+2026-11-03 20:24:07.099 IST [30660] ERROR:  assessment scoring identity cannot be reparented
+2026-11-03 20:24:07.099 IST [30660] CONTEXT:  PL/pgSQL function smartpro_assessment_identity() line 18 at RAISE
+2026-11-03 20:24:07.099 IST [30660] STATEMENT:  UPDATE assessments SET scheme_mode_id=$1 WHERE id=$2
+2026-11-03 20:24:08.034 IST [19736] ERROR:  duplicate key value violates unique constraint "assessments_evaluator_assignment_id_key"
+2026-11-03 20:24:08.034 IST [19736] DETAIL:  Key (evaluator_assignment_id)=(28000000-0000-4000-8000-000000000001) already exists.
+2026-11-03 20:24:08.034 IST [19736] STATEMENT:  INSERT INTO assessments(review_id,scheme_mode_id,evaluator_assignment_id) VALUES($1,$2,$3)
+2026-11-03 20:24:08.946 IST [26728] ERROR:  invalid assessment/criterion scope
+2026-11-03 20:24:08.946 IST [26728] CONTEXT:  PL/pgSQL function smartpro_validate_score() line 9 at RAISE
+2026-11-03 20:24:08.946 IST [26728] STATEMENT:  INSERT INTO team_criterion_scores(assessment_id,scheme_mode_id,mode_criterion_id,marks) VALUES($1,$2,$3,1)
+2026-11-03 20:24:09.886 IST [12696] ERROR:  invalid assessment/criterion scope
+2026-11-03 20:24:09.886 IST [12696] CONTEXT:  PL/pgSQL function smartpro_validate_score() line 9 at RAISE
+2026-11-03 20:24:09.886 IST [12696] STATEMENT:  INSERT INTO student_criterion_scores(assessment_id,review_id,scheme_mode_id,roster_member_id,mode_criterion_id,marks) VALUES($1,$2,$3,$4,$5,1)
+2026-11-03 20:24:10.823 IST [5988] ERROR:  student score outside exact review roster
+2026-11-03 20:24:10.823 IST [5988] CONTEXT:  PL/pgSQL function smartpro_validate_score() line 12 at RAISE
+2026-11-03 20:24:10.823 IST [5988] STATEMENT:  INSERT INTO student_criterion_scores(assessment_id,review_id,scheme_mode_id,roster_member_id,mode_criterion_id,marks) VALUES($1,$2,$3,$4,$5,1)
+2026-11-03 20:24:11.697 IST [30908] ERROR:  membership edit would falsify historical eligibility
+2026-11-03 20:24:11.697 IST [30908] CONTEXT:  PL/pgSQL function smartpro_membership_history() line 10 at RAISE
+2026-11-03 20:24:11.697 IST [30908] STATEMENT:  UPDATE team_memberships SET joined_at=now()+interval '1 day' WHERE id=$1
+2026-11-03 20:24:11.704 IST [30908] ERROR:  membership edit would falsify historical eligibility
+2026-11-03 20:24:11.704 IST [30908] CONTEXT:  PL/pgSQL function smartpro_membership_history() line 10 at RAISE
+2026-11-03 20:24:11.704 IST [30908] STATEMENT:  UPDATE team_memberships SET left_at=(SELECT roster_locked_at FROM project_reviews WHERE id=$1)-interval '1 microsecond' WHERE id=$2
+2026-11-03 20:24:12.613 IST [27428] ERROR:  roster student not eligible at freeze instant
+2026-11-03 20:24:12.613 IST [27428] CONTEXT:  PL/pgSQL function smartpro_roster_freeze_eligibility() line 10 at RAISE
+2026-11-03 20:24:12.613 IST [27428] STATEMENT:  UPDATE project_reviews SET review_state='OPEN',roster_locked_at=clock_timestamp() WHERE id=$1
+2026-11-03 20:24:13.495 IST [5472] ERROR:  faculty assignment requires scoped faculty role
+2026-11-03 20:24:13.495 IST [5472] CONTEXT:  PL/pgSQL function smartpro_assignment_integrity() line 22 at RAISE
+2026-11-03 20:24:13.495 IST [5472] STATEMENT:  INSERT INTO evaluator_assignments(review_id,faculty_user_id) VALUES($1,$2)
+2026-11-03 20:24:14.361 IST [20132] ERROR:  release history immutable
+2026-11-03 20:24:14.361 IST [20132] CONTEXT:  PL/pgSQL function smartpro_release_guard() line 4 at RAISE
+2026-11-03 20:24:14.361 IST [20132] STATEMENT:  DELETE FROM result_releases
+2026-11-03 20:24:15.420 IST [27104] ERROR:  academic evidence is append-only: result_student_scores
+2026-11-03 20:24:15.420 IST [27104] CONTEXT:  PL/pgSQL function smartpro_forbid_mutation() line 3 at RAISE
+2026-11-03 20:24:15.420 IST [27104] STATEMENT:  DELETE FROM result_student_scores
+2026-11-03 20:24:16.276 IST [36360] ERROR:  academic evidence is append-only: result_source_assessments
+2026-11-03 20:24:16.276 IST [36360] CONTEXT:  PL/pgSQL function smartpro_forbid_mutation() line 3 at RAISE
+2026-11-03 20:24:16.276 IST [36360] STATEMENT:  DELETE FROM result_source_assessments
+2026-11-03 20:24:17.056 IST [36264] ERROR:  academic evidence is append-only: audit_events
+2026-11-03 20:24:17.056 IST [36264] CONTEXT:  PL/pgSQL function smartpro_forbid_mutation() line 3 at RAISE
+2026-11-03 20:24:17.056 IST [36264] STATEMENT:  DELETE FROM audit_events
+2026-11-03 20:24:17.897 IST [36744] ERROR:  academic evidence is append-only: approval_decisions
+2026-11-03 20:24:17.897 IST [36744] CONTEXT:  PL/pgSQL function smartpro_forbid_mutation() line 3 at RAISE
+2026-11-03 20:24:17.897 IST [36744] STATEMENT:  DELETE FROM approval_decisions
+2026-11-03 20:24:18.744 IST [2784] ERROR:  academic evidence is append-only: document_versions
+2026-11-03 20:24:18.744 IST [2784] CONTEXT:  PL/pgSQL function smartpro_forbid_mutation() line 3 at RAISE
+2026-11-03 20:24:18.744 IST [2784] STATEMENT:  DELETE FROM document_versions
+2026-11-03 20:24:19.645 IST [12028] ERROR:  insert or update on table "result_source_assessments" violates foreign key constraint "result_source_assessments_assessment_id_review_id_fkey"
+2026-11-03 20:24:19.645 IST [12028] DETAIL:  Key (assessment_id, review_id)=(6d0caafd-c254-49b5-90e4-b95c97507927, 26000000-0000-4000-8000-000000000001) is not present in table "assessments".
+2026-11-03 20:24:19.645 IST [12028] STATEMENT:  INSERT INTO result_source_assessments(release_id,review_id,assessment_id) VALUES($1,$2,$3)
+2026-11-03 20:24:19.650 IST [12028] ERROR:  assessment requires open frozen review
+2026-11-03 20:24:19.650 IST [12028] CONTEXT:  PL/pgSQL function smartpro_assessment_identity() line 13 at RAISE
+2026-11-03 20:24:19.650 IST [12028] STATEMENT:  INSERT INTO assessments(review_id,scheme_mode_id,evaluator_assignment_id) VALUES($1,$2,$3)
+2026-11-03 20:24:21.466 IST [15236] ERROR:  publication/correction requires explicit scoped grant
+2026-11-03 20:24:21.466 IST [15236] CONTEXT:  PL/pgSQL function smartpro_release_guard() line 27 at RAISE
+2026-11-03 20:24:21.466 IST [15236] STATEMENT:  INSERT INTO result_releases(id,review_id,release_no,scheme_version_id,scheme_mode_id,calculation_snapshot,
+	      released_by,supersedes_id,correction_reason) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)
+2026-11-03 20:24:22.367 IST [14956] ERROR:  release must be sealed before commit
+2026-11-03 20:24:22.367 IST [14956] CONTEXT:  PL/pgSQL function smartpro_release_complete() line 6 at RAISE
+2026-11-03 20:24:22.367 IST [14956] STATEMENT:  SET CONSTRAINTS ALL IMMEDIATE
+2026-11-03 20:24:23.292 IST [28636] ERROR:  published score/breakdown differs from finalized source marks
+2026-11-03 20:24:23.292 IST [28636] CONTEXT:  PL/pgSQL function smartpro_release_complete() line 26 at RAISE
+2026-11-03 20:24:23.292 IST [28636] STATEMENT:  SET CONSTRAINTS ALL IMMEDIATE
+2026-11-03 20:24:24.231 IST [14468] ERROR:  review finalization requires complete finalized assessments
+2026-11-03 20:24:24.231 IST [14468] CONTEXT:  PL/pgSQL function smartpro_review_terminal_state() line 14 at RAISE
+2026-11-03 20:24:24.231 IST [14468] STATEMENT:  UPDATE project_reviews SET review_state='FINALIZED' WHERE id=$1
+2026-11-03 20:24:25.101 IST [36672] ERROR:  conflicting key value violates exclusion constraint "same_team_membership_no_overlap"
+2026-11-03 20:24:25.101 IST [36672] DETAIL:  Key (team_id, user_id, tstzrange(joined_at, left_at, '[)'::text))=(13000000-0000-4000-8000-000000000001, 00000000-0000-4000-8000-000000000001, ["2026-11-03 20:24:24.927414+05:30","2026-11-04 20:24:24.927414+05:30")) conflicts with existing key (team_id, user_id, tstzrange(joined_at, left_at, '[)'::text))=(13000000-0000-4000-8000-000000000001, 00000000-0000-4000-8000-000000000001, ["2026-11-03 20:24:24.927414+05:30",)).
+2026-11-03 20:24:25.101 IST [36672] STATEMENT:  INSERT INTO team_memberships(team_id,user_id,joined_at,left_at)
+	      SELECT team_id,user_id,joined_at,joined_at+interval '1 day' FROM team_memberships WHERE id=$1
+2026-11-03 20:24:25.995 IST [3564] ERROR:  membership edit would falsify historical eligibility
+2026-11-03 20:24:25.995 IST [3564] CONTEXT:  PL/pgSQL function smartpro_membership_history() line 10 at RAISE
+2026-11-03 20:24:25.995 IST [3564] STATEMENT:  UPDATE team_memberships SET joined_at=joined_at-interval '1 day' WHERE id=$1
+2026-11-03 20:24:26.891 IST [4960] ERROR:  permission denied for table department_role_assignments
+2026-11-03 20:24:26.891 IST [4960] STATEMENT:  UPDATE department_role_assignments SET role_code='HOD'
+2026-11-03 20:24:26.892 IST [4960] ERROR:  permission denied for table audit_events
+2026-11-03 20:24:26.892 IST [4960] STATEMENT:  TRUNCATE audit_events
+2026-11-03 20:24:26.893 IST [4960] ERROR:  permission denied for table academic_action_grants
+2026-11-03 20:24:26.893 IST [4960] STATEMENT:  INSERT INTO academic_action_grants(user_id,department_id,action_code) VALUES($1,$2,'CORRECT_RESULTS')
+2026-11-03 20:24:27.867 IST [25500] ERROR:  cannot edit finalized assessment
+2026-11-03 20:24:27.867 IST [25500] CONTEXT:  PL/pgSQL function smartpro_validate_score() line 16 at RAISE
+2026-11-03 20:24:27.867 IST [25500] STATEMENT:  UPDATE team_criterion_scores SET marks=1 WHERE assessment_id=$1
+2026-11-03 20:24:28.787 IST [11588] ERROR:  scheme a2f18e57-df02-4592-b53c-28a90aa353a0 is locked in state APPROVED
+2026-11-03 20:24:28.787 IST [11588] CONTEXT:  PL/pgSQL function smartpro_guard_scheme_child() line 13 at RAISE
+2026-11-03 20:24:28.787 IST [11588] STATEMENT:  INSERT INTO rubric_criteria(scheme_version_id,code,label,maximum,sort_order) VALUES($1,'EXTRA','Unmapped',10,2)
+2026-11-03 20:24:40.660 IST [16424] ERROR:  synthetic commit failure
+2026-11-03 20:24:40.660 IST [16424] CONTEXT:  PL/pgSQL function test_fail_at_commit() line 2 at RAISE
+2026-11-03 20:24:40.660 IST [16424] STATEMENT:  COMMIT
+2026-11-03 20:25:01.541 IST [20616] ERROR:  permission denied for table document_versions
+2026-11-03 20:25:01.541 IST [20616] STATEMENT:  UPDATE document_versions SET version_no=3 WHERE id=$1
+2026-11-03 20:25:01.543 IST [20616] ERROR:  permission denied for table submission_items
+2026-11-03 20:25:01.543 IST [20616] STATEMENT:  DELETE FROM submission_items WHERE attempt_id=$1
+2026-11-03 20:25:01.545 IST [20616] ERROR:  permission denied for table approval_decisions
+2026-11-03 20:25:01.545 IST [20616] STATEMENT:  UPDATE approval_decisions SET comment=$1
+2026-11-03 20:28:29.188 IST [11088] LOG:  checkpoint starting: time
+2026-11-03 20:28:54.617 IST [30068] LOG:  received fast shutdown request
+2026-11-03 20:28:54.621 IST [30068] LOG:  aborting any active transactions
+2026-11-03 20:28:54.627 IST [30068] LOG:  background worker "logical replication launcher" (PID 5828) exited with exit code 1
+2026-11-03 20:28:58.989 IST [11088] LOG:  checkpoint complete: wrote 7036 buffers (42.9%); 0 WAL file(s) added, 0 removed, 16 recycled; write=25.649 s, sync=2.213 s, total=29.801 s; sync files=20811, longest=0.008 s, average=0.001 s; distance=259994 kB, estimate=259994 kB; lsn=0/57256408, redo lsn=0/572563D0
+2026-11-03 20:28:59.031 IST [11088] LOG:  shutting down
+2026-11-03 20:28:59.032 IST [11088] LOG:  checkpoint starting: shutdown immediate
+2026-11-03 20:28:59.068 IST [11088] LOG:  checkpoint complete: wrote 0 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.037 s; sync files=0, longest=0.000 s, average=0.000 s; distance=0 kB, estimate=233994 kB; lsn=0/57256480, redo lsn=0/57256480
+2026-11-03 20:28:59.103 IST [30068] LOG:  database system is shut down

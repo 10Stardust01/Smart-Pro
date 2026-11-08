@@ -1,0 +1,14 @@
+Traceback (most recent call last):
+  File "C:\Users\DELL\Documents\Codex\2026-11-03\perform-an-independent-aquacrop-ospy-3\work\smartpro-tools\debug_api.py", line 4, in <module>
+    domain.start_upload('16000000-0000-4000-8000-000000000001','00000000-0000-4000-8000-000000000001')
+  File "C:\Users\DELL\Documents\Codex\2026-11-03\perform-an-independent-aquacrop-ospy-3\outputs\smartpro\workflow-poc\domain.py", line 122, in start_upload
+    require_project(db, doc['project_id'], actor, 'student')
+  File "C:\Users\DELL\Documents\Codex\2026-11-03\perform-an-independent-aquacrop-ospy-3\outputs\smartpro\workflow-poc\domain.py", line 83, in require_project
+    if not has_permission(db, project, actor, permission):
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\DELL\Documents\Codex\2026-11-03\perform-an-independent-aquacrop-ospy-3\outputs\smartpro\workflow-poc\domain.py", line 77, in has_permission
+    return db.execute(query, (project, actor)).fetchone() is not None
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\DELL\Documents\Codex\2026-11-03\perform-an-independent-aquacrop-ospy-3\work\smartpro-venv\Lib\site-packages\psycopg\connection.py", line 304, in execute
+    raise ex.with_traceback(None)
+psycopg.errors.InsufficientPrivilege: permission denied for table team_memberships

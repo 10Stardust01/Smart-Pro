@@ -1,0 +1,26 @@
+The files belonging to this database system will be owned by user "DELL".
+This user must also own the server process.
+
+The database cluster will be initialized with locale "C".
+The default text search configuration will be set to "english".
+
+Data page checksums are disabled.
+
+creating directory C:/Users/DELL/Documents/Codex/2026-11-03/perform-an-independent-aquacrop-ospy-3/work/smartpro-pgdata ... ok
+creating subdirectories ... ok
+selecting dynamic shared memory implementation ... windows
+selecting default max_connections ... 100
+selecting default shared_buffers ... 128MB
+selecting default time zone ... Asia/Calcutta
+creating configuration files ... ok
+running bootstrap script ... ok
+performing post-bootstrap initialization ... ok
+syncing data to disk ... ok
+
+Success. You can now start the database server using:
+
+    ^"C^:^\Users^\DELL^\Documents^\Codex^\2026^-11^-03^\perform^-an^-independent^-aquacrop^-ospy^-3^\work^\smartpro^-tools^\pgsql^\bin^\pg^_ctl^" -D ^"C^:^\Users^\DELL^\Documents^\Codex^\2026^-11^-03^\perform^-an^-independent^-aquacrop^-ospy^-3^\work^\smartpro^-pgdata^" -l logfile start
+
+waiting for server to start.... done
+server started
+Workspace-only PostgreSQL started on loopback port 55439 ; credentials retained only in work/smartpro-local.json

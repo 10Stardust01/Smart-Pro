@@ -1,0 +1,36 @@
+................................F..................ssss                  [100%]
+================================== FAILURES ===================================
+_______________ test_historical_membership_cannot_be_rewritten ________________
+
+db = <psycopg.Connection [IDLE] (host=127.0.0.1 port=55439 user=smartpro_owner database=smartpro_validation) at 0x26240fd60f0>
+
+    def test_historical_membership_cannot_be_rewritten(db):
+        reject(db, "UPDATE team_memberships SET joined_at=now()+interval '1 day' WHERE id=%s", (ident('14'),))
+>       reject(db, "UPDATE team_memberships SET left_at=joined_at+interval '1 microsecond' WHERE id=%s", (ident('14'),))
+
+outputs\smartpro\tests\test_database.py:186: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+db = <psycopg.Connection [IDLE] (host=127.0.0.1 port=55439 user=smartpro_owner database=smartpro_validation) at 0x26240fd60f0>
+statement = "UPDATE team_memberships SET left_at=joined_at+interval '1 microsecond' WHERE id=%s"
+params = ('14000000-0000-4000-8000-000000000001',), states = ('23514',)
+
+    def reject(db, statement, params=(), states=('23514',)):
+>       with pytest.raises(psycopg.Error) as caught:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE Error
+
+outputs\smartpro\tests\test_database.py:37: Failed
+---------------------------- Captured stdout setup ----------------------------
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL 008_runtime_authorization.sql
+PASS SQL 001_seed.sql
+=========================== short test summary info ===========================
+FAILED outputs/smartpro/tests/test_database.py::test_historical_membership_cannot_be_rewritten
+1 failed, 50 passed, 4 skipped in 43.11s

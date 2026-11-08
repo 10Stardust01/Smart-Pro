@@ -1,0 +1,8 @@
+BEGIN
+psql:C:/Users/DELL/Documents/Codex/2026-11-03/perform-an-independent-aquacrop-ospy-3/work/smartpro-original/database-v1.5/tests/002_constraints.sql:234: NOTICE:  PASS cross-project submission blocked
+psql:C:/Users/DELL/Documents/Codex/2026-11-03/perform-an-independent-aquacrop-ospy-3/work/smartpro-original/database-v1.5/tests/002_constraints.sql:234: ERROR:  cannot edit finalized assessment
+CONTEXT:  PL/pgSQL function smartpro_validate_score() line 14 at RAISE
+SQL statement "INSERT INTO team_criterion_scores(assessment_id,scheme_mode_id,mode_criterion_id,marks)
+    VALUES('29000000-0000-4000-8000-000000000001','24000000-0000-4000-8000-000000000003',
+           '25000000-0000-4000-8000-000000000006',12)"
+PL/pgSQL function inline_code_block line 30 at SQL statement

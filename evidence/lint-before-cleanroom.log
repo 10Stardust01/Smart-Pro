@@ -1,0 +1,20 @@
+F401 [*] `db_setup.admin_connect` imported but unused
+  --> outputs\smartpro\validate.py:17:43
+   |
+15 | from psycopg.rows import dict_row
+16 |
+17 | from db_setup import reset_test_database, admin_connect
+   |                                           ^^^^^^^^^^^^^
+18 |
+19 | ROOT = Path(__file__).resolve().parent
+   |
+help: Remove unused import: `db_setup.admin_connect`
+   |
+16 |
+   - from db_setup import reset_test_database, admin_connect
+17 + from db_setup import reset_test_database
+18 |
+   |
+
+Found 1 error.
+[*] 1 fixable with `--fix`.

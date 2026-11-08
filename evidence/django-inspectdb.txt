@@ -1,0 +1,562 @@
+# This is an auto-generated Django model module.
+# You'll have to do the following manually to clean this up:
+#   * Rearrange models' order
+#   * Make sure each model has one field with primary_key=True
+#   * Make sure each ForeignKey and OneToOneField has `on_delete` set to the desired behavior
+#   * Remove `managed = False` lines if you wish to allow Django to create, modify, and delete the table
+# Feel free to rename the models, but don't rename db_table values or field names.
+from django.db import models
+
+
+class AcademicActionGrants(models.Model):
+    id = models.UUIDField(primary_key=True)
+    user = models.ForeignKey('Users', models.DO_NOTHING)
+    department = models.ForeignKey('Departments', models.DO_NOTHING)
+    action_code = models.TextField()
+    valid_from = models.DateTimeField()
+    valid_until = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'academic_action_grants'
+        unique_together = (('user', 'department', 'action_code'),)
+
+
+class AcademicCycles(models.Model):
+    id = models.UUIDField(primary_key=True)
+    department = models.ForeignKey('Departments', models.DO_NOTHING)
+    code = models.TextField()
+    starts_on = models.DateField()
+    ends_on = models.DateField()
+
+    class Meta:
+        managed = False
+        db_table = 'academic_cycles'
+        unique_together = (('department', 'code'), ('id', 'department'),)
+
+
+class ApprovalDecisions(models.Model):
+    id = models.UUIDField(primary_key=True)
+    attempt = models.ForeignKey('SubmissionAttempts', models.DO_NOTHING)
+    project_id = models.UUIDField()
+    reviewer_user = models.ForeignKey('Users', models.DO_NOTHING)
+    decision = models.TextField()
+    comment = models.TextField(blank=True, null=True)
+    decided_at = models.DateTimeField()
+    faculty_assignment = models.ForeignKey('FacultyAssignments', models.DO_NOTHING, blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'approval_decisions'
+        unique_together = (('attempt', 'reviewer_user'),)
+
+
+class Assessments(models.Model):
+    id = models.UUIDField(primary_key=True)
+    review = models.ForeignKey('ProjectReviews', models.DO_NOTHING)
+    scheme_mode_id = models.UUIDField()
+    evaluator_assignment = models.OneToOneField('EvaluatorAssignments', models.DO_NOTHING)
+    state = models.TextField()
+    row_version = models.IntegerField()
+    finalized_at = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'assessments'
+        unique_together = (('id', 'review'), ('id', 'review', 'scheme_mode_id'), ('id', 'scheme_mode_id'),)
+
+
+class AuditEvents(models.Model):
+    id = models.UUIDField(primary_key=True)
+    actor = models.ForeignKey('Users', models.DO_NOTHING, blank=True, null=True)
+    project = models.ForeignKey('Projects', models.DO_NOTHING, blank=True, null=True)
+    action = models.TextField()
+    target_type = models.TextField()
+    target_id = models.UUIDField(blank=True, null=True)
+    metadata = models.JSONField()
+    occurred_at = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'audit_events'
+
+
+class DepartmentRoleAssignments(models.Model):
+    id = models.UUIDField(primary_key=True)
+    user = models.ForeignKey('Users', models.DO_NOTHING)
+    department = models.ForeignKey('Departments', models.DO_NOTHING)
+    role_code = models.TextField()
+    valid_from = models.DateTimeField()
+    valid_until = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'department_role_assignments'
+        unique_together = (('user', 'department', 'role_code'),)
+
+
+class Departments(models.Model):
+    id = models.UUIDField(primary_key=True)
+    code = models.TextField(unique=True)
+    name = models.TextField()
+
+    class Meta:
+        managed = False
+        db_table = 'departments'
+
+
+class DocumentVersions(models.Model):
+    id = models.UUIDField(primary_key=True)
+    project_id = models.UUIDField()
+    document = models.ForeignKey('Documents', models.DO_NOTHING)
+    version_no = models.IntegerField()
+    file_asset = models.OneToOneField('FileAssets', models.DO_NOTHING)
+    uploaded_by = models.ForeignKey('Users', models.DO_NOTHING, db_column='uploaded_by')
+    created_at = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'document_versions'
+        unique_together = (('document', 'version_no'), ('id', 'document', 'project_id'), ('id', 'project_id'),)
+
+
+class Documents(models.Model):
+    id = models.UUIDField(primary_key=True)
+    project = models.ForeignKey('Projects', models.DO_NOTHING)
+    document_type = models.TextField()
+    label = models.TextField()
+    created_at = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'documents'
+        unique_together = (('id', 'project'),)
+
+
+class EvaluationSchemes(models.Model):
+    id = models.UUIDField(primary_key=True)
+    department_id = models.UUIDField()
+    cycle = models.ForeignKey(AcademicCycles, models.DO_NOTHING)
+    review_definition = models.ForeignKey('ReviewDefinitions', models.DO_NOTHING)
+    label = models.TextField()
+
+    class Meta:
+        managed = False
+        db_table = 'evaluation_schemes'
+        unique_together = (('cycle', 'review_definition'), ('id', 'cycle', 'review_definition'),)
+
+
+class EvaluatorAssignments(models.Model):
+    id = models.UUIDField(primary_key=True)
+    review = models.ForeignKey('ProjectReviews', models.DO_NOTHING)
+    faculty_user = models.ForeignKey('Users', models.DO_NOTHING)
+    created_at = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'evaluator_assignments'
+        unique_together = (('id', 'review'), ('review', 'faculty_user'),)
+
+
+class FacultyAssignments(models.Model):
+    id = models.UUIDField(primary_key=True)
+    project = models.ForeignKey('Projects', models.DO_NOTHING)
+    faculty_user = models.ForeignKey('Users', models.DO_NOTHING)
+    assignment_type = models.TextField()
+    valid_from = models.DateTimeField()
+    valid_until = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'faculty_assignments'
+        unique_together = (('id', 'project', 'faculty_user'), ('id', 'project'),)
+
+
+class FileAssets(models.Model):
+    id = models.UUIDField(primary_key=True)
+    storage_key = models.TextField(unique=True)
+    sha256 = models.CharField(max_length=64)
+    size_bytes = models.BigIntegerField()
+    mime_type = models.TextField()
+    upload_status = models.TextField()
+    uploaded_by = models.ForeignKey('Users', models.DO_NOTHING, db_column='uploaded_by')
+    created_at = models.DateTimeField()
+    verified_at = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'file_assets'
+
+
+class IdempotencyRecords(models.Model):
+    id = models.UUIDField(primary_key=True)
+    actor = models.ForeignKey('Users', models.DO_NOTHING)
+    operation = models.TextField()
+    key = models.TextField()
+    request_sha256 = models.CharField(max_length=64)
+    state = models.TextField()
+    response_status = models.IntegerField(blank=True, null=True)
+    response_body = models.JSONField(blank=True, null=True)
+    created_at = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'idempotency_records'
+        unique_together = (('actor', 'operation', 'key'),)
+
+
+class Milestones(models.Model):
+    id = models.UUIDField(primary_key=True)
+    project = models.ForeignKey('Projects', models.DO_NOTHING)
+    title = models.TextField()
+    due_at = models.DateTimeField(blank=True, null=True)
+    state = models.TextField()
+
+    class Meta:
+        managed = False
+        db_table = 'milestones'
+
+
+class ModeCriteria(models.Model):
+    id = models.UUIDField(primary_key=True)
+    scheme_version = models.ForeignKey('SchemeModes', models.DO_NOTHING, to_field='scheme_version_id')
+    scheme_mode_id = models.UUIDField()
+    criterion = models.ForeignKey('RubricCriteria', models.DO_NOTHING)
+    score_scope = models.TextField()
+
+    class Meta:
+        managed = False
+        db_table = 'mode_criteria'
+        unique_together = (('id', 'scheme_mode_id', 'score_scope'), ('scheme_mode_id', 'criterion'),)
+
+
+class NotificationDeliveries(models.Model):
+    id = models.UUIDField(primary_key=True)
+    outbox_event = models.ForeignKey('OutboxEvents', models.DO_NOTHING)
+    recipient_user = models.ForeignKey('Users', models.DO_NOTHING)
+    channel = models.TextField()
+    dedupe_key = models.TextField(unique=True)
+    status = models.TextField()
+    attempts = models.IntegerField()
+    provider_reference = models.TextField(blank=True, null=True)
+    last_attempt_at = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'notification_deliveries'
+
+
+class OutboxEvents(models.Model):
+    id = models.UUIDField(primary_key=True)
+    event_type = models.TextField()
+    aggregate_id = models.UUIDField()
+    payload = models.JSONField()
+    status = models.TextField()
+    attempts = models.IntegerField()
+    available_at = models.DateTimeField()
+    claimed_until = models.DateTimeField(blank=True, null=True)
+    processed_at = models.DateTimeField(blank=True, null=True)
+    created_at = models.DateTimeField()
+    claim_token = models.UUIDField(blank=True, null=True)
+    last_error = models.TextField(blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'outbox_events'
+
+
+class ProjectPolicyVersions(models.Model):
+    id = models.UUIDField(primary_key=True)
+    department = models.ForeignKey(Departments, models.DO_NOTHING)
+    project_type = models.TextField()
+    version_no = models.IntegerField()
+    policy_status = models.TextField()
+    policy_data = models.JSONField()
+    created_at = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'project_policy_versions'
+        unique_together = (('department', 'project_type', 'version_no'), ('id', 'department', 'project_type'),)
+
+
+class ProjectReviews(models.Model):
+    id = models.UUIDField(primary_key=True)
+    project = models.ForeignKey('Projects', models.DO_NOTHING)
+    cycle_id = models.UUIDField()
+    policy_version_id = models.UUIDField()
+    review_definition = models.ForeignKey('ReviewDefinitions', models.DO_NOTHING)
+    round_no = models.IntegerField()
+    scheme_version = models.ForeignKey('SchemeModes', models.DO_NOTHING, to_field='scheme_version_id')
+    scheme_mode_id = models.UUIDField(blank=True, null=True)
+    review_state = models.TextField()
+    scheduled_at = models.DateTimeField(blank=True, null=True)
+    roster_locked_at = models.DateTimeField(blank=True, null=True)
+    row_version = models.IntegerField()
+
+    class Meta:
+        managed = False
+        db_table = 'project_reviews'
+        unique_together = (('id', 'project'), ('id', 'scheme_mode_id'), ('id', 'scheme_version', 'scheme_mode_id'), ('project', 'review_definition', 'round_no'),)
+
+
+class Projects(models.Model):
+    id = models.UUIDField(primary_key=True)
+    department_id = models.UUIDField()
+    cycle = models.ForeignKey(AcademicCycles, models.DO_NOTHING)
+    team = models.ForeignKey('Teams', models.DO_NOTHING)
+    project_type = models.TextField()
+    policy_version = models.ForeignKey(ProjectPolicyVersions, models.DO_NOTHING)
+    project_code = models.TextField()
+    title = models.TextField()
+    row_version = models.IntegerField()
+    created_at = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'projects'
+        unique_together = (('department_id', 'project_code'), ('id', 'cycle', 'policy_version'), ('id', 'department_id'), ('id', 'team'),)
+
+
+class ResultReleases(models.Model):
+    id = models.UUIDField(primary_key=True)
+    review = models.ForeignKey(ProjectReviews, models.DO_NOTHING)
+    release_no = models.IntegerField()
+    scheme_version_id = models.UUIDField()
+    scheme_mode_id = models.UUIDField()
+    calculation_snapshot = models.JSONField()
+    released_by = models.ForeignKey('Users', models.DO_NOTHING, db_column='released_by')
+    released_at = models.DateTimeField()
+    supersedes = models.OneToOneField('self', models.DO_NOTHING, blank=True, null=True)
+    sealed_at = models.DateTimeField(blank=True, null=True)
+    correction_reason = models.TextField(blank=True, null=True)
+    authorization_grant = models.ForeignKey(AcademicActionGrants, models.DO_NOTHING, blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'result_releases'
+        unique_together = (('id', 'review'), ('review', 'release_no'),)
+
+
+class ResultSourceAssessments(models.Model):
+    pk = models.CompositePrimaryKey('release_id', 'assessment_id')
+    release = models.ForeignKey(ResultReleases, models.DO_NOTHING)
+    review_id = models.UUIDField()
+    assessment = models.ForeignKey(Assessments, models.DO_NOTHING)
+
+    class Meta:
+        managed = False
+        db_table = 'result_source_assessments'
+
+
+class ResultStudentScores(models.Model):
+    pk = models.CompositePrimaryKey('release_id', 'roster_member_id')
+    release = models.ForeignKey(ResultReleases, models.DO_NOTHING)
+    review_id = models.UUIDField()
+    roster_member = models.ForeignKey('ReviewRosterMembers', models.DO_NOTHING)
+    total_marks = models.DecimalField(max_digits=9, decimal_places=2)
+    breakdown = models.JSONField()
+
+    class Meta:
+        managed = False
+        db_table = 'result_student_scores'
+
+
+class ReviewDefinitions(models.Model):
+    id = models.UUIDField(primary_key=True)
+    policy_version = models.ForeignKey(ProjectPolicyVersions, models.DO_NOTHING)
+    department_id = models.UUIDField()
+    project_type = models.TextField()
+    review_code = models.TextField()
+    ordinal = models.IntegerField()
+    label = models.TextField()
+
+    class Meta:
+        managed = False
+        db_table = 'review_definitions'
+        unique_together = (('id', 'department_id'), ('id', 'policy_version'), ('policy_version', 'ordinal'), ('policy_version', 'review_code'),)
+
+
+class ReviewRosterMembers(models.Model):
+    id = models.UUIDField(primary_key=True)
+    review = models.ForeignKey(ProjectReviews, models.DO_NOTHING)
+    project = models.ForeignKey(Projects, models.DO_NOTHING)
+    team_id = models.UUIDField()
+    membership = models.ForeignKey('TeamMemberships', models.DO_NOTHING)
+    student_user = models.ForeignKey('Users', models.DO_NOTHING)
+    created_at = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'review_roster_members'
+        unique_together = (('id', 'review'), ('review', 'student_user'),)
+
+
+class RubricCriteria(models.Model):
+    id = models.UUIDField(primary_key=True)
+    scheme_version = models.ForeignKey('SchemeVersions', models.DO_NOTHING)
+    code = models.TextField()
+    label = models.TextField()
+    maximum = models.DecimalField(max_digits=9, decimal_places=2)
+    sort_order = models.IntegerField()
+
+    class Meta:
+        managed = False
+        db_table = 'rubric_criteria'
+        unique_together = (('id', 'scheme_version'), ('scheme_version', 'code'), ('scheme_version', 'sort_order'),)
+
+
+class SchemeModes(models.Model):
+    id = models.UUIDField(primary_key=True)
+    scheme_version = models.ForeignKey('SchemeVersions', models.DO_NOTHING)
+    mode_code = models.TextField()
+
+    class Meta:
+        managed = False
+        db_table = 'scheme_modes'
+        unique_together = (('id', 'scheme_version'), ('scheme_version', 'id'), ('scheme_version', 'mode_code'),)
+
+
+class SchemeVersions(models.Model):
+    id = models.UUIDField(primary_key=True)
+    scheme = models.OneToOneField(EvaluationSchemes, models.DO_NOTHING)
+    cycle_id = models.UUIDField()
+    review_definition_id = models.UUIDField()
+    version_no = models.IntegerField()
+    state = models.TextField()
+    approved_by = models.ForeignKey('Users', models.DO_NOTHING, db_column='approved_by', blank=True, null=True)
+    approved_at = models.DateTimeField(blank=True, null=True)
+    created_at = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'scheme_versions'
+        unique_together = (('id', 'cycle_id', 'review_definition_id'), ('scheme', 'version_no'),)
+
+
+class StudentCriterionScores(models.Model):
+    pk = models.CompositePrimaryKey('assessment_id', 'roster_member_id', 'mode_criterion_id')
+    assessment = models.ForeignKey(Assessments, models.DO_NOTHING)
+    review_id = models.UUIDField()
+    scheme_mode_id = models.UUIDField()
+    roster_member = models.ForeignKey(ReviewRosterMembers, models.DO_NOTHING)
+    mode_criterion = models.ForeignKey(ModeCriteria, models.DO_NOTHING)
+    score_scope = models.TextField()
+    marks = models.DecimalField(max_digits=9, decimal_places=2)
+
+    class Meta:
+        managed = False
+        db_table = 'student_criterion_scores'
+
+
+class SubmissionAttempts(models.Model):
+    id = models.UUIDField(primary_key=True)
+    case = models.ForeignKey('SubmissionCases', models.DO_NOTHING)
+    project_id = models.UUIDField()
+    attempt_no = models.IntegerField()
+    submitted_by = models.ForeignKey('Users', models.DO_NOTHING, db_column='submitted_by')
+    submitted_at = models.DateTimeField()
+    attempt_state = models.TextField()
+    sealed_at = models.DateTimeField(blank=True, null=True)
+    submitted_membership = models.ForeignKey('TeamMemberships', models.DO_NOTHING, blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'submission_attempts'
+        unique_together = (('case', 'attempt_no'), ('id', 'case'), ('id', 'project_id'),)
+
+
+class SubmissionCases(models.Model):
+    id = models.UUIDField(primary_key=True)
+    project = models.ForeignKey(Projects, models.DO_NOTHING)
+    requirement_key = models.TextField()
+    submission_type = models.TextField()
+    state = models.TextField()
+    row_version = models.IntegerField()
+    created_at = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'submission_cases'
+        unique_together = (('id', 'project'), ('project', 'requirement_key'),)
+
+
+class SubmissionItems(models.Model):
+    pk = models.CompositePrimaryKey('attempt_id', 'document_id')
+    attempt = models.ForeignKey(SubmissionAttempts, models.DO_NOTHING)
+    project_id = models.UUIDField()
+    document_id = models.UUIDField()
+    document_version = models.ForeignKey(DocumentVersions, models.DO_NOTHING)
+
+    class Meta:
+        managed = False
+        db_table = 'submission_items'
+
+
+class TeamCriterionScores(models.Model):
+    pk = models.CompositePrimaryKey('assessment_id', 'mode_criterion_id')
+    assessment = models.ForeignKey(Assessments, models.DO_NOTHING)
+    scheme_mode_id = models.UUIDField()
+    mode_criterion = models.ForeignKey(ModeCriteria, models.DO_NOTHING)
+    score_scope = models.TextField()
+    marks = models.DecimalField(max_digits=9, decimal_places=2)
+
+    class Meta:
+        managed = False
+        db_table = 'team_criterion_scores'
+
+
+class TeamMemberships(models.Model):
+    id = models.UUIDField(primary_key=True)
+    team = models.ForeignKey('Teams', models.DO_NOTHING)
+    user = models.ForeignKey('Users', models.DO_NOTHING)
+    joined_at = models.DateTimeField()
+    left_at = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'team_memberships'
+        unique_together = (('id', 'team', 'user'), ('team', 'user'),)
+
+
+class Teams(models.Model):
+    id = models.UUIDField(primary_key=True)
+    department_id = models.UUIDField()
+    cycle = models.ForeignKey(AcademicCycles, models.DO_NOTHING)
+    name = models.TextField()
+    created_at = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'teams'
+        unique_together = (('id', 'cycle', 'department_id'),)
+
+
+class UploadSessions(models.Model):
+    id = models.UUIDField(primary_key=True)
+    document = models.ForeignKey(Documents, models.DO_NOTHING)
+    user = models.ForeignKey('Users', models.DO_NOTHING)
+    status = models.TextField()
+    storage_key = models.TextField(unique=True)
+    document_version = models.ForeignKey(DocumentVersions, models.DO_NOTHING, blank=True, null=True)
+    sha256 = models.CharField(max_length=64, blank=True, null=True)
+    size_bytes = models.BigIntegerField(blank=True, null=True)
+    created_at = models.DateTimeField()
+    completed_at = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'upload_sessions'
+
+
+class Users(models.Model):
+    id = models.UUIDField(primary_key=True)
+    display_name = models.TextField()
+    email = models.TextField()
+    external_subject = models.TextField(unique=True, blank=True, null=True)
+    account_status = models.TextField()
+    created_at = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'users'

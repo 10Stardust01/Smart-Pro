@@ -1,0 +1,555 @@
+{
+  "version": "2026-11-07",
+  "retrievedOn": "2026-11-07",
+  "institution": "Bangalore Institute of Technology, Bengaluru",
+  "department": "Computer Science and Engineering",
+  "rosterUrl": "https://bit-bangalore.edu.in/teaching-faculties/cse",
+  "irinsIndexUrl": "https://bit-bangalore.irins.org/",
+  "irinsReportedProfiles": 39,
+  "records": [
+    {
+      "name": "Dr. J. Girija",
+      "designation": "Professor",
+      "department": "Computer Science and Engineering",
+      "bitProfileUrl": "https://bit-bangalore.edu.in/department-teaching-faculties/cse/kza62j6sot08irrev4f",
+      "irinsProfileUrl": null,
+      "expertise": [],
+      "evidenceStatus": "BIT roster; individual BIT link captured",
+      "auditNote": "IRINS match and expertise not verified",
+      "earlierReference": null
+    },
+    {
+      "name": "Dr. Suneetha K R",
+      "designation": "Professor and HOD",
+      "department": "Computer Science and Engineering",
+      "bitProfileUrl": "https://bit-bangalore.edu.in/department-teaching-faculties/cse/kza69cucqt2j5whljj",
+      "irinsProfileUrl": null,
+      "expertise": [],
+      "evidenceStatus": "BIT roster; individual BIT link captured",
+      "auditNote": "IRINS match and expertise not verified",
+      "earlierReference": {
+        "name": "Dr Suneetha K R",
+        "designation": "Professor",
+        "expertise": [
+          "Data Mining",
+          "Big Data Analytics",
+          "Artificial Intelligence"
+        ],
+        "sourceUrl": "https://bit-bangalore.irins.org/profile/439387",
+        "retrievedOn": "2026-11-07",
+        "directoryNote": "Yes — listed as CSE HOD on BIT department directory"
+      }
+    },
+    {
+      "name": "Dr. Savitha S K",
+      "designation": "Professor and PG Coordinator",
+      "department": "Computer Science and Engineering",
+      "bitProfileUrl": "https://bit-bangalore.edu.in/department-teaching-faculties/cse/kza6cfoxb2oaqa2gfea",
+      "irinsProfileUrl": "https://bit-bangalore.irins.org/profile/445171",
+      "expertise": [
+        "Image processing"
+      ],
+      "evidenceStatus": "BIT roster and IRINS title differ",
+      "auditNote": "IRINS lists Associate Professor; BIT roster lists Professor and PG Coordinator",
+      "earlierReference": {
+        "name": "Dr Savitha S K",
+        "designation": "Associate Professor",
+        "expertise": [
+          "Image Processing"
+        ],
+        "sourceUrl": "https://bit-bangalore.irins.org/profile/445171",
+        "retrievedOn": "2026-11-07",
+        "directoryNote": null
+      }
+    },
+    {
+      "name": "Dr. Harish Kumar B T",
+      "designation": "Professor",
+      "department": "Computer Science and Engineering",
+      "bitProfileUrl": "https://bit-bangalore.edu.in/department-teaching-faculties/cse/kzaujwex57yq9ai5ntd",
+      "irinsProfileUrl": null,
+      "expertise": [],
+      "evidenceStatus": "BIT roster; individual BIT link captured",
+      "auditNote": "IRINS match and expertise not verified",
+      "earlierReference": null
+    },
+    {
+      "name": "Dr. Hemavathi P",
+      "designation": "Professor",
+      "department": "Computer Science and Engineering",
+      "bitProfileUrl": "https://bit-bangalore.edu.in/department-teaching-faculties/cse/kzauwms021i99bpdm7o",
+      "irinsProfileUrl": null,
+      "expertise": [],
+      "evidenceStatus": "BIT roster and IRINS index title differ",
+      "auditNote": "IRINS institution index lists Associate Professor; BIT roster lists Professor. Individual IRINS profile and expertise not verified. Index: https://bit-bangalore.irins.org/",
+      "earlierReference": null
+    },
+    {
+      "name": "Dr. M. S. Bhargavi",
+      "designation": "Associate Professor and Associate Dean, First Year Academics",
+      "department": "Computer Science and Engineering",
+      "bitProfileUrl": "https://bit-bangalore.edu.in/department-teaching-faculties/cse/kzauz9mclzus1hjj5h",
+      "irinsProfileUrl": "https://bit-bangalore.irins.org/profile/439180",
+      "expertise": [
+        "Artificial intelligence",
+        "machine learning",
+        "data science"
+      ],
+      "evidenceStatus": "BIT roster and individual IRINS profile",
+      "auditNote": null,
+      "earlierReference": {
+        "name": "Dr M S Bhargavi",
+        "designation": "Associate Professor",
+        "expertise": [
+          "Artificial Intelligence",
+          "Machine Learning",
+          "Data Science"
+        ],
+        "sourceUrl": "https://bit-bangalore.irins.org/profile/439180",
+        "retrievedOn": "2026-11-07",
+        "directoryNote": null
+      }
+    },
+    {
+      "name": "Dr. Bhanushree K J",
+      "designation": "Associate Professor",
+      "department": "Computer Science and Engineering",
+      "bitProfileUrl": "https://bit-bangalore.edu.in/department-teaching-faculties/cse/kzav3ur7xkh7phmksp",
+      "irinsProfileUrl": null,
+      "expertise": [],
+      "evidenceStatus": "BIT roster; individual BIT link captured",
+      "auditNote": "IRINS match and expertise not verified",
+      "earlierReference": null
+    },
+    {
+      "name": "Dr. Maya B S",
+      "designation": "Associate Professor",
+      "department": "Computer Science and Engineering",
+      "bitProfileUrl": "https://bit-bangalore.edu.in/department-teaching-faculties/cse/kzav8regz8rsxvleq4f",
+      "irinsProfileUrl": null,
+      "expertise": [],
+      "evidenceStatus": "BIT roster; individual BIT link captured",
+      "auditNote": "IRINS match and expertise not verified",
+      "earlierReference": null
+    },
+    {
+      "name": "Dr. Madhuri J",
+      "designation": "Associate Professor",
+      "department": "Computer Science and Engineering",
+      "bitProfileUrl": "https://bit-bangalore.edu.in/department-teaching-faculties/cse/kzavawzu1cqr4xgv8ma",
+      "irinsProfileUrl": "https://bit-bangalore.irins.org/profile/450236",
+      "expertise": [
+        "Big data",
+        "remote sensing",
+        "machine learning",
+        "data mining"
+      ],
+      "evidenceStatus": "BIT roster and individual IRINS profile",
+      "auditNote": null,
+      "earlierReference": {
+        "name": "Dr Madhuri J",
+        "designation": "Associate Professor",
+        "expertise": [
+          "Big Data",
+          "Remote Sensing",
+          "Machine Learning",
+          "Data Mining"
+        ],
+        "sourceUrl": "https://bit-bangalore.irins.org/profile/450236",
+        "retrievedOn": "2026-11-07",
+        "directoryNote": null
+      }
+    },
+    {
+      "name": "Dr. Gunavathi H S",
+      "designation": "Associate Professor",
+      "department": "Computer Science and Engineering",
+      "bitProfileUrl": "https://bit-bangalore.edu.in/department-teaching-faculties/cse/kzavgxjzmk1nzx9sz7c",
+      "irinsProfileUrl": null,
+      "expertise": [],
+      "evidenceStatus": "BIT roster; individual BIT link captured",
+      "auditNote": "IRINS match and expertise not verified",
+      "earlierReference": null
+    },
+    {
+      "name": "Prof. Nethravathy V",
+      "designation": "Assistant Professor",
+      "department": "Computer Science and Engineering",
+      "bitProfileUrl": "https://bit-bangalore.edu.in/department-teaching-faculties/cse/kzauo1mltcl4snfmofa",
+      "irinsProfileUrl": null,
+      "expertise": [],
+      "evidenceStatus": "BIT roster; individual BIT link captured",
+      "auditNote": "IRINS match and expertise not verified",
+      "earlierReference": null
+    },
+    {
+      "name": "Prof. N Thanuja",
+      "designation": "Assistant Professor",
+      "department": "Computer Science and Engineering",
+      "bitProfileUrl": "https://bit-bangalore.edu.in/department-teaching-faculties/cse/kzauqgte8w7awy4emgw",
+      "irinsProfileUrl": null,
+      "expertise": [],
+      "evidenceStatus": "BIT roster; individual BIT link captured",
+      "auditNote": "IRINS match and expertise not verified",
+      "earlierReference": {
+        "name": "Prof N Thanuja",
+        "designation": "Assistant Professor",
+        "expertise": [
+          "Advanced Networking Systems"
+        ],
+        "sourceUrl": "https://bit-bangalore.irins.org/profile/437011",
+        "retrievedOn": "2026-11-07",
+        "directoryNote": null
+      }
+    },
+    {
+      "name": "Prof. D. R. Nagamani",
+      "designation": "Assistant Professor",
+      "department": "Computer Science and Engineering",
+      "bitProfileUrl": "https://bit-bangalore.edu.in/department-teaching-faculties/cse/kzauswshu5d6tvc4ct",
+      "irinsProfileUrl": null,
+      "expertise": [],
+      "evidenceStatus": "BIT roster; individual BIT link captured",
+      "auditNote": "IRINS match and expertise not verified",
+      "earlierReference": null
+    },
+    {
+      "name": "Prof. K. N. Prashanth Kumar",
+      "designation": "Assistant Professor",
+      "department": "Computer Science and Engineering",
+      "bitProfileUrl": "https://bit-bangalore.edu.in/department-teaching-faculties/cse/kzav1rikj62eez4uu9e",
+      "irinsProfileUrl": "https://bit-bangalore.irins.org/profile/439987",
+      "expertise": [
+        "Data mining",
+        "web mining",
+        "computer networks"
+      ],
+      "evidenceStatus": "BIT roster and individual IRINS profile",
+      "auditNote": null,
+      "earlierReference": {
+        "name": "Mr Prashanth Kumar K N",
+        "designation": "Assistant Professor",
+        "expertise": [
+          "Data Mining",
+          "Web Mining",
+          "Computer Networks"
+        ],
+        "sourceUrl": "https://bit-bangalore.irins.org/profile/439987",
+        "retrievedOn": "2026-11-07",
+        "directoryNote": null
+      }
+    },
+    {
+      "name": "Prof. Prathima M G",
+      "designation": "Assistant Professor",
+      "department": "Computer Science and Engineering",
+      "bitProfileUrl": "https://bit-bangalore.edu.in/department-teaching-faculties/cse/kzavj78gb1kirlanl8r",
+      "irinsProfileUrl": null,
+      "expertise": [],
+      "evidenceStatus": "BIT roster; individual BIT link captured",
+      "auditNote": "IRINS match and expertise not verified",
+      "earlierReference": null
+    },
+    {
+      "name": "Prof. T. P. Manasa",
+      "designation": "Assistant Professor",
+      "department": "Computer Science and Engineering",
+      "bitProfileUrl": "https://bit-bangalore.edu.in/department-teaching-faculties/cse/kzavnrn1e0aaoe4391",
+      "irinsProfileUrl": null,
+      "expertise": [],
+      "evidenceStatus": "BIT roster; individual BIT link captured",
+      "auditNote": "IRINS match and expertise not verified",
+      "earlierReference": null
+    },
+    {
+      "name": "Prof. Suma L",
+      "designation": "Assistant Professor",
+      "department": "Computer Science and Engineering",
+      "bitProfileUrl": "https://bit-bangalore.edu.in/department-teaching-faculties/cse/kzavq1uwdx7tlob2i24",
+      "irinsProfileUrl": null,
+      "expertise": [],
+      "evidenceStatus": "BIT roster; individual BIT link captured",
+      "auditNote": "IRINS match and expertise not verified",
+      "earlierReference": null
+    },
+    {
+      "name": "Prof. Nikitha K S",
+      "designation": "Assistant Professor",
+      "department": "Computer Science and Engineering",
+      "bitProfileUrl": "https://bit-bangalore.edu.in/department-teaching-faculties/cse/kzaw4bi67g8tt8jyuv6",
+      "irinsProfileUrl": null,
+      "expertise": [],
+      "evidenceStatus": "BIT roster; individual BIT link captured",
+      "auditNote": "IRINS match and expertise not verified",
+      "earlierReference": null
+    },
+    {
+      "name": "Prof. Sunanda H G",
+      "designation": "Assistant Professor",
+      "department": "Computer Science and Engineering",
+      "bitProfileUrl": "https://bit-bangalore.edu.in/department-teaching-faculties/cse/l8b7juntpknqy6gwsa8",
+      "irinsProfileUrl": "https://bit-bangalore.irins.org/profile/439301",
+      "expertise": [
+        "Automata theory",
+        "compiler design",
+        "data structures"
+      ],
+      "evidenceStatus": "BIT roster and individual IRINS profile",
+      "auditNote": null,
+      "earlierReference": {
+        "name": "Mrs Sunanda H G",
+        "designation": "Assistant Professor",
+        "expertise": [
+          "Automata Theory",
+          "Compiler Design",
+          "Data Structures"
+        ],
+        "sourceUrl": "https://bit-bangalore.irins.org/profile/439301",
+        "retrievedOn": "2026-11-07",
+        "directoryNote": null
+      }
+    },
+    {
+      "name": "Prof. Vidyashree A L",
+      "designation": "Assistant Professor",
+      "department": "Computer Science and Engineering",
+      "bitProfileUrl": "https://bit-bangalore.edu.in/department-teaching-faculties/cse/l8ibi897bgw10xiuek5",
+      "irinsProfileUrl": null,
+      "expertise": [],
+      "evidenceStatus": "BIT roster; individual BIT link captured",
+      "auditNote": "IRINS match and expertise not verified",
+      "earlierReference": null
+    },
+    {
+      "name": "Prof. Neetha Das",
+      "designation": "Assistant Professor",
+      "department": "Computer Science and Engineering",
+      "bitProfileUrl": "https://bit-bangalore.edu.in/department-teaching-faculties/cse/l8ibwsoeeepld8vgeje",
+      "irinsProfileUrl": null,
+      "expertise": [],
+      "evidenceStatus": "BIT roster; individual BIT link captured",
+      "auditNote": "IRINS match and expertise not verified",
+      "earlierReference": null
+    },
+    {
+      "name": "Prof. Pooja P",
+      "designation": "Assistant Professor",
+      "department": "Computer Science and Engineering",
+      "bitProfileUrl": "https://bit-bangalore.edu.in/department-teaching-faculties/cse/l8ic478230b8zt603e4",
+      "irinsProfileUrl": null,
+      "expertise": [],
+      "evidenceStatus": "BIT roster; individual BIT link captured",
+      "auditNote": "IRINS match and expertise not verified",
+      "earlierReference": null
+    },
+    {
+      "name": "Prof. Vidya R",
+      "designation": "Assistant Professor",
+      "department": "Computer Science and Engineering",
+      "bitProfileUrl": "https://bit-bangalore.edu.in/department-teaching-faculties/cse/l8ico9a53wzfuda3knj",
+      "irinsProfileUrl": null,
+      "expertise": [],
+      "evidenceStatus": "BIT roster; individual BIT link captured",
+      "auditNote": "IRINS match and expertise not verified",
+      "earlierReference": null
+    },
+    {
+      "name": "Dr. Manjunath H",
+      "designation": "Assistant Professor",
+      "department": "Computer Science and Engineering",
+      "bitProfileUrl": "https://bit-bangalore.edu.in/department-teaching-faculties/cse/l93qebbjpj1db3sxuqq",
+      "irinsProfileUrl": null,
+      "expertise": [],
+      "evidenceStatus": "BIT roster; individual BIT link captured",
+      "auditNote": "IRINS match and expertise not verified",
+      "earlierReference": null
+    },
+    {
+      "name": "Prof. Ashwini T N",
+      "designation": "Assistant Professor",
+      "department": "Computer Science and Engineering",
+      "bitProfileUrl": "https://bit-bangalore.edu.in/department-teaching-faculties/cse/l8b7e3tqn2ggxmwjup",
+      "irinsProfileUrl": null,
+      "expertise": [],
+      "evidenceStatus": "BIT roster; individual BIT link captured",
+      "auditNote": "IRINS match and expertise not verified",
+      "earlierReference": null
+    },
+    {
+      "name": "Prof. Manjushree N S",
+      "designation": "Assistant Professor",
+      "department": "Computer Science and Engineering",
+      "bitProfileUrl": "https://bit-bangalore.edu.in/department-teaching-faculties/cse/l93q8v2zw9qhhw5bkl",
+      "irinsProfileUrl": "https://bit-bangalore.irins.org/profile/439298",
+      "expertise": [
+        "Artificial intelligence",
+        "machine learning"
+      ],
+      "evidenceStatus": "BIT roster and individual IRINS profile",
+      "auditNote": null,
+      "earlierReference": {
+        "name": "Prof Manjushree N S",
+        "designation": "Assistant Professor",
+        "expertise": [
+          "Artificial Intelligence",
+          "Machine Learning"
+        ],
+        "sourceUrl": "https://bit-bangalore.irins.org/profile/439298",
+        "retrievedOn": "2026-11-07",
+        "directoryNote": null
+      }
+    },
+    {
+      "name": "Prof. Shruthi B Gowda",
+      "designation": "Assistant Professor",
+      "department": "Computer Science and Engineering",
+      "bitProfileUrl": "https://bit-bangalore.edu.in/department-teaching-faculties/cse/ldid6p2egy6n35vq3ki",
+      "irinsProfileUrl": null,
+      "expertise": [],
+      "evidenceStatus": "BIT roster; individual BIT link captured",
+      "auditNote": "IRINS match and expertise not verified",
+      "earlierReference": null
+    },
+    {
+      "name": "Prof. Venkatesh M R",
+      "designation": "Assistant Professor",
+      "department": "Computer Science and Engineering",
+      "bitProfileUrl": "https://bit-bangalore.edu.in/department-teaching-faculties/cse/ldlk450ot1dgrqg4z1",
+      "irinsProfileUrl": "https://bit-bangalore.irins.org/profile/445880",
+      "expertise": [
+        "Computer networks",
+        "computer organization"
+      ],
+      "evidenceStatus": "BIT roster and individual IRINS profile",
+      "auditNote": null,
+      "earlierReference": {
+        "name": "Prof Venkatesh M R",
+        "designation": "Assistant Professor",
+        "expertise": [
+          "Computer Networks",
+          "Computer Organization"
+        ],
+        "sourceUrl": "https://bit-bangalore.irins.org/profile/445880",
+        "retrievedOn": "2026-11-07",
+        "directoryNote": null
+      }
+    },
+    {
+      "name": "Prof. Geetha R",
+      "designation": "Assistant Professor",
+      "department": "Computer Science and Engineering",
+      "bitProfileUrl": "https://bit-bangalore.edu.in/department-teaching-faculties/cse/ldicp3625md95xnrkng",
+      "irinsProfileUrl": "https://bit-bangalore.irins.org/profile/445331",
+      "expertise": [
+        "AI",
+        "cloud computing",
+        "Python",
+        "C"
+      ],
+      "evidenceStatus": "BIT roster and individual IRINS profile",
+      "auditNote": null,
+      "earlierReference": {
+        "name": "Prof Geetha R",
+        "designation": "Assistant Professor",
+        "expertise": [
+          "AI",
+          "Python",
+          "C",
+          "Cloud Computing",
+          "Programming Languages"
+        ],
+        "sourceUrl": "https://bit-bangalore.irins.org/profile/445331",
+        "retrievedOn": "2026-11-07",
+        "directoryNote": null
+      }
+    },
+    {
+      "name": "Prof. Srinidhi C R",
+      "designation": "Assistant Professor",
+      "department": "Computer Science and Engineering",
+      "bitProfileUrl": "https://bit-bangalore.edu.in/department-teaching-faculties/cse/lt84e9sz430f55j7joh",
+      "irinsProfileUrl": null,
+      "expertise": [],
+      "evidenceStatus": "BIT roster; individual BIT link captured",
+      "auditNote": "IRINS match and expertise not verified",
+      "earlierReference": null
+    },
+    {
+      "name": "Prof. Geetha B S",
+      "designation": "Assistant Professor",
+      "department": "Computer Science and Engineering",
+      "bitProfileUrl": "https://bit-bangalore.edu.in/department-teaching-faculties/cse/lte0dtfstv5zay1uzv",
+      "irinsProfileUrl": null,
+      "expertise": [],
+      "evidenceStatus": "BIT roster; individual BIT link captured",
+      "auditNote": "IRINS match and expertise not verified",
+      "earlierReference": null
+    },
+    {
+      "name": "Prof. Chethan H S",
+      "designation": "Assistant Professor",
+      "department": "Computer Science and Engineering",
+      "bitProfileUrl": "https://bit-bangalore.edu.in/department-teaching-faculties/cse/lt84hrdnsatzvn3xsdr",
+      "irinsProfileUrl": null,
+      "expertise": [],
+      "evidenceStatus": "BIT roster; individual BIT link captured",
+      "auditNote": "IRINS match and expertise not verified",
+      "earlierReference": null
+    },
+    {
+      "name": "Prof. Chaithra G V",
+      "designation": "Assistant Professor",
+      "department": "Computer Science and Engineering",
+      "bitProfileUrl": "https://bit-bangalore.edu.in/department-teaching-faculties/cse/lvl4iborm210zz6p49",
+      "irinsProfileUrl": "https://bit-bangalore.irins.org/profile/465195",
+      "expertise": [
+        "Data analytics"
+      ],
+      "evidenceStatus": "BIT roster and individual IRINS profile",
+      "auditNote": null,
+      "earlierReference": {
+        "name": "Prof Chaithra GV",
+        "designation": "Assistant Professor",
+        "expertise": [
+          "Data Analytics"
+        ],
+        "sourceUrl": "https://bit-bangalore.irins.org/profile/465195",
+        "retrievedOn": "2026-11-07",
+        "directoryNote": null
+      }
+    },
+    {
+      "name": "Prof. Sparshakala V S",
+      "designation": "Assistant Professor",
+      "department": "Computer Science and Engineering",
+      "bitProfileUrl": "https://bit-bangalore.edu.in/department-teaching-faculties/cse/mi2p6li77xdjg7r4wld",
+      "irinsProfileUrl": null,
+      "expertise": [],
+      "evidenceStatus": "BIT roster; individual BIT link captured",
+      "auditNote": "IRINS match and expertise not verified",
+      "earlierReference": null
+    },
+    {
+      "name": "Prof. Shweta S M",
+      "designation": "Assistant Professor",
+      "department": "Computer Science and Engineering",
+      "bitProfileUrl": "https://bit-bangalore.edu.in/department-teaching-faculties/cse/mi2totu5b64jyvhuldl",
+      "irinsProfileUrl": null,
+      "expertise": [],
+      "evidenceStatus": "BIT roster; individual BIT link captured",
+      "auditNote": "IRINS match and expertise not verified",
+      "earlierReference": null
+    },
+    {
+      "name": "Prof. Gayathri V",
+      "designation": "Assistant Professor",
+      "department": "Computer Science and Engineering",
+      "bitProfileUrl": "https://bit-bangalore.edu.in/department-teaching-faculties/cse/mi2pt35dj9afhuk6aom",
+      "irinsProfileUrl": null,
+      "expertise": [],
+      "evidenceStatus": "BIT roster; individual BIT link captured",
+      "auditNote": "IRINS match and expertise not verified",
+      "earlierReference": null
+    }
+  ]
+}

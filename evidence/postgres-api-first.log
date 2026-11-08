@@ -1,0 +1,416 @@
+FFFFFFFFFFFFF                                                            [100%]
+================================== FAILURES ===================================
+__________________ test_complete_synopsis_revision_workflow ___________________
+
+client = <starlette.testclient.TestClient object at 0x00000177BC2BA030>
+
+    def test_complete_synopsis_revision_workflow(client):
+>       v1=upload(client)
+           ^^^^^^^^^^^^^^
+
+outputs\smartpro\workflow-poc\tests\test_workflow.py:42: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+client = <starlette.testclient.TestClient object at 0x00000177BC2BA030>
+doc = 'synopsis-1', actor = 'student-a'
+content = b'%PDF-1.4\nDemo synthetic PDF bytes\n%%EOF\n'
+
+    def upload(client,doc='synopsis-1',actor='student-a',content=b'%PDF-1.4\nDemo synthetic PDF bytes\n%%EOF\n'):
+        r=client.post(f'/api/v1/documents/{doc}/upload-sessions',headers=headers(actor))
+>       assert r.status_code==201,r.text
+E       AssertionError: {"detail":{"code":"DATABASE_AUTHORITY_DENIED","message":"Database transaction rejected; no partial academic change committed"}}
+E       assert 403 == 201
+E        +  where 403 = <Response [403 Forbidden]>.status_code
+
+outputs\smartpro\workflow-poc\tests\test_workflow.py:27: AssertionError
+---------------------------- Captured stdout setup ----------------------------
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL api_seed.sql
+_____ test_replayed_submission_returns_original_result_without_duplicates _____
+
+client = <starlette.testclient.TestClient object at 0x00000177BC2B8DD0>
+
+    def test_replayed_submission_returns_original_result_without_duplicates(client):
+>       vid=upload(client)
+            ^^^^^^^^^^^^^^
+
+outputs\smartpro\workflow-poc\tests\test_workflow.py:66: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+client = <starlette.testclient.TestClient object at 0x00000177BC2B8DD0>
+doc = 'synopsis-1', actor = 'student-a'
+content = b'%PDF-1.4\nDemo synthetic PDF bytes\n%%EOF\n'
+
+    def upload(client,doc='synopsis-1',actor='student-a',content=b'%PDF-1.4\nDemo synthetic PDF bytes\n%%EOF\n'):
+        r=client.post(f'/api/v1/documents/{doc}/upload-sessions',headers=headers(actor))
+>       assert r.status_code==201,r.text
+E       AssertionError: {"detail":{"code":"DATABASE_AUTHORITY_DENIED","message":"Database transaction rejected; no partial academic change committed"}}
+E       assert 403 == 201
+E        +  where 403 = <Response [403 Forbidden]>.status_code
+
+outputs\smartpro\workflow-poc\tests\test_workflow.py:27: AssertionError
+---------------------------- Captured stdout setup ----------------------------
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL api_seed.sql
+___________ test_idempotency_key_cannot_be_reused_with_new_request ____________
+
+client = <starlette.testclient.TestClient object at 0x00000177BC2D4410>
+
+    def test_idempotency_key_cannot_be_reused_with_new_request(client):
+>       vid=upload(client)
+            ^^^^^^^^^^^^^^
+
+outputs\smartpro\workflow-poc\tests\test_workflow.py:76: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+client = <starlette.testclient.TestClient object at 0x00000177BC2D4410>
+doc = 'synopsis-1', actor = 'student-a'
+content = b'%PDF-1.4\nDemo synthetic PDF bytes\n%%EOF\n'
+
+    def upload(client,doc='synopsis-1',actor='student-a',content=b'%PDF-1.4\nDemo synthetic PDF bytes\n%%EOF\n'):
+        r=client.post(f'/api/v1/documents/{doc}/upload-sessions',headers=headers(actor))
+>       assert r.status_code==201,r.text
+E       AssertionError: {"detail":{"code":"DATABASE_AUTHORITY_DENIED","message":"Database transaction rejected; no partial academic change committed"}}
+E       assert 403 == 201
+E        +  where 403 = <Response [403 Forbidden]>.status_code
+
+outputs\smartpro\workflow-poc\tests\test_workflow.py:27: AssertionError
+---------------------------- Captured stdout setup ----------------------------
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL api_seed.sql
+_________________ test_outsider_and_unassigned_faculty_denied _________________
+
+client = <starlette.testclient.TestClient object at 0x00000177BC2D42F0>
+
+    def test_outsider_and_unassigned_faculty_denied(client):
+        r=client.post('/api/v1/documents/synopsis-1/upload-sessions',headers=headers('student-outsider'))
+        assert r.status_code==403
+>       vid=upload(client)
+            ^^^^^^^^^^^^^^
+
+outputs\smartpro\workflow-poc\tests\test_workflow.py:84: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+client = <starlette.testclient.TestClient object at 0x00000177BC2D42F0>
+doc = 'synopsis-1', actor = 'student-a'
+content = b'%PDF-1.4\nDemo synthetic PDF bytes\n%%EOF\n'
+
+    def upload(client,doc='synopsis-1',actor='student-a',content=b'%PDF-1.4\nDemo synthetic PDF bytes\n%%EOF\n'):
+        r=client.post(f'/api/v1/documents/{doc}/upload-sessions',headers=headers(actor))
+>       assert r.status_code==201,r.text
+E       AssertionError: {"detail":{"code":"DATABASE_AUTHORITY_DENIED","message":"Database transaction rejected; no partial academic change committed"}}
+E       assert 403 == 201
+E        +  where 403 = <Response [403 Forbidden]>.status_code
+
+outputs\smartpro\workflow-poc\tests\test_workflow.py:27: AssertionError
+---------------------------- Captured stdout setup ----------------------------
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL api_seed.sql
+_________________ test_incomplete_upload_cannot_be_finalized __________________
+
+client = <starlette.testclient.TestClient object at 0x00000177BC33CDA0>
+
+    def test_incomplete_upload_cannot_be_finalized(client):
+>       uid=client.post('/api/v1/documents/synopsis-1/upload-sessions',headers=headers()).json()['uploadId']
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'uploadId'
+
+outputs\smartpro\workflow-poc\tests\test_workflow.py:92: KeyError
+---------------------------- Captured stdout setup ----------------------------
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL api_seed.sql
+_________________________ test_wrong_format_rejected __________________________
+
+client = <starlette.testclient.TestClient object at 0x00000177BC33E960>
+
+    def test_wrong_format_rejected(client):
+>       uid=client.post('/api/v1/documents/synopsis-1/upload-sessions',headers=headers()).json()['uploadId']
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'uploadId'
+
+outputs\smartpro\workflow-poc\tests\test_workflow.py:100: KeyError
+---------------------------- Captured stdout setup ----------------------------
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL api_seed.sql
+______________ test_stale_decision_and_wrong_transition_refused _______________
+
+client = <starlette.testclient.TestClient object at 0x00000177BC33C560>
+
+    def test_stale_decision_and_wrong_transition_refused(client):
+>       vid=upload(client)
+            ^^^^^^^^^^^^^^
+
+outputs\smartpro\workflow-poc\tests\test_workflow.py:105: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+client = <starlette.testclient.TestClient object at 0x00000177BC33C560>
+doc = 'synopsis-1', actor = 'student-a'
+content = b'%PDF-1.4\nDemo synthetic PDF bytes\n%%EOF\n'
+
+    def upload(client,doc='synopsis-1',actor='student-a',content=b'%PDF-1.4\nDemo synthetic PDF bytes\n%%EOF\n'):
+        r=client.post(f'/api/v1/documents/{doc}/upload-sessions',headers=headers(actor))
+>       assert r.status_code==201,r.text
+E       AssertionError: {"detail":{"code":"DATABASE_AUTHORITY_DENIED","message":"Database transaction rejected; no partial academic change committed"}}
+E       assert 403 == 201
+E        +  where 403 = <Response [403 Forbidden]>.status_code
+
+outputs\smartpro\workflow-poc\tests\test_workflow.py:27: AssertionError
+---------------------------- Captured stdout setup ----------------------------
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL api_seed.sql
+____________________ test_wrong_project_document_rejected _____________________
+
+client = <starlette.testclient.TestClient object at 0x00000177BC2D6E40>
+
+    def test_wrong_project_document_rejected(client):
+>       vid=upload(client)
+            ^^^^^^^^^^^^^^
+
+outputs\smartpro\workflow-poc\tests\test_workflow.py:114: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+client = <starlette.testclient.TestClient object at 0x00000177BC2D6E40>
+doc = 'synopsis-1', actor = 'student-a'
+content = b'%PDF-1.4\nDemo synthetic PDF bytes\n%%EOF\n'
+
+    def upload(client,doc='synopsis-1',actor='student-a',content=b'%PDF-1.4\nDemo synthetic PDF bytes\n%%EOF\n'):
+        r=client.post(f'/api/v1/documents/{doc}/upload-sessions',headers=headers(actor))
+>       assert r.status_code==201,r.text
+E       AssertionError: {"detail":{"code":"DATABASE_AUTHORITY_DENIED","message":"Database transaction rejected; no partial academic change committed"}}
+E       assert 403 == 201
+E        +  where 403 = <Response [403 Forbidden]>.status_code
+
+outputs\smartpro\workflow-poc\tests\test_workflow.py:27: AssertionError
+---------------------------- Captured stdout setup ----------------------------
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL api_seed.sql
+______________________ test_immutable_evidence_triggers _______________________
+
+client = <starlette.testclient.TestClient object at 0x00000177BC33DCD0>
+
+    def test_immutable_evidence_triggers(client):
+>       vid=upload(client)
+            ^^^^^^^^^^^^^^
+
+outputs\smartpro\workflow-poc\tests\test_workflow.py:122: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+client = <starlette.testclient.TestClient object at 0x00000177BC33DCD0>
+doc = 'synopsis-1', actor = 'student-a'
+content = b'%PDF-1.4\nDemo synthetic PDF bytes\n%%EOF\n'
+
+    def upload(client,doc='synopsis-1',actor='student-a',content=b'%PDF-1.4\nDemo synthetic PDF bytes\n%%EOF\n'):
+        r=client.post(f'/api/v1/documents/{doc}/upload-sessions',headers=headers(actor))
+>       assert r.status_code==201,r.text
+E       AssertionError: {"detail":{"code":"DATABASE_AUTHORITY_DENIED","message":"Database transaction rejected; no partial academic change committed"}}
+E       assert 403 == 201
+E        +  where 403 = <Response [403 Forbidden]>.status_code
+
+outputs\smartpro\workflow-poc\tests\test_workflow.py:27: AssertionError
+---------------------------- Captured stdout setup ----------------------------
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL api_seed.sql
+________________ test_missing_idempotency_and_anonymous_access ________________
+
+client = <starlette.testclient.TestClient object at 0x00000177BC2BAD50>
+
+    def test_missing_idempotency_and_anonymous_access(client):
+>       vid=upload(client)
+            ^^^^^^^^^^^^^^
+
+outputs\smartpro\workflow-poc\tests\test_workflow.py:133: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+client = <starlette.testclient.TestClient object at 0x00000177BC2BAD50>
+doc = 'synopsis-1', actor = 'student-a'
+content = b'%PDF-1.4\nDemo synthetic PDF bytes\n%%EOF\n'
+
+    def upload(client,doc='synopsis-1',actor='student-a',content=b'%PDF-1.4\nDemo synthetic PDF bytes\n%%EOF\n'):
+        r=client.post(f'/api/v1/documents/{doc}/upload-sessions',headers=headers(actor))
+>       assert r.status_code==201,r.text
+E       AssertionError: {"detail":{"code":"DATABASE_AUTHORITY_DENIED","message":"Database transaction rejected; no partial academic change committed"}}
+E       assert 403 == 201
+E        +  where 403 = <Response [403 Forbidden]>.status_code
+
+outputs\smartpro\workflow-poc\tests\test_workflow.py:27: AssertionError
+---------------------------- Captured stdout setup ----------------------------
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL api_seed.sql
+_______________ test_replayed_decision_returns_identical_result _______________
+
+client = <starlette.testclient.TestClient object at 0x00000177BC380B00>
+
+    def test_replayed_decision_returns_identical_result(client):
+>       vid=upload(client)
+            ^^^^^^^^^^^^^^
+
+outputs\smartpro\workflow-poc\tests\test_workflow.py:140: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+client = <starlette.testclient.TestClient object at 0x00000177BC380B00>
+doc = 'synopsis-1', actor = 'student-a'
+content = b'%PDF-1.4\nDemo synthetic PDF bytes\n%%EOF\n'
+
+    def upload(client,doc='synopsis-1',actor='student-a',content=b'%PDF-1.4\nDemo synthetic PDF bytes\n%%EOF\n'):
+        r=client.post(f'/api/v1/documents/{doc}/upload-sessions',headers=headers(actor))
+>       assert r.status_code==201,r.text
+E       AssertionError: {"detail":{"code":"DATABASE_AUTHORITY_DENIED","message":"Database transaction rejected; no partial academic change committed"}}
+E       assert 403 == 201
+E        +  where 403 = <Response [403 Forbidden]>.status_code
+
+outputs\smartpro\workflow-poc\tests\test_workflow.py:27: AssertionError
+---------------------------- Captured stdout setup ----------------------------
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL api_seed.sql
+__________________ test_concurrent_submissions_only_one_wins __________________
+
+client = <starlette.testclient.TestClient object at 0x00000177BC382C60>
+
+    def test_concurrent_submissions_only_one_wins(client):
+        from concurrent.futures import ThreadPoolExecutor
+>       vid=upload(client)
+            ^^^^^^^^^^^^^^
+
+outputs\smartpro\workflow-poc\tests\test_workflow.py:152: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+client = <starlette.testclient.TestClient object at 0x00000177BC382C60>
+doc = 'synopsis-1', actor = 'student-a'
+content = b'%PDF-1.4\nDemo synthetic PDF bytes\n%%EOF\n'
+
+    def upload(client,doc='synopsis-1',actor='student-a',content=b'%PDF-1.4\nDemo synthetic PDF bytes\n%%EOF\n'):
+        r=client.post(f'/api/v1/documents/{doc}/upload-sessions',headers=headers(actor))
+>       assert r.status_code==201,r.text
+E       AssertionError: {"detail":{"code":"DATABASE_AUTHORITY_DENIED","message":"Database transaction rejected; no partial academic change committed"}}
+E       assert 403 == 201
+E        +  where 403 = <Response [403 Forbidden]>.status_code
+
+outputs\smartpro\workflow-poc\tests\test_workflow.py:27: AssertionError
+---------------------------- Captured stdout setup ----------------------------
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL api_seed.sql
+_________ test_document_version_attached_to_other_project_is_rejected _________
+
+client = <starlette.testclient.TestClient object at 0x00000177BC380830>
+
+    def test_document_version_attached_to_other_project_is_rejected(client):
+>       vid=upload(client,doc='synopsis-2',actor='student-outsider')
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+outputs\smartpro\workflow-poc\tests\test_workflow.py:166: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+client = <starlette.testclient.TestClient object at 0x00000177BC380830>
+doc = 'synopsis-2', actor = 'student-outsider'
+content = b'%PDF-1.4\nDemo synthetic PDF bytes\n%%EOF\n'
+
+    def upload(client,doc='synopsis-1',actor='student-a',content=b'%PDF-1.4\nDemo synthetic PDF bytes\n%%EOF\n'):
+        r=client.post(f'/api/v1/documents/{doc}/upload-sessions',headers=headers(actor))
+>       assert r.status_code==201,r.text
+E       AssertionError: {"detail":{"code":"DATABASE_AUTHORITY_DENIED","message":"Database transaction rejected; no partial academic change committed"}}
+E       assert 403 == 201
+E        +  where 403 = <Response [403 Forbidden]>.status_code
+
+outputs\smartpro\workflow-poc\tests\test_workflow.py:27: AssertionError
+---------------------------- Captured stdout setup ----------------------------
+PASS SQL 001_core.sql
+PASS SQL 002_documents.sql
+PASS SQL 003_evaluation.sql
+PASS SQL 004_operations_and_guards.sql
+PASS SQL 005_integrity_hardening.sql
+PASS SQL 006_publication_contract.sql
+PASS SQL 007_upload_and_delivery.sql
+PASS SQL api_seed.sql
+============================== warnings summary ===============================
+work\smartpro-venv\Lib\site-packages\fastapi\testclient.py:1
+  C:\Users\DELL\Documents\Codex\2026-11-03\perform-an-independent-aquacrop-ospy-3\work\smartpro-venv\Lib\site-packages\fastapi\testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED outputs/smartpro/workflow-poc/tests/test_workflow.py::test_complete_synopsis_revision_workflow
+FAILED outputs/smartpro/workflow-poc/tests/test_workflow.py::test_replayed_submission_returns_original_result_without_duplicates
+FAILED outputs/smartpro/workflow-poc/tests/test_workflow.py::test_idempotency_key_cannot_be_reused_with_new_request
+FAILED outputs/smartpro/workflow-poc/tests/test_workflow.py::test_outsider_and_unassigned_faculty_denied
+FAILED outputs/smartpro/workflow-poc/tests/test_workflow.py::test_incomplete_upload_cannot_be_finalized
+FAILED outputs/smartpro/workflow-poc/tests/test_workflow.py::test_wrong_format_rejected
+FAILED outputs/smartpro/workflow-poc/tests/test_workflow.py::test_stale_decision_and_wrong_transition_refused
+FAILED outputs/smartpro/workflow-poc/tests/test_workflow.py::test_wrong_project_document_rejected
+FAILED outputs/smartpro/workflow-poc/tests/test_workflow.py::test_immutable_evidence_triggers
+FAILED outputs/smartpro/workflow-poc/tests/test_workflow.py::test_missing_idempotency_and_anonymous_access
+FAILED outputs/smartpro/workflow-poc/tests/test_workflow.py::test_replayed_decision_returns_identical_result
+FAILED outputs/smartpro/workflow-poc/tests/test_workflow.py::test_concurrent_submissions_only_one_wins
+FAILED outputs/smartpro/workflow-poc/tests/test_workflow.py::test_document_version_attached_to_other_project_is_rejected
+13 failed, 1 warning in 19.04s

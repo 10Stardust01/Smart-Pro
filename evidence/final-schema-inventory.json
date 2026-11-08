@@ -1,0 +1,3877 @@
+{
+  "version": "PostgreSQL 16.15, compiled by Visual C++ build 1944, 64-bit",
+  "extensions": [
+    {
+      "extname": "btree_gist",
+      "extversion": "1.7"
+    },
+    {
+      "extname": "plpgsql",
+      "extversion": "1.0"
+    }
+  ],
+  "tables": [
+    {
+      "tablename": "academic_action_grants"
+    },
+    {
+      "tablename": "academic_cycles"
+    },
+    {
+      "tablename": "approval_decisions"
+    },
+    {
+      "tablename": "assessments"
+    },
+    {
+      "tablename": "audit_events"
+    },
+    {
+      "tablename": "department_role_assignments"
+    },
+    {
+      "tablename": "departments"
+    },
+    {
+      "tablename": "document_versions"
+    },
+    {
+      "tablename": "documents"
+    },
+    {
+      "tablename": "evaluation_schemes"
+    },
+    {
+      "tablename": "evaluator_assignments"
+    },
+    {
+      "tablename": "faculty_assignments"
+    },
+    {
+      "tablename": "file_assets"
+    },
+    {
+      "tablename": "idempotency_records"
+    },
+    {
+      "tablename": "milestones"
+    },
+    {
+      "tablename": "mode_criteria"
+    },
+    {
+      "tablename": "notification_deliveries"
+    },
+    {
+      "tablename": "outbox_events"
+    },
+    {
+      "tablename": "project_policy_versions"
+    },
+    {
+      "tablename": "project_reviews"
+    },
+    {
+      "tablename": "projects"
+    },
+    {
+      "tablename": "result_releases"
+    },
+    {
+      "tablename": "result_source_assessments"
+    },
+    {
+      "tablename": "result_student_scores"
+    },
+    {
+      "tablename": "review_definitions"
+    },
+    {
+      "tablename": "review_roster_members"
+    },
+    {
+      "tablename": "rubric_criteria"
+    },
+    {
+      "tablename": "scheme_modes"
+    },
+    {
+      "tablename": "scheme_versions"
+    },
+    {
+      "tablename": "student_criterion_scores"
+    },
+    {
+      "tablename": "submission_attempts"
+    },
+    {
+      "tablename": "submission_cases"
+    },
+    {
+      "tablename": "submission_items"
+    },
+    {
+      "tablename": "team_criterion_scores"
+    },
+    {
+      "tablename": "team_memberships"
+    },
+    {
+      "tablename": "teams"
+    },
+    {
+      "tablename": "upload_sessions"
+    },
+    {
+      "tablename": "users"
+    }
+  ],
+  "constraints": [
+    {
+      "conname": "academic_action_grants_action_code_check",
+      "contype": "c",
+      "convalidated": true,
+      "definition": "CHECK ((action_code = ANY (ARRAY['APPROVE_SCHEME'::text, 'PUBLISH_RESULTS'::text, 'CORRECT_RESULTS'::text])))"
+    },
+    {
+      "conname": "academic_action_grants_check",
+      "contype": "c",
+      "convalidated": true,
+      "definition": "CHECK (((valid_until IS NULL) OR (valid_until > valid_from)))"
+    },
+    {
+      "conname": "academic_action_grants_department_id_fkey",
+      "contype": "f",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (department_id) REFERENCES departments(id)"
+    },
+    {
+      "conname": "academic_action_grants_pkey",
+      "contype": "p",
+      "convalidated": true,
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "conname": "academic_action_grants_user_id_fkey",
+      "contype": "f",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (user_id) REFERENCES users(id)"
+    },
+    {
+      "conname": "academic_cycles_check",
+      "contype": "c",
+      "convalidated": true,
+      "definition": "CHECK ((starts_on < ends_on))"
+    },
+    {
+      "conname": "academic_cycles_code_check",
+      "contype": "c",
+      "convalidated": true,
+      "definition": "CHECK ((btrim(code) <> ''::text))"
+    },
+    {
+      "conname": "academic_cycles_department_id_code_key",
+      "contype": "u",
+      "convalidated": true,
+      "definition": "UNIQUE (department_id, code)"
+    },
+    {
+      "conname": "academic_cycles_department_id_fkey",
+      "contype": "f",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (department_id) REFERENCES departments(id)"
+    },
+    {
+      "conname": "academic_cycles_id_department_id_key",
+      "contype": "u",
+      "convalidated": true,
+      "definition": "UNIQUE (id, department_id)"
+    },
+    {
+      "conname": "academic_cycles_pkey",
+      "contype": "p",
+      "convalidated": true,
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "conname": "approval_decisions_attempt_id_project_id_fkey",
+      "contype": "f",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (attempt_id, project_id) REFERENCES submission_attempts(id, project_id)"
+    },
+    {
+      "conname": "approval_decisions_attempt_id_reviewer_user_id_key",
+      "contype": "u",
+      "convalidated": true,
+      "definition": "UNIQUE (attempt_id, reviewer_user_id)"
+    },
+    {
+      "conname": "approval_decisions_decision_check",
+      "contype": "c",
+      "convalidated": true,
+      "definition": "CHECK ((decision = ANY (ARRAY['APPROVE'::text, 'REQUEST_CHANGES'::text, 'REJECT'::text])))"
+    },
+    {
+      "conname": "approval_decisions_faculty_assignment_id_project_id_review_fkey",
+      "contype": "f",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (faculty_assignment_id, project_id, reviewer_user_id) REFERENCES faculty_assignments(id, project_id, faculty_user_id)"
+    },
+    {
+      "conname": "approval_decisions_pkey",
+      "contype": "p",
+      "convalidated": true,
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "conname": "approval_decisions_reviewer_user_id_fkey",
+      "contype": "f",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (reviewer_user_id) REFERENCES users(id)"
+    },
+    {
+      "conname": "assessments_evaluator_assignment_id_key",
+      "contype": "u",
+      "convalidated": true,
+      "definition": "UNIQUE (evaluator_assignment_id)"
+    },
+    {
+      "conname": "assessments_evaluator_assignment_id_review_id_fkey",
+      "contype": "f",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (evaluator_assignment_id, review_id) REFERENCES evaluator_assignments(id, review_id)"
+    },
+    {
+      "conname": "assessments_id_review_id_key",
+      "contype": "u",
+      "convalidated": true,
+      "definition": "UNIQUE (id, review_id)"
+    },
+    {
+      "conname": "assessments_id_review_id_scheme_mode_id_key",
+      "contype": "u",
+      "convalidated": true,
+      "definition": "UNIQUE (id, review_id, scheme_mode_id)"
+    },
+    {
+      "conname": "assessments_id_scheme_mode_id_key",
+      "contype": "u",
+      "convalidated": true,
+      "definition": "UNIQUE (id, scheme_mode_id)"
+    },
+    {
+      "conname": "assessments_pkey",
+      "contype": "p",
+      "convalidated": true,
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "conname": "assessments_review_id_scheme_mode_id_fkey",
+      "contype": "f",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (review_id, scheme_mode_id) REFERENCES project_reviews(id, scheme_mode_id)"
+    },
+    {
+      "conname": "assessments_row_version_check",
+      "contype": "c",
+      "convalidated": true,
+      "definition": "CHECK ((row_version > 0))"
+    },
+    {
+      "conname": "assessments_state_check",
+      "contype": "c",
+      "convalidated": true,
+      "definition": "CHECK ((state = ANY (ARRAY['DRAFT'::text, 'FINALIZED'::text])))"
+    },
+    {
+      "conname": "audit_events_actor_id_fkey",
+      "contype": "f",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (actor_id) REFERENCES users(id)"
+    },
+    {
+      "conname": "audit_events_metadata_check",
+      "contype": "c",
+      "convalidated": true,
+      "definition": "CHECK ((jsonb_typeof(metadata) = 'object'::text))"
+    },
+    {
+      "conname": "audit_events_pkey",
+      "contype": "p",
+      "convalidated": true,
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "conname": "audit_events_project_id_fkey",
+      "contype": "f",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (project_id) REFERENCES projects(id)"
+    },
+    {
+      "conname": "claimed_lease_present",
+      "contype": "c",
+      "convalidated": true,
+      "definition": "CHECK (((status = 'CLAIMED'::text) = ((claim_token IS NOT NULL) AND (claimed_until IS NOT NULL))))"
+    },
+    {
+      "conname": "complete_attempt",
+      "contype": "t",
+      "convalidated": true,
+      "definition": "TRIGGER DEFERRABLE INITIALLY DEFERRED"
+    },
+    {
+      "conname": "department_role_assignments_check",
+      "contype": "c",
+      "convalidated": true,
+      "definition": "CHECK (((valid_until IS NULL) OR (valid_until > valid_from)))"
+    },
+    {
+      "conname": "department_role_assignments_department_id_fkey",
+      "contype": "f",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (department_id) REFERENCES departments(id)"
+    },
+    {
+      "conname": "department_role_assignments_pkey",
+      "contype": "p",
+      "convalidated": true,
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "conname": "department_role_assignments_role_code_check",
+      "contype": "c",
+      "convalidated": true,
+      "definition": "CHECK ((role_code = ANY (ARRAY['STUDENT'::text, 'FACULTY'::text, 'COORDINATOR'::text, 'HOD'::text, 'ACADEMIC_ADMIN'::text, 'TECH_ADMIN'::text])))"
+    },
+    {
+      "conname": "department_role_assignments_user_id_fkey",
+      "contype": "f",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (user_id) REFERENCES users(id)"
+    },
+    {
+      "conname": "departments_code_check",
+      "contype": "c",
+      "convalidated": true,
+      "definition": "CHECK ((btrim(code) <> ''::text))"
+    },
+    {
+      "conname": "departments_code_key",
+      "contype": "u",
+      "convalidated": true,
+      "definition": "UNIQUE (code)"
+    },
+    {
+      "conname": "departments_name_check",
+      "contype": "c",
+      "convalidated": true,
+      "definition": "CHECK ((btrim(name) <> ''::text))"
+    },
+    {
+      "conname": "departments_pkey",
+      "contype": "p",
+      "convalidated": true,
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "conname": "document_versions_document_id_project_id_fkey",
+      "contype": "f",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (document_id, project_id) REFERENCES documents(id, project_id)"
+    },
+    {
+      "conname": "document_versions_document_id_version_no_key",
+      "contype": "u",
+      "convalidated": true,
+      "definition": "UNIQUE (document_id, version_no)"
+    },
+    {
+      "conname": "document_versions_file_asset_id_fkey",
+      "contype": "f",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (file_asset_id) REFERENCES file_assets(id)"
+    },
+    {
+      "conname": "document_versions_file_asset_id_key",
+      "contype": "u",
+      "convalidated": true,
+      "definition": "UNIQUE (file_asset_id)"
+    },
+    {
+      "conname": "document_versions_id_document_id_project_id_key",
+      "contype": "u",
+      "convalidated": true,
+      "definition": "UNIQUE (id, document_id, project_id)"
+    },
+    {
+      "conname": "document_versions_id_project_id_key",
+      "contype": "u",
+      "convalidated": true,
+      "definition": "UNIQUE (id, project_id)"
+    },
+    {
+      "conname": "document_versions_pkey",
+      "contype": "p",
+      "convalidated": true,
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "conname": "document_versions_uploaded_by_fkey",
+      "contype": "f",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (uploaded_by) REFERENCES users(id)"
+    },
+    {
+      "conname": "document_versions_version_no_check",
+      "contype": "c",
+      "convalidated": true,
+      "definition": "CHECK ((version_no > 0))"
+    },
+    {
+      "conname": "documents_document_type_check",
+      "contype": "c",
+      "convalidated": true,
+      "definition": "CHECK ((document_type = ANY (ARRAY['SYNOPSIS'::text, 'REPORT'::text, 'PRESENTATION'::text, 'SOURCE_CODE'::text, 'DATASET'::text, 'OTHER'::text])))"
+    },
+    {
+      "conname": "documents_id_project_id_key",
+      "contype": "u",
+      "convalidated": true,
+      "definition": "UNIQUE (id, project_id)"
+    },
+    {
+      "conname": "documents_pkey",
+      "contype": "p",
+      "convalidated": true,
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "conname": "documents_project_id_fkey",
+      "contype": "f",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (project_id) REFERENCES projects(id)"
+    },
+    {
+      "conname": "evaluation_schemes_cycle_id_department_id_fkey",
+      "contype": "f",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (cycle_id, department_id) REFERENCES academic_cycles(id, department_id)"
+    },
+    {
+      "conname": "evaluation_schemes_cycle_id_review_definition_id_key",
+      "contype": "u",
+      "convalidated": true,
+      "definition": "UNIQUE (cycle_id, review_definition_id)"
+    },
+    {
+      "conname": "evaluation_schemes_id_cycle_id_review_definition_id_key",
+      "contype": "u",
+      "convalidated": true,
+      "definition": "UNIQUE (id, cycle_id, review_definition_id)"
+    },
+    {
+      "conname": "evaluation_schemes_pkey",
+      "contype": "p",
+      "convalidated": true,
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "conname": "evaluation_schemes_review_definition_id_department_id_fkey",
+      "contype": "f",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (review_definition_id, department_id) REFERENCES review_definitions(id, department_id)"
+    },
+    {
+      "conname": "evaluator_assignments_faculty_user_id_fkey",
+      "contype": "f",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (faculty_user_id) REFERENCES users(id)"
+    },
+    {
+      "conname": "evaluator_assignments_id_review_id_key",
+      "contype": "u",
+      "convalidated": true,
+      "definition": "UNIQUE (id, review_id)"
+    },
+    {
+      "conname": "evaluator_assignments_pkey",
+      "contype": "p",
+      "convalidated": true,
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "conname": "evaluator_assignments_review_id_faculty_user_id_key",
+      "contype": "u",
+      "convalidated": true,
+      "definition": "UNIQUE (review_id, faculty_user_id)"
+    },
+    {
+      "conname": "evaluator_assignments_review_id_fkey",
+      "contype": "f",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (review_id) REFERENCES project_reviews(id)"
+    },
+    {
+      "conname": "faculty_assignments_assignment_type_check",
+      "contype": "c",
+      "convalidated": true,
+      "definition": "CHECK ((assignment_type = ANY (ARRAY['GUIDE'::text, 'REVIEWER'::text, 'EVALUATOR'::text])))"
+    },
+    {
+      "conname": "faculty_assignments_check",
+      "contype": "c",
+      "convalidated": true,
+      "definition": "CHECK (((valid_until IS NULL) OR (valid_until > valid_from)))"
+    },
+    {
+      "conname": "faculty_assignments_faculty_user_id_fkey",
+      "contype": "f",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (faculty_user_id) REFERENCES users(id)"
+    },
+    {
+      "conname": "faculty_assignments_id_project_id_faculty_user_id_key",
+      "contype": "u",
+      "convalidated": true,
+      "definition": "UNIQUE (id, project_id, faculty_user_id)"
+    },
+    {
+      "conname": "faculty_assignments_id_project_id_key",
+      "contype": "u",
+      "convalidated": true,
+      "definition": "UNIQUE (id, project_id)"
+    },
+    {
+      "conname": "faculty_assignments_pkey",
+      "contype": "p",
+      "convalidated": true,
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "conname": "faculty_assignments_project_id_fkey",
+      "contype": "f",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (project_id) REFERENCES projects(id)"
+    },
+    {
+      "conname": "file_assets_pkey",
+      "contype": "p",
+      "convalidated": true,
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "conname": "file_assets_sha256_check",
+      "contype": "c",
+      "convalidated": true,
+      "definition": "CHECK ((sha256 ~ '^[0-9a-f]{64}$'::text))"
+    },
+    {
+      "conname": "file_assets_size_bytes_check",
+      "contype": "c",
+      "convalidated": true,
+      "definition": "CHECK ((size_bytes >= 0))"
+    },
+    {
+      "conname": "file_assets_storage_key_key",
+      "contype": "u",
+      "convalidated": true,
+      "definition": "UNIQUE (storage_key)"
+    },
+    {
+      "conname": "file_assets_upload_status_check",
+      "contype": "c",
+      "convalidated": true,
+      "definition": "CHECK ((upload_status = ANY (ARRAY['PENDING'::text, 'READY'::text, 'REJECTED'::text])))"
+    },
+    {
+      "conname": "file_assets_uploaded_by_fkey",
+      "contype": "f",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (uploaded_by) REFERENCES users(id)"
+    },
+    {
+      "conname": "idempotency_records_actor_id_fkey",
+      "contype": "f",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (actor_id) REFERENCES users(id)"
+    },
+    {
+      "conname": "idempotency_records_actor_id_operation_key_key",
+      "contype": "u",
+      "convalidated": true,
+      "definition": "UNIQUE (actor_id, operation, key)"
+    },
+    {
+      "conname": "idempotency_records_pkey",
+      "contype": "p",
+      "convalidated": true,
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "conname": "idempotency_records_request_sha256_check",
+      "contype": "c",
+      "convalidated": true,
+      "definition": "CHECK ((request_sha256 ~ '^[0-9a-f]{64}$'::text))"
+    },
+    {
+      "conname": "idempotency_records_state_check",
+      "contype": "c",
+      "convalidated": true,
+      "definition": "CHECK ((state = ANY (ARRAY['IN_PROGRESS'::text, 'COMPLETE'::text, 'FAILED'::text])))"
+    },
+    {
+      "conname": "milestones_pkey",
+      "contype": "p",
+      "convalidated": true,
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "conname": "milestones_project_id_fkey",
+      "contype": "f",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (project_id) REFERENCES projects(id)"
+    },
+    {
+      "conname": "milestones_state_check",
+      "contype": "c",
+      "convalidated": true,
+      "definition": "CHECK ((state = ANY (ARRAY['PENDING'::text, 'ACTIVE'::text, 'COMPLETED'::text, 'CANCELLED'::text])))"
+    },
+    {
+      "conname": "milestones_title_check",
+      "contype": "c",
+      "convalidated": true,
+      "definition": "CHECK ((btrim(title) <> ''::text))"
+    },
+    {
+      "conname": "mode_criteria_criterion_id_scheme_version_id_fkey",
+      "contype": "f",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (criterion_id, scheme_version_id) REFERENCES rubric_criteria(id, scheme_version_id)"
+    },
+    {
+      "conname": "mode_criteria_id_scheme_mode_id_score_scope_key",
+      "contype": "u",
+      "convalidated": true,
+      "definition": "UNIQUE (id, scheme_mode_id, score_scope)"
+    },
+    {
+      "conname": "mode_criteria_pkey",
+      "contype": "p",
+      "convalidated": true,
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "conname": "mode_criteria_scheme_mode_id_criterion_id_key",
+      "contype": "u",
+      "convalidated": true,
+      "definition": "UNIQUE (scheme_mode_id, criterion_id)"
+    },
+    {
+      "conname": "mode_criteria_scheme_version_id_scheme_mode_id_fkey",
+      "contype": "f",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (scheme_version_id, scheme_mode_id) REFERENCES scheme_modes(scheme_version_id, id)"
+    },
+    {
+      "conname": "mode_criteria_score_scope_check",
+      "contype": "c",
+      "convalidated": true,
+      "definition": "CHECK ((score_scope = ANY (ARRAY['TEAM'::text, 'STUDENT'::text])))"
+    },
+    {
+      "conname": "notification_deliveries_attempts_check",
+      "contype": "c",
+      "convalidated": true,
+      "definition": "CHECK ((attempts >= 0))"
+    },
+    {
+      "conname": "notification_deliveries_channel_check",
+      "contype": "c",
+      "convalidated": true,
+      "definition": "CHECK ((channel = ANY (ARRAY['EMAIL'::text, 'IN_APP'::text])))"
+    },
+    {
+      "conname": "notification_deliveries_dedupe_key_key",
+      "contype": "u",
+      "convalidated": true,
+      "definition": "UNIQUE (dedupe_key)"
+    },
+    {
+      "conname": "notification_deliveries_outbox_event_id_fkey",
+      "contype": "f",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (outbox_event_id) REFERENCES outbox_events(id)"
+    },
+    {
+      "conname": "notification_deliveries_pkey",
+      "contype": "p",
+      "convalidated": true,
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "conname": "notification_deliveries_recipient_user_id_fkey",
+      "contype": "f",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (recipient_user_id) REFERENCES users(id)"
+    },
+    {
+      "conname": "notification_deliveries_status_check",
+      "contype": "c",
+      "convalidated": true,
+      "definition": "CHECK ((status = ANY (ARRAY['PENDING'::text, 'SENT'::text, 'FAILED'::text])))"
+    },
+    {
+      "conname": "outbox_events_attempts_check",
+      "contype": "c",
+      "convalidated": true,
+      "definition": "CHECK ((attempts >= 0))"
+    },
+    {
+      "conname": "outbox_events_payload_check",
+      "contype": "c",
+      "convalidated": true,
+      "definition": "CHECK ((jsonb_typeof(payload) = 'object'::text))"
+    },
+    {
+      "conname": "outbox_events_pkey",
+      "contype": "p",
+      "convalidated": true,
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "conname": "outbox_events_status_check",
+      "contype": "c",
+      "convalidated": true,
+      "definition": "CHECK ((status = ANY (ARRAY['PENDING'::text, 'CLAIMED'::text, 'PROCESSED'::text, 'DEAD'::text])))"
+    },
+    {
+      "conname": "project_policy_versions_department_id_fkey",
+      "contype": "f",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (department_id) REFERENCES departments(id)"
+    },
+    {
+      "conname": "project_policy_versions_department_id_project_type_version__key",
+      "contype": "u",
+      "convalidated": true,
+      "definition": "UNIQUE (department_id, project_type, version_no)"
+    },
+    {
+      "conname": "project_policy_versions_id_department_id_project_type_key",
+      "contype": "u",
+      "convalidated": true,
+      "definition": "UNIQUE (id, department_id, project_type)"
+    },
+    {
+      "conname": "project_policy_versions_pkey",
+      "contype": "p",
+      "convalidated": true,
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "conname": "project_policy_versions_policy_data_check",
+      "contype": "c",
+      "convalidated": true,
+      "definition": "CHECK ((jsonb_typeof(policy_data) = 'object'::text))"
+    },
+    {
+      "conname": "project_policy_versions_policy_status_check",
+      "contype": "c",
+      "convalidated": true,
+      "definition": "CHECK ((policy_status = ANY (ARRAY['DRAFT'::text, 'APPROVED'::text, 'RETIRED'::text])))"
+    },
+    {
+      "conname": "project_policy_versions_project_type_check",
+      "contype": "c",
+      "convalidated": true,
+      "definition": "CHECK ((project_type = ANY (ARRAY['MINI'::text, 'MAJOR'::text])))"
+    },
+    {
+      "conname": "project_policy_versions_version_no_check",
+      "contype": "c",
+      "convalidated": true,
+      "definition": "CHECK ((version_no > 0))"
+    },
+    {
+      "conname": "project_reviews_check",
+      "contype": "c",
+      "convalidated": true,
+      "definition": "CHECK (((review_state = ANY (ARRAY['SCHEDULED'::text, 'CANCELLED'::text])) OR ((scheme_mode_id IS NOT NULL) AND (roster_locked_at IS NOT NULL))))"
+    },
+    {
+      "conname": "project_reviews_id_project_id_key",
+      "contype": "u",
+      "convalidated": true,
+      "definition": "UNIQUE (id, project_id)"
+    },
+    {
+      "conname": "project_reviews_id_scheme_mode_id_key",
+      "contype": "u",
+      "convalidated": true,
+      "definition": "UNIQUE (id, scheme_mode_id)"
+    },
+    {
+      "conname": "project_reviews_id_scheme_version_id_scheme_mode_id_key",
+      "contype": "u",
+      "convalidated": true,
+      "definition": "UNIQUE (id, scheme_version_id, scheme_mode_id)"
+    },
+    {
+      "conname": "project_reviews_pkey",
+      "contype": "p",
+      "convalidated": true,
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "conname": "project_reviews_project_id_cycle_id_policy_version_id_fkey",
+      "contype": "f",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (project_id, cycle_id, policy_version_id) REFERENCES projects(id, cycle_id, policy_version_id)"
+    },
+    {
+      "conname": "project_reviews_project_id_review_definition_id_round_no_key",
+      "contype": "u",
+      "convalidated": true,
+      "definition": "UNIQUE (project_id, review_definition_id, round_no)"
+    },
+    {
+      "conname": "project_reviews_review_definition_id_policy_version_id_fkey",
+      "contype": "f",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (review_definition_id, policy_version_id) REFERENCES review_definitions(id, policy_version_id)"
+    },
+    {
+      "conname": "project_reviews_review_state_check",
+      "contype": "c",
+      "convalidated": true,
+      "definition": "CHECK ((review_state = ANY (ARRAY['SCHEDULED'::text, 'OPEN'::text, 'FINALIZED'::text, 'RELEASED'::text, 'CANCELLED'::text])))"
+    },
+    {
+      "conname": "project_reviews_round_no_check",
+      "contype": "c",
+      "convalidated": true,
+      "definition": "CHECK ((round_no > 0))"
+    },
+    {
+      "conname": "project_reviews_row_version_check",
+      "contype": "c",
+      "convalidated": true,
+      "definition": "CHECK ((row_version > 0))"
+    },
+    {
+      "conname": "project_reviews_scheme_version_id_cycle_id_review_definiti_fkey",
+      "contype": "f",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (scheme_version_id, cycle_id, review_definition_id) REFERENCES scheme_versions(id, cycle_id, review_definition_id)"
+    },
+    {
+      "conname": "project_reviews_scheme_version_id_scheme_mode_id_fkey",
+      "contype": "f",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (scheme_version_id, scheme_mode_id) REFERENCES scheme_modes(scheme_version_id, id)"
+    },
+    {
+      "conname": "projects_cycle_id_department_id_fkey",
+      "contype": "f",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (cycle_id, department_id) REFERENCES academic_cycles(id, department_id)"
+    },
+    {
+      "conname": "projects_department_id_project_code_key",
+      "contype": "u",
+      "convalidated": true,
+      "definition": "UNIQUE (department_id, project_code)"
+    },
+    {
+      "conname": "projects_id_cycle_id_policy_version_id_key",
+      "contype": "u",
+      "convalidated": true,
+      "definition": "UNIQUE (id, cycle_id, policy_version_id)"
+    },
+    {
+      "conname": "projects_id_department_id_key",
+      "contype": "u",
+      "convalidated": true,
+      "definition": "UNIQUE (id, department_id)"
+    },
+    {
+      "conname": "projects_id_team_id_key",
+      "contype": "u",
+      "convalidated": true,
+      "definition": "UNIQUE (id, team_id)"
+    },
+    {
+      "conname": "projects_pkey",
+      "contype": "p",
+      "convalidated": true,
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "conname": "projects_policy_version_id_department_id_project_type_fkey",
+      "contype": "f",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (policy_version_id, department_id, project_type) REFERENCES project_policy_versions(id, department_id, project_type)"
+    },
+    {
+      "conname": "projects_project_code_check",
+      "contype": "c",
+      "convalidated": true,
+      "definition": "CHECK ((btrim(project_code) <> ''::text))"
+    },
+    {
+      "conname": "projects_project_type_check",
+      "contype": "c",
+      "convalidated": true,
+      "definition": "CHECK ((project_type = ANY (ARRAY['MINI'::text, 'MAJOR'::text])))"
+    },
+    {
+      "conname": "projects_row_version_check",
+      "contype": "c",
+      "convalidated": true,
+      "definition": "CHECK ((row_version > 0))"
+    },
+    {
+      "conname": "projects_team_id_cycle_id_department_id_fkey",
+      "contype": "f",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (team_id, cycle_id, department_id) REFERENCES teams(id, cycle_id, department_id)"
+    },
+    {
+      "conname": "projects_title_check",
+      "contype": "c",
+      "convalidated": true,
+      "definition": "CHECK ((btrim(title) <> ''::text))"
+    },
+    {
+      "conname": "ready_has_verification",
+      "contype": "c",
+      "convalidated": true,
+      "definition": "CHECK (((upload_status <> 'READY'::text) OR (verified_at IS NOT NULL)))"
+    },
+    {
+      "conname": "result_releases_authorization_grant_id_fkey",
+      "contype": "f",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (authorization_grant_id) REFERENCES academic_action_grants(id)"
+    },
+    {
+      "conname": "result_releases_calculation_snapshot_check",
+      "contype": "c",
+      "convalidated": true,
+      "definition": "CHECK ((jsonb_typeof(calculation_snapshot) = 'object'::text))"
+    },
+    {
+      "conname": "result_releases_check",
+      "contype": "c",
+      "convalidated": true,
+      "definition": "CHECK ((supersedes_id IS DISTINCT FROM id))"
+    },
+    {
+      "conname": "result_releases_id_review_id_key",
+      "contype": "u",
+      "convalidated": true,
+      "definition": "UNIQUE (id, review_id)"
+    },
+    {
+      "conname": "result_releases_pkey",
+      "contype": "p",
+      "convalidated": true,
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "conname": "result_releases_release_no_check",
+      "contype": "c",
+      "convalidated": true,
+      "definition": "CHECK ((release_no > 0))"
+    },
+    {
+      "conname": "result_releases_released_by_fkey",
+      "contype": "f",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (released_by) REFERENCES users(id)"
+    },
+    {
+      "conname": "result_releases_review_id_release_no_key",
+      "contype": "u",
+      "convalidated": true,
+      "definition": "UNIQUE (review_id, release_no)"
+    },
+    {
+      "conname": "result_releases_review_id_scheme_version_id_scheme_mode_id_fkey",
+      "contype": "f",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (review_id, scheme_version_id, scheme_mode_id) REFERENCES project_reviews(id, scheme_version_id, scheme_mode_id)"
+    },
+    {
+      "conname": "result_releases_supersedes_id_review_id_fkey",
+      "contype": "f",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (supersedes_id, review_id) REFERENCES result_releases(id, review_id)"
+    },
+    {
+      "conname": "result_source_assessments_assessment_id_review_id_fkey",
+      "contype": "f",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (assessment_id, review_id) REFERENCES assessments(id, review_id)"
+    },
+    {
+      "conname": "result_source_assessments_pkey",
+      "contype": "p",
+      "convalidated": true,
+      "definition": "PRIMARY KEY (release_id, assessment_id)"
+    },
+    {
+      "conname": "result_source_assessments_release_id_review_id_fkey",
+      "contype": "f",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (release_id, review_id) REFERENCES result_releases(id, review_id)"
+    },
+    {
+      "conname": "result_student_scores_breakdown_check",
+      "contype": "c",
+      "convalidated": true,
+      "definition": "CHECK ((jsonb_typeof(breakdown) = 'object'::text))"
+    },
+    {
+      "conname": "result_student_scores_pkey",
+      "contype": "p",
+      "convalidated": true,
+      "definition": "PRIMARY KEY (release_id, roster_member_id)"
+    },
+    {
+      "conname": "result_student_scores_release_id_review_id_fkey",
+      "contype": "f",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (release_id, review_id) REFERENCES result_releases(id, review_id)"
+    },
+    {
+      "conname": "result_student_scores_roster_member_id_review_id_fkey",
+      "contype": "f",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (roster_member_id, review_id) REFERENCES review_roster_members(id, review_id)"
+    },
+    {
+      "conname": "result_student_scores_total_marks_check",
+      "contype": "c",
+      "convalidated": true,
+      "definition": "CHECK ((total_marks >= (0)::numeric))"
+    },
+    {
+      "conname": "result_student_scores_total_marks_check1",
+      "contype": "c",
+      "convalidated": true,
+      "definition": "CHECK (((total_marks)::text <> 'NaN'::text))"
+    },
+    {
+      "conname": "review_definitions_id_department_id_key",
+      "contype": "u",
+      "convalidated": true,
+      "definition": "UNIQUE (id, department_id)"
+    },
+    {
+      "conname": "review_definitions_id_policy_version_id_key",
+      "contype": "u",
+      "convalidated": true,
+      "definition": "UNIQUE (id, policy_version_id)"
+    },
+    {
+      "conname": "review_definitions_ordinal_check",
+      "contype": "c",
+      "convalidated": true,
+      "definition": "CHECK ((ordinal > 0))"
+    },
+    {
+      "conname": "review_definitions_pkey",
+      "contype": "p",
+      "convalidated": true,
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "conname": "review_definitions_policy_version_id_department_id_project_fkey",
+      "contype": "f",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (policy_version_id, department_id, project_type) REFERENCES project_policy_versions(id, department_id, project_type)"
+    },
+    {
+      "conname": "review_definitions_policy_version_id_ordinal_key",
+      "contype": "u",
+      "convalidated": true,
+      "definition": "UNIQUE (policy_version_id, ordinal)"
+    },
+    {
+      "conname": "review_definitions_policy_version_id_review_code_key",
+      "contype": "u",
+      "convalidated": true,
+      "definition": "UNIQUE (policy_version_id, review_code)"
+    },
+    {
+      "conname": "review_roster_members_id_review_id_key",
+      "contype": "u",
+      "convalidated": true,
+      "definition": "UNIQUE (id, review_id)"
+    },
+    {
+      "conname": "review_roster_members_membership_id_team_id_student_user_i_fkey",
+      "contype": "f",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (membership_id, team_id, student_user_id) REFERENCES team_memberships(id, team_id, user_id)"
+    },
+    {
+      "conname": "review_roster_members_pkey",
+      "contype": "p",
+      "convalidated": true,
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "conname": "review_roster_members_project_id_team_id_fkey",
+      "contype": "f",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (project_id, team_id) REFERENCES projects(id, team_id)"
+    },
+    {
+      "conname": "review_roster_members_review_id_project_id_fkey",
+      "contype": "f",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (review_id, project_id) REFERENCES project_reviews(id, project_id)"
+    },
+    {
+      "conname": "review_roster_members_review_id_student_user_id_key",
+      "contype": "u",
+      "convalidated": true,
+      "definition": "UNIQUE (review_id, student_user_id)"
+    },
+    {
+      "conname": "review_roster_members_student_user_id_fkey",
+      "contype": "f",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (student_user_id) REFERENCES users(id)"
+    },
+    {
+      "conname": "rubric_criteria_id_scheme_version_id_key",
+      "contype": "u",
+      "convalidated": true,
+      "definition": "UNIQUE (id, scheme_version_id)"
+    },
+    {
+      "conname": "rubric_criteria_maximum_check",
+      "contype": "c",
+      "convalidated": true,
+      "definition": "CHECK ((maximum > (0)::numeric))"
+    },
+    {
+      "conname": "rubric_criteria_maximum_check1",
+      "contype": "c",
+      "convalidated": true,
+      "definition": "CHECK (((maximum)::text <> 'NaN'::text))"
+    },
+    {
+      "conname": "rubric_criteria_pkey",
+      "contype": "p",
+      "convalidated": true,
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "conname": "rubric_criteria_scheme_version_id_code_key",
+      "contype": "u",
+      "convalidated": true,
+      "definition": "UNIQUE (scheme_version_id, code)"
+    },
+    {
+      "conname": "rubric_criteria_scheme_version_id_fkey",
+      "contype": "f",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (scheme_version_id) REFERENCES scheme_versions(id)"
+    },
+    {
+      "conname": "rubric_criteria_scheme_version_id_sort_order_key",
+      "contype": "u",
+      "convalidated": true,
+      "definition": "UNIQUE (scheme_version_id, sort_order)"
+    },
+    {
+      "conname": "rubric_criteria_sort_order_check",
+      "contype": "c",
+      "convalidated": true,
+      "definition": "CHECK ((sort_order > 0))"
+    },
+    {
+      "conname": "same_team_membership_no_overlap",
+      "contype": "x",
+      "convalidated": true,
+      "definition": "EXCLUDE USING gist (team_id WITH =, user_id WITH =, tstzrange(joined_at, left_at, '[)'::text) WITH &&)"
+    },
+    {
+      "conname": "scheme_modes_id_scheme_version_id_key",
+      "contype": "u",
+      "convalidated": true,
+      "definition": "UNIQUE (id, scheme_version_id)"
+    },
+    {
+      "conname": "scheme_modes_mode_code_check",
+      "contype": "c",
+      "convalidated": true,
+      "definition": "CHECK ((mode_code = ANY (ARRAY['TEAM'::text, 'INDIVIDUAL'::text, 'COMBINED'::text])))"
+    },
+    {
+      "conname": "scheme_modes_pkey",
+      "contype": "p",
+      "convalidated": true,
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "conname": "scheme_modes_scheme_version_id_fkey",
+      "contype": "f",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (scheme_version_id) REFERENCES scheme_versions(id)"
+    },
+    {
+      "conname": "scheme_modes_scheme_version_id_id_key",
+      "contype": "u",
+      "convalidated": true,
+      "definition": "UNIQUE (scheme_version_id, id)"
+    },
+    {
+      "conname": "scheme_modes_scheme_version_id_mode_code_key",
+      "contype": "u",
+      "convalidated": true,
+      "definition": "UNIQUE (scheme_version_id, mode_code)"
+    },
+    {
+      "conname": "scheme_versions_approved_by_fkey",
+      "contype": "f",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (approved_by) REFERENCES users(id)"
+    },
+    {
+      "conname": "scheme_versions_id_cycle_id_review_definition_id_key",
+      "contype": "u",
+      "convalidated": true,
+      "definition": "UNIQUE (id, cycle_id, review_definition_id)"
+    },
+    {
+      "conname": "scheme_versions_pkey",
+      "contype": "p",
+      "convalidated": true,
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "conname": "scheme_versions_scheme_id_cycle_id_review_definition_id_fkey",
+      "contype": "f",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (scheme_id, cycle_id, review_definition_id) REFERENCES evaluation_schemes(id, cycle_id, review_definition_id)"
+    },
+    {
+      "conname": "scheme_versions_scheme_id_version_no_key",
+      "contype": "u",
+      "convalidated": true,
+      "definition": "UNIQUE (scheme_id, version_no)"
+    },
+    {
+      "conname": "scheme_versions_state_check",
+      "contype": "c",
+      "convalidated": true,
+      "definition": "CHECK ((state = ANY (ARRAY['DRAFT'::text, 'APPROVED'::text, 'ACTIVE'::text, 'RETIRED'::text])))"
+    },
+    {
+      "conname": "scheme_versions_version_no_check",
+      "contype": "c",
+      "convalidated": true,
+      "definition": "CHECK ((version_no > 0))"
+    },
+    {
+      "conname": "student_criterion_scores_assessment_id_review_id_scheme_mo_fkey",
+      "contype": "f",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (assessment_id, review_id, scheme_mode_id) REFERENCES assessments(id, review_id, scheme_mode_id)"
+    },
+    {
+      "conname": "student_criterion_scores_marks_check",
+      "contype": "c",
+      "convalidated": true,
+      "definition": "CHECK ((marks >= (0)::numeric))"
+    },
+    {
+      "conname": "student_criterion_scores_marks_check1",
+      "contype": "c",
+      "convalidated": true,
+      "definition": "CHECK (((marks)::text <> 'NaN'::text))"
+    },
+    {
+      "conname": "student_criterion_scores_mode_criterion_id_scheme_mode_id__fkey",
+      "contype": "f",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (mode_criterion_id, scheme_mode_id, score_scope) REFERENCES mode_criteria(id, scheme_mode_id, score_scope)"
+    },
+    {
+      "conname": "student_criterion_scores_pkey",
+      "contype": "p",
+      "convalidated": true,
+      "definition": "PRIMARY KEY (assessment_id, roster_member_id, mode_criterion_id)"
+    },
+    {
+      "conname": "student_criterion_scores_roster_member_id_review_id_fkey",
+      "contype": "f",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (roster_member_id, review_id) REFERENCES review_roster_members(id, review_id)"
+    },
+    {
+      "conname": "student_criterion_scores_score_scope_check",
+      "contype": "c",
+      "convalidated": true,
+      "definition": "CHECK ((score_scope = 'STUDENT'::text))"
+    },
+    {
+      "conname": "submission_attempts_attempt_no_check",
+      "contype": "c",
+      "convalidated": true,
+      "definition": "CHECK ((attempt_no > 0))"
+    },
+    {
+      "conname": "submission_attempts_attempt_state_check",
+      "contype": "c",
+      "convalidated": true,
+      "definition": "CHECK ((attempt_state = ANY (ARRAY['SUBMITTED'::text, 'CHANGES_REQUESTED'::text, 'APPROVED'::text, 'REJECTED'::text])))"
+    },
+    {
+      "conname": "submission_attempts_case_id_attempt_no_key",
+      "contype": "u",
+      "convalidated": true,
+      "definition": "UNIQUE (case_id, attempt_no)"
+    },
+    {
+      "conname": "submission_attempts_case_id_project_id_fkey",
+      "contype": "f",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (case_id, project_id) REFERENCES submission_cases(id, project_id)"
+    },
+    {
+      "conname": "submission_attempts_id_case_id_key",
+      "contype": "u",
+      "convalidated": true,
+      "definition": "UNIQUE (id, case_id)"
+    },
+    {
+      "conname": "submission_attempts_id_project_id_key",
+      "contype": "u",
+      "convalidated": true,
+      "definition": "UNIQUE (id, project_id)"
+    },
+    {
+      "conname": "submission_attempts_pkey",
+      "contype": "p",
+      "convalidated": true,
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "conname": "submission_attempts_submitted_by_fkey",
+      "contype": "f",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (submitted_by) REFERENCES users(id)"
+    },
+    {
+      "conname": "submission_attempts_submitted_membership_id_fkey",
+      "contype": "f",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (submitted_membership_id) REFERENCES team_memberships(id)"
+    },
+    {
+      "conname": "submission_cases_id_project_id_key",
+      "contype": "u",
+      "convalidated": true,
+      "definition": "UNIQUE (id, project_id)"
+    },
+    {
+      "conname": "submission_cases_pkey",
+      "contype": "p",
+      "convalidated": true,
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "conname": "submission_cases_project_id_fkey",
+      "contype": "f",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (project_id) REFERENCES projects(id)"
+    },
+    {
+      "conname": "submission_cases_project_id_requirement_key_key",
+      "contype": "u",
+      "convalidated": true,
+      "definition": "UNIQUE (project_id, requirement_key)"
+    },
+    {
+      "conname": "submission_cases_requirement_key_check",
+      "contype": "c",
+      "convalidated": true,
+      "definition": "CHECK ((btrim(requirement_key) <> ''::text))"
+    },
+    {
+      "conname": "submission_cases_row_version_check",
+      "contype": "c",
+      "convalidated": true,
+      "definition": "CHECK ((row_version > 0))"
+    },
+    {
+      "conname": "submission_cases_state_check",
+      "contype": "c",
+      "convalidated": true,
+      "definition": "CHECK ((state = ANY (ARRAY['DRAFT'::text, 'AWAITING_REVIEW'::text, 'CHANGES_REQUESTED'::text, 'APPROVED'::text, 'REJECTED'::text])))"
+    },
+    {
+      "conname": "submission_cases_submission_type_check",
+      "contype": "c",
+      "convalidated": true,
+      "definition": "CHECK ((submission_type = ANY (ARRAY['SYNOPSIS'::text, 'REVIEW_DOCUMENT'::text, 'FINAL_REPORT'::text, 'OTHER'::text])))"
+    },
+    {
+      "conname": "submission_items_attempt_id_project_id_fkey",
+      "contype": "f",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (attempt_id, project_id) REFERENCES submission_attempts(id, project_id)"
+    },
+    {
+      "conname": "submission_items_document_version_id_document_id_project_i_fkey",
+      "contype": "f",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (document_version_id, document_id, project_id) REFERENCES document_versions(id, document_id, project_id)"
+    },
+    {
+      "conname": "submission_items_pkey",
+      "contype": "p",
+      "convalidated": true,
+      "definition": "PRIMARY KEY (attempt_id, document_id)"
+    },
+    {
+      "conname": "team_criterion_scores_assessment_id_scheme_mode_id_fkey",
+      "contype": "f",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (assessment_id, scheme_mode_id) REFERENCES assessments(id, scheme_mode_id)"
+    },
+    {
+      "conname": "team_criterion_scores_marks_check",
+      "contype": "c",
+      "convalidated": true,
+      "definition": "CHECK ((marks >= (0)::numeric))"
+    },
+    {
+      "conname": "team_criterion_scores_marks_check1",
+      "contype": "c",
+      "convalidated": true,
+      "definition": "CHECK (((marks)::text <> 'NaN'::text))"
+    },
+    {
+      "conname": "team_criterion_scores_mode_criterion_id_scheme_mode_id_sco_fkey",
+      "contype": "f",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (mode_criterion_id, scheme_mode_id, score_scope) REFERENCES mode_criteria(id, scheme_mode_id, score_scope)"
+    },
+    {
+      "conname": "team_criterion_scores_pkey",
+      "contype": "p",
+      "convalidated": true,
+      "definition": "PRIMARY KEY (assessment_id, mode_criterion_id)"
+    },
+    {
+      "conname": "team_criterion_scores_score_scope_check",
+      "contype": "c",
+      "convalidated": true,
+      "definition": "CHECK ((score_scope = 'TEAM'::text))"
+    },
+    {
+      "conname": "team_memberships_check",
+      "contype": "c",
+      "convalidated": true,
+      "definition": "CHECK (((left_at IS NULL) OR (left_at > joined_at)))"
+    },
+    {
+      "conname": "team_memberships_id_team_id_user_id_key",
+      "contype": "u",
+      "convalidated": true,
+      "definition": "UNIQUE (id, team_id, user_id)"
+    },
+    {
+      "conname": "team_memberships_pkey",
+      "contype": "p",
+      "convalidated": true,
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "conname": "team_memberships_team_id_fkey",
+      "contype": "f",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (team_id) REFERENCES teams(id)"
+    },
+    {
+      "conname": "team_memberships_user_id_fkey",
+      "contype": "f",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (user_id) REFERENCES users(id)"
+    },
+    {
+      "conname": "teams_cycle_id_department_id_fkey",
+      "contype": "f",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (cycle_id, department_id) REFERENCES academic_cycles(id, department_id)"
+    },
+    {
+      "conname": "teams_id_cycle_id_department_id_key",
+      "contype": "u",
+      "convalidated": true,
+      "definition": "UNIQUE (id, cycle_id, department_id)"
+    },
+    {
+      "conname": "teams_name_check",
+      "contype": "c",
+      "convalidated": true,
+      "definition": "CHECK ((btrim(name) <> ''::text))"
+    },
+    {
+      "conname": "teams_pkey",
+      "contype": "p",
+      "convalidated": true,
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "conname": "upload_sessions_check",
+      "contype": "c",
+      "convalidated": true,
+      "definition": "CHECK (((status = 'COMPLETE'::text) = ((document_version_id IS NOT NULL) AND (completed_at IS NOT NULL))))"
+    },
+    {
+      "conname": "upload_sessions_document_id_fkey",
+      "contype": "f",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (document_id) REFERENCES documents(id)"
+    },
+    {
+      "conname": "upload_sessions_document_version_id_fkey",
+      "contype": "f",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (document_version_id) REFERENCES document_versions(id)"
+    },
+    {
+      "conname": "upload_sessions_pkey",
+      "contype": "p",
+      "convalidated": true,
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "conname": "upload_sessions_sha256_check",
+      "contype": "c",
+      "convalidated": true,
+      "definition": "CHECK ((sha256 ~ '^[0-9a-f]{64}$'::text))"
+    },
+    {
+      "conname": "upload_sessions_size_bytes_check",
+      "contype": "c",
+      "convalidated": true,
+      "definition": "CHECK ((size_bytes > 0))"
+    },
+    {
+      "conname": "upload_sessions_status_check",
+      "contype": "c",
+      "convalidated": true,
+      "definition": "CHECK ((status = ANY (ARRAY['PENDING'::text, 'UPLOADED'::text, 'COMPLETE'::text, 'REJECTED'::text])))"
+    },
+    {
+      "conname": "upload_sessions_storage_key_key",
+      "contype": "u",
+      "convalidated": true,
+      "definition": "UNIQUE (storage_key)"
+    },
+    {
+      "conname": "upload_sessions_user_id_fkey",
+      "contype": "f",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (user_id) REFERENCES users(id)"
+    },
+    {
+      "conname": "users_account_status_check",
+      "contype": "c",
+      "convalidated": true,
+      "definition": "CHECK ((account_status = ANY (ARRAY['ACTIVE'::text, 'DISABLED'::text])))"
+    },
+    {
+      "conname": "users_display_name_check",
+      "contype": "c",
+      "convalidated": true,
+      "definition": "CHECK ((btrim(display_name) <> ''::text))"
+    },
+    {
+      "conname": "users_email_check",
+      "contype": "c",
+      "convalidated": true,
+      "definition": "CHECK (((email = btrim(email)) AND (POSITION(('@'::text) IN (email)) > 1)))"
+    },
+    {
+      "conname": "users_external_subject_key",
+      "contype": "u",
+      "convalidated": true,
+      "definition": "UNIQUE (external_subject)"
+    },
+    {
+      "conname": "users_pkey",
+      "contype": "p",
+      "convalidated": true,
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "conname": "verify_release_complete",
+      "contype": "t",
+      "convalidated": true,
+      "definition": "TRIGGER DEFERRABLE INITIALLY DEFERRED"
+    }
+  ],
+  "triggers": [
+    {
+      "event_object_table": "academic_action_grants",
+      "trigger_name": "freeze_grant_history",
+      "event_manipulation": "DELETE",
+      "action_statement": "EXECUTE FUNCTION smartpro_grant_history()"
+    },
+    {
+      "event_object_table": "academic_action_grants",
+      "trigger_name": "freeze_grant_history",
+      "event_manipulation": "UPDATE",
+      "action_statement": "EXECUTE FUNCTION smartpro_grant_history()"
+    },
+    {
+      "event_object_table": "approval_decisions",
+      "trigger_name": "check_decision_authority",
+      "event_manipulation": "INSERT",
+      "action_statement": "EXECUTE FUNCTION smartpro_decision_authority()"
+    },
+    {
+      "event_object_table": "approval_decisions",
+      "trigger_name": "lock_approval_decisions",
+      "event_manipulation": "DELETE",
+      "action_statement": "EXECUTE FUNCTION smartpro_forbid_mutation()"
+    },
+    {
+      "event_object_table": "approval_decisions",
+      "trigger_name": "lock_approval_decisions",
+      "event_manipulation": "UPDATE",
+      "action_statement": "EXECUTE FUNCTION smartpro_forbid_mutation()"
+    },
+    {
+      "event_object_table": "assessments",
+      "trigger_name": "freeze_assessment_identity",
+      "event_manipulation": "DELETE",
+      "action_statement": "EXECUTE FUNCTION smartpro_assessment_identity()"
+    },
+    {
+      "event_object_table": "assessments",
+      "trigger_name": "freeze_assessment_identity",
+      "event_manipulation": "INSERT",
+      "action_statement": "EXECUTE FUNCTION smartpro_assessment_identity()"
+    },
+    {
+      "event_object_table": "assessments",
+      "trigger_name": "freeze_assessment_identity",
+      "event_manipulation": "UPDATE",
+      "action_statement": "EXECUTE FUNCTION smartpro_assessment_identity()"
+    },
+    {
+      "event_object_table": "assessments",
+      "trigger_name": "validate_assessment_finalization",
+      "event_manipulation": "UPDATE",
+      "action_statement": "EXECUTE FUNCTION smartpro_finalize_assessment()"
+    },
+    {
+      "event_object_table": "audit_events",
+      "trigger_name": "lock_audit_events",
+      "event_manipulation": "DELETE",
+      "action_statement": "EXECUTE FUNCTION smartpro_forbid_mutation()"
+    },
+    {
+      "event_object_table": "audit_events",
+      "trigger_name": "lock_audit_events",
+      "event_manipulation": "UPDATE",
+      "action_statement": "EXECUTE FUNCTION smartpro_forbid_mutation()"
+    },
+    {
+      "event_object_table": "document_versions",
+      "trigger_name": "lock_document_versions",
+      "event_manipulation": "DELETE",
+      "action_statement": "EXECUTE FUNCTION smartpro_forbid_mutation()"
+    },
+    {
+      "event_object_table": "document_versions",
+      "trigger_name": "lock_document_versions",
+      "event_manipulation": "UPDATE",
+      "action_statement": "EXECUTE FUNCTION smartpro_forbid_mutation()"
+    },
+    {
+      "event_object_table": "documents",
+      "trigger_name": "freeze_document_identity",
+      "event_manipulation": "UPDATE",
+      "action_statement": "EXECUTE FUNCTION smartpro_document_identity()"
+    },
+    {
+      "event_object_table": "evaluator_assignments",
+      "trigger_name": "validate_evaluator_assignment",
+      "event_manipulation": "DELETE",
+      "action_statement": "EXECUTE FUNCTION smartpro_assignment_integrity()"
+    },
+    {
+      "event_object_table": "evaluator_assignments",
+      "trigger_name": "validate_evaluator_assignment",
+      "event_manipulation": "INSERT",
+      "action_statement": "EXECUTE FUNCTION smartpro_assignment_integrity()"
+    },
+    {
+      "event_object_table": "evaluator_assignments",
+      "trigger_name": "validate_evaluator_assignment",
+      "event_manipulation": "UPDATE",
+      "action_statement": "EXECUTE FUNCTION smartpro_assignment_integrity()"
+    },
+    {
+      "event_object_table": "faculty_assignments",
+      "trigger_name": "validate_faculty_assignment",
+      "event_manipulation": "DELETE",
+      "action_statement": "EXECUTE FUNCTION smartpro_assignment_integrity()"
+    },
+    {
+      "event_object_table": "faculty_assignments",
+      "trigger_name": "validate_faculty_assignment",
+      "event_manipulation": "INSERT",
+      "action_statement": "EXECUTE FUNCTION smartpro_assignment_integrity()"
+    },
+    {
+      "event_object_table": "faculty_assignments",
+      "trigger_name": "validate_faculty_assignment",
+      "event_manipulation": "UPDATE",
+      "action_statement": "EXECUTE FUNCTION smartpro_assignment_integrity()"
+    },
+    {
+      "event_object_table": "file_assets",
+      "trigger_name": "guard_file_asset_identity",
+      "event_manipulation": "UPDATE",
+      "action_statement": "EXECUTE FUNCTION smartpro_guard_file_identity()"
+    },
+    {
+      "event_object_table": "mode_criteria",
+      "trigger_name": "check_mode_criterion",
+      "event_manipulation": "INSERT",
+      "action_statement": "EXECUTE FUNCTION smartpro_validate_mode_criterion()"
+    },
+    {
+      "event_object_table": "mode_criteria",
+      "trigger_name": "check_mode_criterion",
+      "event_manipulation": "UPDATE",
+      "action_statement": "EXECUTE FUNCTION smartpro_validate_mode_criterion()"
+    },
+    {
+      "event_object_table": "mode_criteria",
+      "trigger_name": "lock_mode_criterion_child",
+      "event_manipulation": "DELETE",
+      "action_statement": "EXECUTE FUNCTION smartpro_guard_scheme_child()"
+    },
+    {
+      "event_object_table": "mode_criteria",
+      "trigger_name": "lock_mode_criterion_child",
+      "event_manipulation": "INSERT",
+      "action_statement": "EXECUTE FUNCTION smartpro_guard_scheme_child()"
+    },
+    {
+      "event_object_table": "mode_criteria",
+      "trigger_name": "lock_mode_criterion_child",
+      "event_manipulation": "UPDATE",
+      "action_statement": "EXECUTE FUNCTION smartpro_guard_scheme_child()"
+    },
+    {
+      "event_object_table": "project_policy_versions",
+      "trigger_name": "freeze_policy_metadata",
+      "event_manipulation": "DELETE",
+      "action_statement": "EXECUTE FUNCTION smartpro_immutable_configuration()"
+    },
+    {
+      "event_object_table": "project_policy_versions",
+      "trigger_name": "freeze_policy_metadata",
+      "event_manipulation": "UPDATE",
+      "action_statement": "EXECUTE FUNCTION smartpro_immutable_configuration()"
+    },
+    {
+      "event_object_table": "project_policy_versions",
+      "trigger_name": "guard_academic_policy",
+      "event_manipulation": "DELETE",
+      "action_statement": "EXECUTE FUNCTION smartpro_guard_project_policy()"
+    },
+    {
+      "event_object_table": "project_policy_versions",
+      "trigger_name": "guard_academic_policy",
+      "event_manipulation": "UPDATE",
+      "action_statement": "EXECUTE FUNCTION smartpro_guard_project_policy()"
+    },
+    {
+      "event_object_table": "project_reviews",
+      "trigger_name": "guard_review_configuration",
+      "event_manipulation": "INSERT",
+      "action_statement": "EXECUTE FUNCTION smartpro_guard_review_change()"
+    },
+    {
+      "event_object_table": "project_reviews",
+      "trigger_name": "guard_review_configuration",
+      "event_manipulation": "UPDATE",
+      "action_statement": "EXECUTE FUNCTION smartpro_guard_review_change()"
+    },
+    {
+      "event_object_table": "project_reviews",
+      "trigger_name": "validate_review_terminal_state",
+      "event_manipulation": "UPDATE",
+      "action_statement": "EXECUTE FUNCTION smartpro_review_terminal_state()"
+    },
+    {
+      "event_object_table": "project_reviews",
+      "trigger_name": "validate_roster_eligibility",
+      "event_manipulation": "UPDATE",
+      "action_statement": "EXECUTE FUNCTION smartpro_roster_freeze_eligibility()"
+    },
+    {
+      "event_object_table": "projects",
+      "trigger_name": "check_project_policy",
+      "event_manipulation": "INSERT",
+      "action_statement": "EXECUTE FUNCTION smartpro_project_policy_binding()"
+    },
+    {
+      "event_object_table": "projects",
+      "trigger_name": "check_project_policy",
+      "event_manipulation": "UPDATE",
+      "action_statement": "EXECUTE FUNCTION smartpro_project_policy_binding()"
+    },
+    {
+      "event_object_table": "result_releases",
+      "trigger_name": "audit_publication",
+      "event_manipulation": "UPDATE",
+      "action_statement": "EXECUTE FUNCTION smartpro_publication_audit()"
+    },
+    {
+      "event_object_table": "result_releases",
+      "trigger_name": "guard_release",
+      "event_manipulation": "DELETE",
+      "action_statement": "EXECUTE FUNCTION smartpro_release_guard()"
+    },
+    {
+      "event_object_table": "result_releases",
+      "trigger_name": "guard_release",
+      "event_manipulation": "INSERT",
+      "action_statement": "EXECUTE FUNCTION smartpro_release_guard()"
+    },
+    {
+      "event_object_table": "result_releases",
+      "trigger_name": "guard_release",
+      "event_manipulation": "UPDATE",
+      "action_statement": "EXECUTE FUNCTION smartpro_release_guard()"
+    },
+    {
+      "event_object_table": "result_releases",
+      "trigger_name": "verify_release_complete",
+      "event_manipulation": "INSERT",
+      "action_statement": "EXECUTE FUNCTION smartpro_release_complete()"
+    },
+    {
+      "event_object_table": "result_releases",
+      "trigger_name": "verify_release_complete",
+      "event_manipulation": "UPDATE",
+      "action_statement": "EXECUTE FUNCTION smartpro_release_complete()"
+    },
+    {
+      "event_object_table": "result_source_assessments",
+      "trigger_name": "lock_result_source_assessments",
+      "event_manipulation": "DELETE",
+      "action_statement": "EXECUTE FUNCTION smartpro_forbid_mutation()"
+    },
+    {
+      "event_object_table": "result_source_assessments",
+      "trigger_name": "lock_result_source_assessments",
+      "event_manipulation": "UPDATE",
+      "action_statement": "EXECUTE FUNCTION smartpro_forbid_mutation()"
+    },
+    {
+      "event_object_table": "result_source_assessments",
+      "trigger_name": "zz_guard_release_source_insert",
+      "event_manipulation": "INSERT",
+      "action_statement": "EXECUTE FUNCTION smartpro_release_child()"
+    },
+    {
+      "event_object_table": "result_student_scores",
+      "trigger_name": "lock_result_student_scores",
+      "event_manipulation": "DELETE",
+      "action_statement": "EXECUTE FUNCTION smartpro_forbid_mutation()"
+    },
+    {
+      "event_object_table": "result_student_scores",
+      "trigger_name": "lock_result_student_scores",
+      "event_manipulation": "UPDATE",
+      "action_statement": "EXECUTE FUNCTION smartpro_forbid_mutation()"
+    },
+    {
+      "event_object_table": "result_student_scores",
+      "trigger_name": "zz_guard_release_student_insert",
+      "event_manipulation": "INSERT",
+      "action_statement": "EXECUTE FUNCTION smartpro_release_child()"
+    },
+    {
+      "event_object_table": "review_definitions",
+      "trigger_name": "freeze_review_definition",
+      "event_manipulation": "DELETE",
+      "action_statement": "EXECUTE FUNCTION smartpro_review_definition_history()"
+    },
+    {
+      "event_object_table": "review_definitions",
+      "trigger_name": "freeze_review_definition",
+      "event_manipulation": "UPDATE",
+      "action_statement": "EXECUTE FUNCTION smartpro_review_definition_history()"
+    },
+    {
+      "event_object_table": "review_roster_members",
+      "trigger_name": "guard_review_roster",
+      "event_manipulation": "DELETE",
+      "action_statement": "EXECUTE FUNCTION smartpro_guard_review_roster()"
+    },
+    {
+      "event_object_table": "review_roster_members",
+      "trigger_name": "guard_review_roster",
+      "event_manipulation": "INSERT",
+      "action_statement": "EXECUTE FUNCTION smartpro_guard_review_roster()"
+    },
+    {
+      "event_object_table": "review_roster_members",
+      "trigger_name": "guard_review_roster",
+      "event_manipulation": "UPDATE",
+      "action_statement": "EXECUTE FUNCTION smartpro_guard_review_roster()"
+    },
+    {
+      "event_object_table": "rubric_criteria",
+      "trigger_name": "lock_rubric_child",
+      "event_manipulation": "DELETE",
+      "action_statement": "EXECUTE FUNCTION smartpro_guard_scheme_child()"
+    },
+    {
+      "event_object_table": "rubric_criteria",
+      "trigger_name": "lock_rubric_child",
+      "event_manipulation": "INSERT",
+      "action_statement": "EXECUTE FUNCTION smartpro_guard_scheme_child()"
+    },
+    {
+      "event_object_table": "rubric_criteria",
+      "trigger_name": "lock_rubric_child",
+      "event_manipulation": "UPDATE",
+      "action_statement": "EXECUTE FUNCTION smartpro_guard_scheme_child()"
+    },
+    {
+      "event_object_table": "scheme_modes",
+      "trigger_name": "lock_mode_child",
+      "event_manipulation": "DELETE",
+      "action_statement": "EXECUTE FUNCTION smartpro_guard_scheme_child()"
+    },
+    {
+      "event_object_table": "scheme_modes",
+      "trigger_name": "lock_mode_child",
+      "event_manipulation": "INSERT",
+      "action_statement": "EXECUTE FUNCTION smartpro_guard_scheme_child()"
+    },
+    {
+      "event_object_table": "scheme_modes",
+      "trigger_name": "lock_mode_child",
+      "event_manipulation": "UPDATE",
+      "action_statement": "EXECUTE FUNCTION smartpro_guard_scheme_child()"
+    },
+    {
+      "event_object_table": "scheme_modes",
+      "trigger_name": "validate_mode_scope_change",
+      "event_manipulation": "UPDATE",
+      "action_statement": "EXECUTE FUNCTION smartpro_mode_scope_change()"
+    },
+    {
+      "event_object_table": "scheme_versions",
+      "trigger_name": "authorize_scheme_approval",
+      "event_manipulation": "UPDATE",
+      "action_statement": "EXECUTE FUNCTION smartpro_scheme_approver()"
+    },
+    {
+      "event_object_table": "scheme_versions",
+      "trigger_name": "freeze_scheme_version",
+      "event_manipulation": "DELETE",
+      "action_statement": "EXECUTE FUNCTION smartpro_immutable_configuration()"
+    },
+    {
+      "event_object_table": "scheme_versions",
+      "trigger_name": "freeze_scheme_version",
+      "event_manipulation": "INSERT",
+      "action_statement": "EXECUTE FUNCTION smartpro_immutable_configuration()"
+    },
+    {
+      "event_object_table": "scheme_versions",
+      "trigger_name": "freeze_scheme_version",
+      "event_manipulation": "UPDATE",
+      "action_statement": "EXECUTE FUNCTION smartpro_immutable_configuration()"
+    },
+    {
+      "event_object_table": "scheme_versions",
+      "trigger_name": "validate_scheme_state",
+      "event_manipulation": "UPDATE",
+      "action_statement": "EXECUTE FUNCTION smartpro_scheme_transition()"
+    },
+    {
+      "event_object_table": "student_criterion_scores",
+      "trigger_name": "check_student_score",
+      "event_manipulation": "INSERT",
+      "action_statement": "EXECUTE FUNCTION smartpro_validate_score()"
+    },
+    {
+      "event_object_table": "student_criterion_scores",
+      "trigger_name": "check_student_score",
+      "event_manipulation": "UPDATE",
+      "action_statement": "EXECUTE FUNCTION smartpro_validate_score()"
+    },
+    {
+      "event_object_table": "student_criterion_scores",
+      "trigger_name": "guard_student_score_delete",
+      "event_manipulation": "DELETE",
+      "action_statement": "EXECUTE FUNCTION smartpro_guard_score_delete()"
+    },
+    {
+      "event_object_table": "submission_attempts",
+      "trigger_name": "complete_attempt",
+      "event_manipulation": "INSERT",
+      "action_statement": "EXECUTE FUNCTION smartpro_attempt_complete()"
+    },
+    {
+      "event_object_table": "submission_attempts",
+      "trigger_name": "complete_attempt",
+      "event_manipulation": "UPDATE",
+      "action_statement": "EXECUTE FUNCTION smartpro_attempt_complete()"
+    },
+    {
+      "event_object_table": "submission_attempts",
+      "trigger_name": "freeze_attempt_identity",
+      "event_manipulation": "DELETE",
+      "action_statement": "EXECUTE FUNCTION smartpro_attempt_guard()"
+    },
+    {
+      "event_object_table": "submission_attempts",
+      "trigger_name": "freeze_attempt_identity",
+      "event_manipulation": "UPDATE",
+      "action_statement": "EXECUTE FUNCTION smartpro_attempt_guard()"
+    },
+    {
+      "event_object_table": "submission_attempts",
+      "trigger_name": "snapshot_submitter",
+      "event_manipulation": "INSERT",
+      "action_statement": "EXECUTE FUNCTION smartpro_submitter_snapshot()"
+    },
+    {
+      "event_object_table": "submission_items",
+      "trigger_name": "verify_submission_item_file",
+      "event_manipulation": "INSERT",
+      "action_statement": "EXECUTE FUNCTION smartpro_guard_submitted_file()"
+    },
+    {
+      "event_object_table": "submission_items",
+      "trigger_name": "verify_submission_item_file",
+      "event_manipulation": "UPDATE",
+      "action_statement": "EXECUTE FUNCTION smartpro_guard_submitted_file()"
+    },
+    {
+      "event_object_table": "submission_items",
+      "trigger_name": "zz_guard_item_set",
+      "event_manipulation": "DELETE",
+      "action_statement": "EXECUTE FUNCTION smartpro_submission_item_set()"
+    },
+    {
+      "event_object_table": "submission_items",
+      "trigger_name": "zz_guard_item_set",
+      "event_manipulation": "INSERT",
+      "action_statement": "EXECUTE FUNCTION smartpro_submission_item_set()"
+    },
+    {
+      "event_object_table": "submission_items",
+      "trigger_name": "zz_guard_item_set",
+      "event_manipulation": "UPDATE",
+      "action_statement": "EXECUTE FUNCTION smartpro_submission_item_set()"
+    },
+    {
+      "event_object_table": "team_criterion_scores",
+      "trigger_name": "check_team_score",
+      "event_manipulation": "INSERT",
+      "action_statement": "EXECUTE FUNCTION smartpro_validate_score()"
+    },
+    {
+      "event_object_table": "team_criterion_scores",
+      "trigger_name": "check_team_score",
+      "event_manipulation": "UPDATE",
+      "action_statement": "EXECUTE FUNCTION smartpro_validate_score()"
+    },
+    {
+      "event_object_table": "team_criterion_scores",
+      "trigger_name": "guard_team_score_delete",
+      "event_manipulation": "DELETE",
+      "action_statement": "EXECUTE FUNCTION smartpro_guard_score_delete()"
+    },
+    {
+      "event_object_table": "team_memberships",
+      "trigger_name": "freeze_membership_history",
+      "event_manipulation": "DELETE",
+      "action_statement": "EXECUTE FUNCTION smartpro_membership_history()"
+    },
+    {
+      "event_object_table": "team_memberships",
+      "trigger_name": "freeze_membership_history",
+      "event_manipulation": "UPDATE",
+      "action_statement": "EXECUTE FUNCTION smartpro_membership_history()"
+    },
+    {
+      "event_object_table": "upload_sessions",
+      "trigger_name": "guard_upload_session",
+      "event_manipulation": "DELETE",
+      "action_statement": "EXECUTE FUNCTION smartpro_upload_identity()"
+    },
+    {
+      "event_object_table": "upload_sessions",
+      "trigger_name": "guard_upload_session",
+      "event_manipulation": "UPDATE",
+      "action_statement": "EXECUTE FUNCTION smartpro_upload_identity()"
+    }
+  ],
+  "indexes": [
+    {
+      "tablename": "academic_action_grants",
+      "indexname": "academic_action_grants_pkey",
+      "indexdef": "CREATE UNIQUE INDEX academic_action_grants_pkey ON public.academic_action_grants USING btree (id)"
+    },
+    {
+      "tablename": "academic_action_grants",
+      "indexname": "uq_current_academic_action",
+      "indexdef": "CREATE UNIQUE INDEX uq_current_academic_action ON public.academic_action_grants USING btree (user_id, department_id, action_code) WHERE (valid_until IS NULL)"
+    },
+    {
+      "tablename": "academic_cycles",
+      "indexname": "academic_cycles_department_id_code_key",
+      "indexdef": "CREATE UNIQUE INDEX academic_cycles_department_id_code_key ON public.academic_cycles USING btree (department_id, code)"
+    },
+    {
+      "tablename": "academic_cycles",
+      "indexname": "academic_cycles_id_department_id_key",
+      "indexdef": "CREATE UNIQUE INDEX academic_cycles_id_department_id_key ON public.academic_cycles USING btree (id, department_id)"
+    },
+    {
+      "tablename": "academic_cycles",
+      "indexname": "academic_cycles_pkey",
+      "indexdef": "CREATE UNIQUE INDEX academic_cycles_pkey ON public.academic_cycles USING btree (id)"
+    },
+    {
+      "tablename": "approval_decisions",
+      "indexname": "approval_decisions_attempt_id_reviewer_user_id_key",
+      "indexdef": "CREATE UNIQUE INDEX approval_decisions_attempt_id_reviewer_user_id_key ON public.approval_decisions USING btree (attempt_id, reviewer_user_id)"
+    },
+    {
+      "tablename": "approval_decisions",
+      "indexname": "approval_decisions_pkey",
+      "indexdef": "CREATE UNIQUE INDEX approval_decisions_pkey ON public.approval_decisions USING btree (id)"
+    },
+    {
+      "tablename": "approval_decisions",
+      "indexname": "ix_approval_decisions_reviewer",
+      "indexdef": "CREATE INDEX ix_approval_decisions_reviewer ON public.approval_decisions USING btree (reviewer_user_id, decided_at DESC)"
+    },
+    {
+      "tablename": "assessments",
+      "indexname": "assessments_evaluator_assignment_id_key",
+      "indexdef": "CREATE UNIQUE INDEX assessments_evaluator_assignment_id_key ON public.assessments USING btree (evaluator_assignment_id)"
+    },
+    {
+      "tablename": "assessments",
+      "indexname": "assessments_id_review_id_key",
+      "indexdef": "CREATE UNIQUE INDEX assessments_id_review_id_key ON public.assessments USING btree (id, review_id)"
+    },
+    {
+      "tablename": "assessments",
+      "indexname": "assessments_id_review_id_scheme_mode_id_key",
+      "indexdef": "CREATE UNIQUE INDEX assessments_id_review_id_scheme_mode_id_key ON public.assessments USING btree (id, review_id, scheme_mode_id)"
+    },
+    {
+      "tablename": "assessments",
+      "indexname": "assessments_id_scheme_mode_id_key",
+      "indexdef": "CREATE UNIQUE INDEX assessments_id_scheme_mode_id_key ON public.assessments USING btree (id, scheme_mode_id)"
+    },
+    {
+      "tablename": "assessments",
+      "indexname": "assessments_pkey",
+      "indexdef": "CREATE UNIQUE INDEX assessments_pkey ON public.assessments USING btree (id)"
+    },
+    {
+      "tablename": "assessments",
+      "indexname": "ix_assessments_review",
+      "indexdef": "CREATE INDEX ix_assessments_review ON public.assessments USING btree (review_id)"
+    },
+    {
+      "tablename": "audit_events",
+      "indexname": "audit_events_pkey",
+      "indexdef": "CREATE UNIQUE INDEX audit_events_pkey ON public.audit_events USING btree (id)"
+    },
+    {
+      "tablename": "audit_events",
+      "indexname": "ix_audit_project_time",
+      "indexdef": "CREATE INDEX ix_audit_project_time ON public.audit_events USING btree (project_id, occurred_at DESC)"
+    },
+    {
+      "tablename": "department_role_assignments",
+      "indexname": "department_role_assignments_pkey",
+      "indexdef": "CREATE UNIQUE INDEX department_role_assignments_pkey ON public.department_role_assignments USING btree (id)"
+    },
+    {
+      "tablename": "department_role_assignments",
+      "indexname": "uq_active_department_role",
+      "indexdef": "CREATE UNIQUE INDEX uq_active_department_role ON public.department_role_assignments USING btree (user_id, department_id, role_code) WHERE (valid_until IS NULL)"
+    },
+    {
+      "tablename": "departments",
+      "indexname": "departments_code_key",
+      "indexdef": "CREATE UNIQUE INDEX departments_code_key ON public.departments USING btree (code)"
+    },
+    {
+      "tablename": "departments",
+      "indexname": "departments_pkey",
+      "indexdef": "CREATE UNIQUE INDEX departments_pkey ON public.departments USING btree (id)"
+    },
+    {
+      "tablename": "document_versions",
+      "indexname": "document_versions_document_id_version_no_key",
+      "indexdef": "CREATE UNIQUE INDEX document_versions_document_id_version_no_key ON public.document_versions USING btree (document_id, version_no)"
+    },
+    {
+      "tablename": "document_versions",
+      "indexname": "document_versions_file_asset_id_key",
+      "indexdef": "CREATE UNIQUE INDEX document_versions_file_asset_id_key ON public.document_versions USING btree (file_asset_id)"
+    },
+    {
+      "tablename": "document_versions",
+      "indexname": "document_versions_id_document_id_project_id_key",
+      "indexdef": "CREATE UNIQUE INDEX document_versions_id_document_id_project_id_key ON public.document_versions USING btree (id, document_id, project_id)"
+    },
+    {
+      "tablename": "document_versions",
+      "indexname": "document_versions_id_project_id_key",
+      "indexdef": "CREATE UNIQUE INDEX document_versions_id_project_id_key ON public.document_versions USING btree (id, project_id)"
+    },
+    {
+      "tablename": "document_versions",
+      "indexname": "document_versions_pkey",
+      "indexdef": "CREATE UNIQUE INDEX document_versions_pkey ON public.document_versions USING btree (id)"
+    },
+    {
+      "tablename": "document_versions",
+      "indexname": "ix_document_versions_document",
+      "indexdef": "CREATE INDEX ix_document_versions_document ON public.document_versions USING btree (document_id, version_no DESC)"
+    },
+    {
+      "tablename": "documents",
+      "indexname": "documents_id_project_id_key",
+      "indexdef": "CREATE UNIQUE INDEX documents_id_project_id_key ON public.documents USING btree (id, project_id)"
+    },
+    {
+      "tablename": "documents",
+      "indexname": "documents_pkey",
+      "indexdef": "CREATE UNIQUE INDEX documents_pkey ON public.documents USING btree (id)"
+    },
+    {
+      "tablename": "evaluation_schemes",
+      "indexname": "evaluation_schemes_cycle_id_review_definition_id_key",
+      "indexdef": "CREATE UNIQUE INDEX evaluation_schemes_cycle_id_review_definition_id_key ON public.evaluation_schemes USING btree (cycle_id, review_definition_id)"
+    },
+    {
+      "tablename": "evaluation_schemes",
+      "indexname": "evaluation_schemes_id_cycle_id_review_definition_id_key",
+      "indexdef": "CREATE UNIQUE INDEX evaluation_schemes_id_cycle_id_review_definition_id_key ON public.evaluation_schemes USING btree (id, cycle_id, review_definition_id)"
+    },
+    {
+      "tablename": "evaluation_schemes",
+      "indexname": "evaluation_schemes_pkey",
+      "indexdef": "CREATE UNIQUE INDEX evaluation_schemes_pkey ON public.evaluation_schemes USING btree (id)"
+    },
+    {
+      "tablename": "evaluator_assignments",
+      "indexname": "evaluator_assignments_id_review_id_key",
+      "indexdef": "CREATE UNIQUE INDEX evaluator_assignments_id_review_id_key ON public.evaluator_assignments USING btree (id, review_id)"
+    },
+    {
+      "tablename": "evaluator_assignments",
+      "indexname": "evaluator_assignments_pkey",
+      "indexdef": "CREATE UNIQUE INDEX evaluator_assignments_pkey ON public.evaluator_assignments USING btree (id)"
+    },
+    {
+      "tablename": "evaluator_assignments",
+      "indexname": "evaluator_assignments_review_id_faculty_user_id_key",
+      "indexdef": "CREATE UNIQUE INDEX evaluator_assignments_review_id_faculty_user_id_key ON public.evaluator_assignments USING btree (review_id, faculty_user_id)"
+    },
+    {
+      "tablename": "faculty_assignments",
+      "indexname": "faculty_assignments_id_project_id_faculty_user_id_key",
+      "indexdef": "CREATE UNIQUE INDEX faculty_assignments_id_project_id_faculty_user_id_key ON public.faculty_assignments USING btree (id, project_id, faculty_user_id)"
+    },
+    {
+      "tablename": "faculty_assignments",
+      "indexname": "faculty_assignments_id_project_id_key",
+      "indexdef": "CREATE UNIQUE INDEX faculty_assignments_id_project_id_key ON public.faculty_assignments USING btree (id, project_id)"
+    },
+    {
+      "tablename": "faculty_assignments",
+      "indexname": "faculty_assignments_pkey",
+      "indexdef": "CREATE UNIQUE INDEX faculty_assignments_pkey ON public.faculty_assignments USING btree (id)"
+    },
+    {
+      "tablename": "faculty_assignments",
+      "indexname": "ix_faculty_assignments_user",
+      "indexdef": "CREATE INDEX ix_faculty_assignments_user ON public.faculty_assignments USING btree (faculty_user_id, valid_until)"
+    },
+    {
+      "tablename": "file_assets",
+      "indexname": "file_assets_pkey",
+      "indexdef": "CREATE UNIQUE INDEX file_assets_pkey ON public.file_assets USING btree (id)"
+    },
+    {
+      "tablename": "file_assets",
+      "indexname": "file_assets_storage_key_key",
+      "indexdef": "CREATE UNIQUE INDEX file_assets_storage_key_key ON public.file_assets USING btree (storage_key)"
+    },
+    {
+      "tablename": "idempotency_records",
+      "indexname": "idempotency_records_actor_id_operation_key_key",
+      "indexdef": "CREATE UNIQUE INDEX idempotency_records_actor_id_operation_key_key ON public.idempotency_records USING btree (actor_id, operation, key)"
+    },
+    {
+      "tablename": "idempotency_records",
+      "indexname": "idempotency_records_pkey",
+      "indexdef": "CREATE UNIQUE INDEX idempotency_records_pkey ON public.idempotency_records USING btree (id)"
+    },
+    {
+      "tablename": "milestones",
+      "indexname": "milestones_pkey",
+      "indexdef": "CREATE UNIQUE INDEX milestones_pkey ON public.milestones USING btree (id)"
+    },
+    {
+      "tablename": "mode_criteria",
+      "indexname": "mode_criteria_id_scheme_mode_id_score_scope_key",
+      "indexdef": "CREATE UNIQUE INDEX mode_criteria_id_scheme_mode_id_score_scope_key ON public.mode_criteria USING btree (id, scheme_mode_id, score_scope)"
+    },
+    {
+      "tablename": "mode_criteria",
+      "indexname": "mode_criteria_pkey",
+      "indexdef": "CREATE UNIQUE INDEX mode_criteria_pkey ON public.mode_criteria USING btree (id)"
+    },
+    {
+      "tablename": "mode_criteria",
+      "indexname": "mode_criteria_scheme_mode_id_criterion_id_key",
+      "indexdef": "CREATE UNIQUE INDEX mode_criteria_scheme_mode_id_criterion_id_key ON public.mode_criteria USING btree (scheme_mode_id, criterion_id)"
+    },
+    {
+      "tablename": "notification_deliveries",
+      "indexname": "notification_deliveries_dedupe_key_key",
+      "indexdef": "CREATE UNIQUE INDEX notification_deliveries_dedupe_key_key ON public.notification_deliveries USING btree (dedupe_key)"
+    },
+    {
+      "tablename": "notification_deliveries",
+      "indexname": "notification_deliveries_pkey",
+      "indexdef": "CREATE UNIQUE INDEX notification_deliveries_pkey ON public.notification_deliveries USING btree (id)"
+    },
+    {
+      "tablename": "outbox_events",
+      "indexname": "ix_outbox_expired_claims",
+      "indexdef": "CREATE INDEX ix_outbox_expired_claims ON public.outbox_events USING btree (claimed_until) WHERE (status = 'CLAIMED'::text)"
+    },
+    {
+      "tablename": "outbox_events",
+      "indexname": "ix_outbox_pending",
+      "indexdef": "CREATE INDEX ix_outbox_pending ON public.outbox_events USING btree (available_at, created_at) WHERE (status = 'PENDING'::text)"
+    },
+    {
+      "tablename": "outbox_events",
+      "indexname": "outbox_events_pkey",
+      "indexdef": "CREATE UNIQUE INDEX outbox_events_pkey ON public.outbox_events USING btree (id)"
+    },
+    {
+      "tablename": "project_policy_versions",
+      "indexname": "project_policy_versions_department_id_project_type_version__key",
+      "indexdef": "CREATE UNIQUE INDEX project_policy_versions_department_id_project_type_version__key ON public.project_policy_versions USING btree (department_id, project_type, version_no)"
+    },
+    {
+      "tablename": "project_policy_versions",
+      "indexname": "project_policy_versions_id_department_id_project_type_key",
+      "indexdef": "CREATE UNIQUE INDEX project_policy_versions_id_department_id_project_type_key ON public.project_policy_versions USING btree (id, department_id, project_type)"
+    },
+    {
+      "tablename": "project_policy_versions",
+      "indexname": "project_policy_versions_pkey",
+      "indexdef": "CREATE UNIQUE INDEX project_policy_versions_pkey ON public.project_policy_versions USING btree (id)"
+    },
+    {
+      "tablename": "project_reviews",
+      "indexname": "ix_review_project",
+      "indexdef": "CREATE INDEX ix_review_project ON public.project_reviews USING btree (project_id, review_definition_id)"
+    },
+    {
+      "tablename": "project_reviews",
+      "indexname": "project_reviews_id_project_id_key",
+      "indexdef": "CREATE UNIQUE INDEX project_reviews_id_project_id_key ON public.project_reviews USING btree (id, project_id)"
+    },
+    {
+      "tablename": "project_reviews",
+      "indexname": "project_reviews_id_scheme_mode_id_key",
+      "indexdef": "CREATE UNIQUE INDEX project_reviews_id_scheme_mode_id_key ON public.project_reviews USING btree (id, scheme_mode_id)"
+    },
+    {
+      "tablename": "project_reviews",
+      "indexname": "project_reviews_id_scheme_version_id_scheme_mode_id_key",
+      "indexdef": "CREATE UNIQUE INDEX project_reviews_id_scheme_version_id_scheme_mode_id_key ON public.project_reviews USING btree (id, scheme_version_id, scheme_mode_id)"
+    },
+    {
+      "tablename": "project_reviews",
+      "indexname": "project_reviews_pkey",
+      "indexdef": "CREATE UNIQUE INDEX project_reviews_pkey ON public.project_reviews USING btree (id)"
+    },
+    {
+      "tablename": "project_reviews",
+      "indexname": "project_reviews_project_id_review_definition_id_round_no_key",
+      "indexdef": "CREATE UNIQUE INDEX project_reviews_project_id_review_definition_id_round_no_key ON public.project_reviews USING btree (project_id, review_definition_id, round_no)"
+    },
+    {
+      "tablename": "projects",
+      "indexname": "ix_projects_cycle",
+      "indexdef": "CREATE INDEX ix_projects_cycle ON public.projects USING btree (cycle_id)"
+    },
+    {
+      "tablename": "projects",
+      "indexname": "projects_department_id_project_code_key",
+      "indexdef": "CREATE UNIQUE INDEX projects_department_id_project_code_key ON public.projects USING btree (department_id, project_code)"
+    },
+    {
+      "tablename": "projects",
+      "indexname": "projects_id_cycle_id_policy_version_id_key",
+      "indexdef": "CREATE UNIQUE INDEX projects_id_cycle_id_policy_version_id_key ON public.projects USING btree (id, cycle_id, policy_version_id)"
+    },
+    {
+      "tablename": "projects",
+      "indexname": "projects_id_department_id_key",
+      "indexdef": "CREATE UNIQUE INDEX projects_id_department_id_key ON public.projects USING btree (id, department_id)"
+    },
+    {
+      "tablename": "projects",
+      "indexname": "projects_id_team_id_key",
+      "indexdef": "CREATE UNIQUE INDEX projects_id_team_id_key ON public.projects USING btree (id, team_id)"
+    },
+    {
+      "tablename": "projects",
+      "indexname": "projects_pkey",
+      "indexdef": "CREATE UNIQUE INDEX projects_pkey ON public.projects USING btree (id)"
+    },
+    {
+      "tablename": "result_releases",
+      "indexname": "ix_releases_review",
+      "indexdef": "CREATE INDEX ix_releases_review ON public.result_releases USING btree (review_id, release_no DESC)"
+    },
+    {
+      "tablename": "result_releases",
+      "indexname": "result_releases_id_review_id_key",
+      "indexdef": "CREATE UNIQUE INDEX result_releases_id_review_id_key ON public.result_releases USING btree (id, review_id)"
+    },
+    {
+      "tablename": "result_releases",
+      "indexname": "result_releases_pkey",
+      "indexdef": "CREATE UNIQUE INDEX result_releases_pkey ON public.result_releases USING btree (id)"
+    },
+    {
+      "tablename": "result_releases",
+      "indexname": "result_releases_review_id_release_no_key",
+      "indexdef": "CREATE UNIQUE INDEX result_releases_review_id_release_no_key ON public.result_releases USING btree (review_id, release_no)"
+    },
+    {
+      "tablename": "result_releases",
+      "indexname": "uq_release_successor",
+      "indexdef": "CREATE UNIQUE INDEX uq_release_successor ON public.result_releases USING btree (supersedes_id) WHERE (supersedes_id IS NOT NULL)"
+    },
+    {
+      "tablename": "result_source_assessments",
+      "indexname": "result_source_assessments_pkey",
+      "indexdef": "CREATE UNIQUE INDEX result_source_assessments_pkey ON public.result_source_assessments USING btree (release_id, assessment_id)"
+    },
+    {
+      "tablename": "result_student_scores",
+      "indexname": "result_student_scores_pkey",
+      "indexdef": "CREATE UNIQUE INDEX result_student_scores_pkey ON public.result_student_scores USING btree (release_id, roster_member_id)"
+    },
+    {
+      "tablename": "review_definitions",
+      "indexname": "review_definitions_id_department_id_key",
+      "indexdef": "CREATE UNIQUE INDEX review_definitions_id_department_id_key ON public.review_definitions USING btree (id, department_id)"
+    },
+    {
+      "tablename": "review_definitions",
+      "indexname": "review_definitions_id_policy_version_id_key",
+      "indexdef": "CREATE UNIQUE INDEX review_definitions_id_policy_version_id_key ON public.review_definitions USING btree (id, policy_version_id)"
+    },
+    {
+      "tablename": "review_definitions",
+      "indexname": "review_definitions_pkey",
+      "indexdef": "CREATE UNIQUE INDEX review_definitions_pkey ON public.review_definitions USING btree (id)"
+    },
+    {
+      "tablename": "review_definitions",
+      "indexname": "review_definitions_policy_version_id_ordinal_key",
+      "indexdef": "CREATE UNIQUE INDEX review_definitions_policy_version_id_ordinal_key ON public.review_definitions USING btree (policy_version_id, ordinal)"
+    },
+    {
+      "tablename": "review_definitions",
+      "indexname": "review_definitions_policy_version_id_review_code_key",
+      "indexdef": "CREATE UNIQUE INDEX review_definitions_policy_version_id_review_code_key ON public.review_definitions USING btree (policy_version_id, review_code)"
+    },
+    {
+      "tablename": "review_roster_members",
+      "indexname": "ix_roster_review",
+      "indexdef": "CREATE INDEX ix_roster_review ON public.review_roster_members USING btree (review_id)"
+    },
+    {
+      "tablename": "review_roster_members",
+      "indexname": "review_roster_members_id_review_id_key",
+      "indexdef": "CREATE UNIQUE INDEX review_roster_members_id_review_id_key ON public.review_roster_members USING btree (id, review_id)"
+    },
+    {
+      "tablename": "review_roster_members",
+      "indexname": "review_roster_members_pkey",
+      "indexdef": "CREATE UNIQUE INDEX review_roster_members_pkey ON public.review_roster_members USING btree (id)"
+    },
+    {
+      "tablename": "review_roster_members",
+      "indexname": "review_roster_members_review_id_student_user_id_key",
+      "indexdef": "CREATE UNIQUE INDEX review_roster_members_review_id_student_user_id_key ON public.review_roster_members USING btree (review_id, student_user_id)"
+    },
+    {
+      "tablename": "rubric_criteria",
+      "indexname": "rubric_criteria_id_scheme_version_id_key",
+      "indexdef": "CREATE UNIQUE INDEX rubric_criteria_id_scheme_version_id_key ON public.rubric_criteria USING btree (id, scheme_version_id)"
+    },
+    {
+      "tablename": "rubric_criteria",
+      "indexname": "rubric_criteria_pkey",
+      "indexdef": "CREATE UNIQUE INDEX rubric_criteria_pkey ON public.rubric_criteria USING btree (id)"
+    },
+    {
+      "tablename": "rubric_criteria",
+      "indexname": "rubric_criteria_scheme_version_id_code_key",
+      "indexdef": "CREATE UNIQUE INDEX rubric_criteria_scheme_version_id_code_key ON public.rubric_criteria USING btree (scheme_version_id, code)"
+    },
+    {
+      "tablename": "rubric_criteria",
+      "indexname": "rubric_criteria_scheme_version_id_sort_order_key",
+      "indexdef": "CREATE UNIQUE INDEX rubric_criteria_scheme_version_id_sort_order_key ON public.rubric_criteria USING btree (scheme_version_id, sort_order)"
+    },
+    {
+      "tablename": "scheme_modes",
+      "indexname": "scheme_modes_id_scheme_version_id_key",
+      "indexdef": "CREATE UNIQUE INDEX scheme_modes_id_scheme_version_id_key ON public.scheme_modes USING btree (id, scheme_version_id)"
+    },
+    {
+      "tablename": "scheme_modes",
+      "indexname": "scheme_modes_pkey",
+      "indexdef": "CREATE UNIQUE INDEX scheme_modes_pkey ON public.scheme_modes USING btree (id)"
+    },
+    {
+      "tablename": "scheme_modes",
+      "indexname": "scheme_modes_scheme_version_id_id_key",
+      "indexdef": "CREATE UNIQUE INDEX scheme_modes_scheme_version_id_id_key ON public.scheme_modes USING btree (scheme_version_id, id)"
+    },
+    {
+      "tablename": "scheme_modes",
+      "indexname": "scheme_modes_scheme_version_id_mode_code_key",
+      "indexdef": "CREATE UNIQUE INDEX scheme_modes_scheme_version_id_mode_code_key ON public.scheme_modes USING btree (scheme_version_id, mode_code)"
+    },
+    {
+      "tablename": "scheme_versions",
+      "indexname": "scheme_versions_id_cycle_id_review_definition_id_key",
+      "indexdef": "CREATE UNIQUE INDEX scheme_versions_id_cycle_id_review_definition_id_key ON public.scheme_versions USING btree (id, cycle_id, review_definition_id)"
+    },
+    {
+      "tablename": "scheme_versions",
+      "indexname": "scheme_versions_pkey",
+      "indexdef": "CREATE UNIQUE INDEX scheme_versions_pkey ON public.scheme_versions USING btree (id)"
+    },
+    {
+      "tablename": "scheme_versions",
+      "indexname": "scheme_versions_scheme_id_version_no_key",
+      "indexdef": "CREATE UNIQUE INDEX scheme_versions_scheme_id_version_no_key ON public.scheme_versions USING btree (scheme_id, version_no)"
+    },
+    {
+      "tablename": "scheme_versions",
+      "indexname": "uq_active_scheme_version",
+      "indexdef": "CREATE UNIQUE INDEX uq_active_scheme_version ON public.scheme_versions USING btree (scheme_id) WHERE (state = 'ACTIVE'::text)"
+    },
+    {
+      "tablename": "student_criterion_scores",
+      "indexname": "student_criterion_scores_pkey",
+      "indexdef": "CREATE UNIQUE INDEX student_criterion_scores_pkey ON public.student_criterion_scores USING btree (assessment_id, roster_member_id, mode_criterion_id)"
+    },
+    {
+      "tablename": "submission_attempts",
+      "indexname": "ix_attempts_case",
+      "indexdef": "CREATE INDEX ix_attempts_case ON public.submission_attempts USING btree (case_id, attempt_no DESC)"
+    },
+    {
+      "tablename": "submission_attempts",
+      "indexname": "submission_attempts_case_id_attempt_no_key",
+      "indexdef": "CREATE UNIQUE INDEX submission_attempts_case_id_attempt_no_key ON public.submission_attempts USING btree (case_id, attempt_no)"
+    },
+    {
+      "tablename": "submission_attempts",
+      "indexname": "submission_attempts_id_case_id_key",
+      "indexdef": "CREATE UNIQUE INDEX submission_attempts_id_case_id_key ON public.submission_attempts USING btree (id, case_id)"
+    },
+    {
+      "tablename": "submission_attempts",
+      "indexname": "submission_attempts_id_project_id_key",
+      "indexdef": "CREATE UNIQUE INDEX submission_attempts_id_project_id_key ON public.submission_attempts USING btree (id, project_id)"
+    },
+    {
+      "tablename": "submission_attempts",
+      "indexname": "submission_attempts_pkey",
+      "indexdef": "CREATE UNIQUE INDEX submission_attempts_pkey ON public.submission_attempts USING btree (id)"
+    },
+    {
+      "tablename": "submission_cases",
+      "indexname": "ix_submissions_cases_project",
+      "indexdef": "CREATE INDEX ix_submissions_cases_project ON public.submission_cases USING btree (project_id)"
+    },
+    {
+      "tablename": "submission_cases",
+      "indexname": "submission_cases_id_project_id_key",
+      "indexdef": "CREATE UNIQUE INDEX submission_cases_id_project_id_key ON public.submission_cases USING btree (id, project_id)"
+    },
+    {
+      "tablename": "submission_cases",
+      "indexname": "submission_cases_pkey",
+      "indexdef": "CREATE UNIQUE INDEX submission_cases_pkey ON public.submission_cases USING btree (id)"
+    },
+    {
+      "tablename": "submission_cases",
+      "indexname": "submission_cases_project_id_requirement_key_key",
+      "indexdef": "CREATE UNIQUE INDEX submission_cases_project_id_requirement_key_key ON public.submission_cases USING btree (project_id, requirement_key)"
+    },
+    {
+      "tablename": "submission_items",
+      "indexname": "submission_items_pkey",
+      "indexdef": "CREATE UNIQUE INDEX submission_items_pkey ON public.submission_items USING btree (attempt_id, document_id)"
+    },
+    {
+      "tablename": "team_criterion_scores",
+      "indexname": "team_criterion_scores_pkey",
+      "indexdef": "CREATE UNIQUE INDEX team_criterion_scores_pkey ON public.team_criterion_scores USING btree (assessment_id, mode_criterion_id)"
+    },
+    {
+      "tablename": "team_memberships",
+      "indexname": "ix_team_membership_user",
+      "indexdef": "CREATE INDEX ix_team_membership_user ON public.team_memberships USING btree (user_id)"
+    },
+    {
+      "tablename": "team_memberships",
+      "indexname": "same_team_membership_no_overlap",
+      "indexdef": "CREATE INDEX same_team_membership_no_overlap ON public.team_memberships USING gist (team_id, user_id, tstzrange(joined_at, left_at, '[)'::text))"
+    },
+    {
+      "tablename": "team_memberships",
+      "indexname": "team_memberships_id_team_id_user_id_key",
+      "indexdef": "CREATE UNIQUE INDEX team_memberships_id_team_id_user_id_key ON public.team_memberships USING btree (id, team_id, user_id)"
+    },
+    {
+      "tablename": "team_memberships",
+      "indexname": "team_memberships_pkey",
+      "indexdef": "CREATE UNIQUE INDEX team_memberships_pkey ON public.team_memberships USING btree (id)"
+    },
+    {
+      "tablename": "team_memberships",
+      "indexname": "uq_active_team_member",
+      "indexdef": "CREATE UNIQUE INDEX uq_active_team_member ON public.team_memberships USING btree (team_id, user_id) WHERE (left_at IS NULL)"
+    },
+    {
+      "tablename": "teams",
+      "indexname": "teams_id_cycle_id_department_id_key",
+      "indexdef": "CREATE UNIQUE INDEX teams_id_cycle_id_department_id_key ON public.teams USING btree (id, cycle_id, department_id)"
+    },
+    {
+      "tablename": "teams",
+      "indexname": "teams_pkey",
+      "indexdef": "CREATE UNIQUE INDEX teams_pkey ON public.teams USING btree (id)"
+    },
+    {
+      "tablename": "upload_sessions",
+      "indexname": "upload_sessions_pkey",
+      "indexdef": "CREATE UNIQUE INDEX upload_sessions_pkey ON public.upload_sessions USING btree (id)"
+    },
+    {
+      "tablename": "upload_sessions",
+      "indexname": "upload_sessions_storage_key_key",
+      "indexdef": "CREATE UNIQUE INDEX upload_sessions_storage_key_key ON public.upload_sessions USING btree (storage_key)"
+    },
+    {
+      "tablename": "users",
+      "indexname": "uq_users_email_ci",
+      "indexdef": "CREATE UNIQUE INDEX uq_users_email_ci ON public.users USING btree (lower(email))"
+    },
+    {
+      "tablename": "users",
+      "indexname": "users_external_subject_key",
+      "indexdef": "CREATE UNIQUE INDEX users_external_subject_key ON public.users USING btree (external_subject)"
+    },
+    {
+      "tablename": "users",
+      "indexname": "users_pkey",
+      "indexdef": "CREATE UNIQUE INDEX users_pkey ON public.users USING btree (id)"
+    }
+  ],
+  "functions": [
+    {
+      "proname": "cash_dist",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "date_dist",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "float4_dist",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "float8_dist",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_bit_compress",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_bit_consistent",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_bit_penalty",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_bit_picksplit",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_bit_same",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_bit_union",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_bool_compress",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_bool_consistent",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_bool_fetch",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_bool_penalty",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_bool_picksplit",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_bool_same",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_bool_union",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_bpchar_compress",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_bpchar_consistent",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_bytea_compress",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_bytea_consistent",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_bytea_penalty",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_bytea_picksplit",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_bytea_same",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_bytea_union",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_cash_compress",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_cash_consistent",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_cash_distance",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_cash_fetch",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_cash_penalty",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_cash_picksplit",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_cash_same",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_cash_union",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_date_compress",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_date_consistent",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_date_distance",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_date_fetch",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_date_penalty",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_date_picksplit",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_date_same",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_date_union",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_decompress",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_enum_compress",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_enum_consistent",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_enum_fetch",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_enum_penalty",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_enum_picksplit",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_enum_same",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_enum_union",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_float4_compress",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_float4_consistent",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_float4_distance",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_float4_fetch",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_float4_penalty",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_float4_picksplit",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_float4_same",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_float4_union",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_float8_compress",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_float8_consistent",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_float8_distance",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_float8_fetch",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_float8_penalty",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_float8_picksplit",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_float8_same",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_float8_union",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_inet_compress",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_inet_consistent",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_inet_penalty",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_inet_picksplit",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_inet_same",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_inet_union",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_int2_compress",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_int2_consistent",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_int2_distance",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_int2_fetch",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_int2_penalty",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_int2_picksplit",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_int2_same",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_int2_union",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_int4_compress",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_int4_consistent",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_int4_distance",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_int4_fetch",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_int4_penalty",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_int4_picksplit",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_int4_same",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_int4_union",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_int8_compress",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_int8_consistent",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_int8_distance",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_int8_fetch",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_int8_penalty",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_int8_picksplit",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_int8_same",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_int8_union",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_intv_compress",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_intv_consistent",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_intv_decompress",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_intv_distance",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_intv_fetch",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_intv_penalty",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_intv_picksplit",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_intv_same",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_intv_union",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_macad8_compress",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_macad8_consistent",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_macad8_fetch",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_macad8_penalty",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_macad8_picksplit",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_macad8_same",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_macad8_union",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_macad_compress",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_macad_consistent",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_macad_fetch",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_macad_penalty",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_macad_picksplit",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_macad_same",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_macad_union",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_numeric_compress",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_numeric_consistent",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_numeric_penalty",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_numeric_picksplit",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_numeric_same",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_numeric_union",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_oid_compress",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_oid_consistent",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_oid_distance",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_oid_fetch",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_oid_penalty",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_oid_picksplit",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_oid_same",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_oid_union",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_text_compress",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_text_consistent",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_text_penalty",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_text_picksplit",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_text_same",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_text_union",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_time_compress",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_time_consistent",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_time_distance",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_time_fetch",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_time_penalty",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_time_picksplit",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_time_same",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_time_union",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_timetz_compress",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_timetz_consistent",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_ts_compress",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_ts_consistent",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_ts_distance",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_ts_fetch",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_ts_penalty",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_ts_picksplit",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_ts_same",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_ts_union",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_tstz_compress",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_tstz_consistent",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_tstz_distance",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_uuid_compress",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_uuid_consistent",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_uuid_fetch",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_uuid_penalty",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_uuid_picksplit",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_uuid_same",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_uuid_union",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_var_decompress",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbt_var_fetch",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbtreekey16_in",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbtreekey16_out",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbtreekey2_in",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbtreekey2_out",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbtreekey32_in",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbtreekey32_out",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbtreekey4_in",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbtreekey4_out",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbtreekey8_in",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbtreekey8_out",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbtreekey_var_in",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "gbtreekey_var_out",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "int2_dist",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "int4_dist",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "int8_dist",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "interval_dist",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "oid_dist",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "smartpro_academic_grant",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "smartpro_ack_outbox",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "smartpro_assessment_identity",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "smartpro_assignment_integrity",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "smartpro_attempt_complete",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "smartpro_attempt_guard",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "smartpro_claim_outbox",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "smartpro_decision_authority",
+      "prosecdef": true,
+      "proconfig": [
+        "search_path=pg_catalog, public, pg_temp"
+      ]
+    },
+    {
+      "proname": "smartpro_document_identity",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "smartpro_finalize_assessment",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "smartpro_forbid_mutation",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "smartpro_grant_history",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "smartpro_guard_file_identity",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "smartpro_guard_project_policy",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "smartpro_guard_review_change",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "smartpro_guard_review_roster",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "smartpro_guard_scheme_child",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "smartpro_guard_score_delete",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "smartpro_guard_submitted_file",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "smartpro_has_role",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "smartpro_immutable_configuration",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "smartpro_membership_history",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "smartpro_mode_scope_change",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "smartpro_project_permission",
+      "prosecdef": true,
+      "proconfig": [
+        "search_path=pg_catalog, public, pg_temp"
+      ]
+    },
+    {
+      "proname": "smartpro_project_policy_binding",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "smartpro_publication_audit",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "smartpro_release_child",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "smartpro_release_complete",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "smartpro_release_guard",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "smartpro_retry_outbox",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "smartpro_review_definition_history",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "smartpro_review_terminal_state",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "smartpro_roster_freeze_eligibility",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "smartpro_scheme_approver",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "smartpro_scheme_transition",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "smartpro_submission_item_set",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "smartpro_submitter_snapshot",
+      "prosecdef": true,
+      "proconfig": [
+        "search_path=pg_catalog, public, pg_temp"
+      ]
+    },
+    {
+      "proname": "smartpro_upload_identity",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "smartpro_validate_mode_criterion",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "smartpro_validate_score",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "time_dist",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "ts_dist",
+      "prosecdef": false,
+      "proconfig": null
+    },
+    {
+      "proname": "tstz_dist",
+      "prosecdef": false,
+      "proconfig": null
+    }
+  ]
+}

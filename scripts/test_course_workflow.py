@@ -1,0 +1,901 @@
+"""Course workflow contracts in a new disposable database; preserve all source data."""
+import os
+from pathlib import Path
+import sys
+import tempfile
+import unittest
+from uuid import uuid4
+from concurrent.futures import ThreadPoolExecutor
+import psycopg
+from psycopg import sql
+from psycopg.rows import dict_row
+from psycopg.conninfo import make_conninfo
+ROOT=Path(__file__).resolve().parents[1]
+sys.path[:0]=[str(ROOT),str(ROOT/'scripts'),str(ROOT/'backend')]
+from department_demo import settings,TARGET,CSE,FACULTY,install_documents
+from db_setup import execute_file
+
+def main(test_name=None):
+ _,owner,app=settings(ROOT/'.test-data/pg-memberships.env.json');name='smartpro_test_demo_acceptance_courses_'+uuid4().hex[:10]
+ with psycopg.connect(**dict(owner,dbname='postgres'),autocommit=True) as manager:manager.execute(sql.SQL('CREATE DATABASE {} TEMPLATE {}').format(sql.Identifier(name),sql.Identifier(TARGET)))
+ storage=tempfile.TemporaryDirectory(prefix='smartpro-courses-')
+ os.environ.update(DATABASE_URL=make_conninfo(**dict(app,dbname=name)),DJANGO_SETTINGS_MODULE='smartpro.settings',DJANGO_SECRET_KEY='synthetic-course-tests',SMARTPRO_ENV='demo',SMARTPRO_DEMO_AUTH='YES',SMARTPRO_DEPARTMENT_DEMO='YES',SMARTPRO_DATA_DIR=storage.name)
+ for gate in ['CURRICULUM','TEAM','MEMBERSHIP','PROJECT','STAFF','ACADEMIC','DOCUMENT','COURSE']:os.environ['SMARTPRO_'+gate+'_API']='YES'
+ import django;django.setup()
+ from django.db import connection,close_old_connections
+ from rest_framework.test import APIClient
+ class Contracts(unittest.TestCase):
+  @classmethod
+  def setUpClass(cls):
+   cls.db=psycopg.connect(**dict(owner,dbname=name),autocommit=True,row_factory=dict_row);install_documents(cls.db)
+   for candidate in ['037_course_coordination.sql','038_course_assessment_lifecycle.sql','039_course_deadlines_notifications.sql','040_course_integration.sql','041_course_scope_guards.sql','042_course_authorized_operations.sql','043_runtime_function_grants.sql','044_coordinator_own_corrections.sql','045_admin_course_appointments.sql','046_department_leadership.sql','047_department_intake.sql','048_course_evaluation_queue.sql','049_paginated_evaluation_queue.sql','050_document_project_pages.sql','051_department_intake_pages.sql','052_department_directory.sql','053_department_import_outcomes.sql','054_department_offering_pages.sql','055_leadership_history_pages.sql','056_coordinator_catalog_scope_prefilter.sql','057_department_identity_navigation.sql','058_course_command_lock_order.sql']:execute_file(cls.db,ROOT/'proposals/curriculum'/candidate)
+  @classmethod
+  def tearDownClass(cls):cls.db.close();connection.close()
+  def client(self,who='staff-policy',role=None):
+   c=APIClient()
+   if who=='tech-admin':c.credentials(HTTP_X_DEMO_USER=who)
+   else:c.credentials(HTTP_X_DEMO_USER=who,HTTP_X_SMARTPRO_ROLE=role or {'staff-policy':'HOD','department-admin':'Admin','coordinator':'Coordinator','faculty-a':'Faculty','student-a':'Student'}.get(who,'Faculty'))
+   return c
+  def post(self,path,body,who='staff-policy',role=None,key=None):return self.client(who,role).post(path,body,format='json',HTTP_IDEMPOTENCY_KEY=key or uuid4().hex)
+  def ok(self,r,status=200):self.assertEqual(r.status_code,status,r.content);return r.json()
+  def offering(self,project_policy=None):
+   kind=str(self.db.execute('INSERT INTO curriculum_types(code,label) VALUES(%s,%s) RETURNING id',('COURSE-'+uuid4().hex.upper(),'Isolated course')).fetchone()['id'])
+   admin=str(self.db.execute("SELECT id FROM department_role_assignments WHERE user_id='00000000-0000-4000-8000-000000000012' AND role_code='ACADEMIC_ADMIN' ORDER BY id LIMIT 1").fetchone()['id'])
+   cfg=dict(curriculumTypeId=kind,cycleId='11000000-0000-4000-8000-000000000001',semester='SYNTHETIC-SEM-3',projectPolicyId=project_policy or str(self.db.execute('SELECT policy_id FROM demo_catalog WHERE department_id=%s',(CSE,)).fetchone()['policy_id']),teamPolicyId=str(self.db.execute('SELECT id FROM team_membership_policy_versions WHERE department_id=%s ORDER BY version_no LIMIT 1',(CSE,)).fetchone()['id']),adminRoleId=admin,visibleFrom='2026-01-01T00:00:00Z',visibleUntil='2027-06-01T00:00:00Z',submissionOpensAt='2026-01-01T00:00:00Z',submissionClosesAt='2027-06-01T00:00:00Z',maxBytes=2097152,facultyApprovalEnabled=True,teamCreationEnabled=True)
+   base=f'/api/v1/documents/departments/{CSE}'
+   i=self.ok(self.post(base,dict(action='AUTHORIZE',configuration=cfg)))['instructionId']
+   return self.ok(self.post(base,dict(action='CONFIGURE',instructionId=i),who='department-admin'))['offeringId']
+  def authority(self):return dict(hodMandateId=str(self.db.execute('SELECT id FROM academic_hod_mandates WHERE department_id=%s AND enabled',(CSE,)).fetchone()['id']),source='EXTERNAL_INSTRUCTION',confirmed=True,reference='')
+  def appoint(self,oid,uid=FACULTY,version=0,active=True,who='department-admin',key=None,permissions=None):
+   return self.post(f'/api/v1/courses/offerings/{oid}/coordinators',dict(userId=uid,expectedVersion=version,active=active,validUntil='2027-06-01T00:00:00Z',responsibilities=permissions if permissions is not None else ['OVERVIEW','REQUIREMENTS','PLAN','GUIDE','EVALUATORS','SUBMISSIONS','DEADLINES','RESULTS','CORRECTIONS','HISTORY'],authority=None),who=who,key=key)
+  def command(self,oid,action,body,who='staff-policy',role=None,key=None):return self.post(f'/api/v1/courses/offerings/{oid}/commands',dict(action=action,**body),who,role,key)
+  def activate(self,oid):
+   row=self.db.execute('SELECT availability,management_revision FROM curriculum_offerings WHERE id=%s',(oid,)).fetchone()
+   if row['availability']!='ACTIVE':self.ok(self.post(f'/api/v1/staff/departments/{CSE}/offering-management',dict(action='AVAILABILITY',offeringId=oid,expectedRevision=row['management_revision'],availability='ACTIVE',authority=self.authority()),who='department-admin'))
+  def project(self,oid,guide_id=FACULTY):
+   self.activate(oid)
+   team=self.ok(self.post('/api/v1/teams',dict(offeringId=oid,name='Course verification team'),who='student-a'),201)['id']
+   pid=self.ok(self.post('/api/v1/projects',dict(offeringId=oid,teamId=team,title='Course verification project',description='Synthetic assessment evidence'),who='student-a'),201)['id']
+   self.ok(self.post(f'/api/v1/staff/departments/{CSE}/projects/{pid}/guide',dict(facultyId=guide_id,expectedGuideId=None)))
+   return pid
+  def framework(self,oid,n=1,scheme=None):
+   cat=scheme or self.db.execute('SELECT * FROM demo_catalog WHERE department_id=%s',(CSE,)).fetchone()
+   policy=str(self.db.execute('SELECT id FROM academic_evaluation_policies WHERE department_id=%s ORDER BY version_no DESC LIMIT 1',(CSE,)).fetchone()['id'])
+   stages=[dict(key='stage-'+str(i),name='Authorized assessment '+str(i),schemeVersionId=str(cat['scheme_id']),schemeModeId=str(cat['mode_id']),policyId=policy,weight='100' if n==1 else '25' if i==1 else '75',required=True,opensAt='2026-01-01T00:00:00Z',deadline='2027-06-01T00:00:00Z') for i in range(1,n+1)]
+   cfg=dict(stages=stages,method='SINGLE_RAW' if n==1 else 'WEIGHTED_NORMALIZED',rounding='HALF_UP',decimalPlaces=2,scale='100',allowFinalCorrections=True,outsidePanelAuthorizer=True,maxExtensionDays=10,publicationRoles=['Coordinator','HOD'])
+   fid=self.ok(self.command(oid,'FRAMEWORK',dict(expectedVersion=0,configuration=cfg,authority=None)))['id']
+   self.ok(self.command(oid,'PLAN',dict(expectedVersion=0,frameworkId=fid,schedules={x['key']:'2026-12-01T09:00:00Z' for x in stages}),who='coordinator'))
+   return cfg
+  def stage(self,oid,pid,key,mark,faculty=None,faculty_id=FACULTY,race=False):
+   faculty=faculty or self.client('faculty-a')
+   rid=self.ok(self.command(oid,'CREATE_STAGE',dict(projectId=pid,stageKey=key,facultyIds=[]),who='coordinator'))['id']
+   w=self.ok(faculty.get('/api/v1/workspace'));r=next(r for r in w['reviews'] if r['id']==rid)
+   self.assertEqual(r['label'],'Authorized assessment '+key.removeprefix('stage-'))
+   self.assertEqual(len(r['assessments']),1);a=r['assessments'][0];self.assertEqual(a['facultyId'],faculty_id)
+   scores=[dict(criterionId=c['id'],studentId=uid,marks=str(mark[c['scope']] if isinstance(mark,dict) else mark)) for c in r['criteria'] for uid in ([None] if c['scope']=='TEAM' else [x['id'] for x in r['roster']])]
+   root=f'/api/v1/academic/departments/{CSE}'
+   def submit(path,body):
+    return faculty.post(root+f'/assessments/{a["id"]}/{path}',body,format='json',HTTP_IDEMPOTENCY_KEY=uuid4().hex)
+   def race_submit(path,body):
+    from threading import Barrier
+    barrier=Barrier(2)
+    def run(_):
+     try:
+      barrier.wait(timeout=5)
+      return submit(path,body)
+     finally:close_old_connections()
+    with ThreadPoolExecutor(max_workers=2) as workers:responses=list(workers.map(run,range(2)))
+    self.assertEqual(sum(response.status_code==200 for response in responses),1)
+    self.assertTrue(all(response.status_code in (200,403,409) for response in responses))
+    return next(response.json() for response in responses if response.status_code==200)
+   body=dict(expectedAssessmentVersion=a['version'],scores=scores)
+   saved=race_submit('draft',body) if race else self.ok(submit('draft',body))
+   body=dict(expectedAssessmentVersion=saved['assessmentVersion'])
+   if race:race_submit('finalize',body)
+   else:self.ok(submit('finalize',body))
+   self.ok(self.post(root+f'/reviews/{rid}/publish',dict(expectedReviewRevision=r['revision']),who='coordinator'))
+   for who in ['coordinator','staff-policy']:
+    history=self.ok(self.client(who).get(root+f'/reviews/{rid}/results'))['results']
+    self.assertEqual(len(history),1)
+   return rid,a['id'],scores
+  def test_course_assignment_waits_for_governance_before_locking_coordinator(self):
+   from queue import Queue
+   from time import monotonic, sleep
+   from psycopg.types.json import Jsonb
+   oid=self.offering()
+   self.ok(self.appoint(oid,uid='00000000-0000-4000-8000-000000000008'))
+   pid=self.project(oid);self.framework(oid)
+   backend=Queue()
+   def assign():
+    with psycopg.connect(**dict(app,dbname=name),autocommit=True) as runtime:
+     runtime.execute('SET ROLE smartpro_runtime')
+     runtime.execute("SET lock_timeout='5s'")
+     backend.put(runtime.info.backend_pid)
+     return runtime.execute('SELECT public.smartpro_course_command(%s,%s,%s,%s,%s)',
+       ('00000000-0000-4000-8000-000000000008',oid,'CREATE_STAGE',
+        Jsonb(dict(projectId=pid,stageKey='stage-1',facultyIds=[],_actingRole='Coordinator')),uuid4().hex)).fetchone()[0]
+   with ThreadPoolExecutor(max_workers=1) as pool, psycopg.connect(**dict(owner,dbname=name),autocommit=True) as probe:
+    with self.db.transaction():
+     self.db.execute('SELECT 1 FROM academic_governance_settings WHERE department_id=%s FOR UPDATE',(CSE,))
+     future=pool.submit(assign)
+     worker_pid=backend.get(timeout=5)
+     deadline=monotonic()+3
+     while monotonic()<deadline:
+      if self.db.info.backend_pid in probe.execute('SELECT pg_blocking_pids(%s)',(worker_pid,)).fetchone()[0]:
+       break
+      sleep(.02)
+     else:self.fail('Stage creation did not reach the controlled governance wait')
+     with probe.transaction():
+      mandates=probe.execute("""SELECT id FROM academic_coordinator_mandates
+       WHERE department_id=%s AND user_id='00000000-0000-4000-8000-000000000008'
+       ORDER BY id FOR UPDATE NOWAIT""",(CSE,)).fetchall()
+      self.assertTrue(mandates)
+    self.assertIn('id',future.result(timeout=5))
+  def test_new_faculty_appointment_reevaluates_the_same_client(self):
+   from unittest.mock import patch
+   from smartpro.identity import DEMO_USERS
+   uid=str(uuid4())
+   self.db.execute("INSERT INTO users(id,display_name,email) VALUES(%s,'Isolated new faculty',%s)",(uid,uid+'@example.invalid'))
+   self.db.execute("INSERT INTO department_role_assignments(user_id,department_id,role_code) VALUES(%s,%s,'STUDENT')",(uid,CSE))
+   alias='readiness-faculty'
+   with patch.dict(DEMO_USERS,{alias:uid}):
+    faculty=self.client(alias,'Student')
+    self.ok(faculty.get('/api/v1/workspace'))
+    faculty.credentials(HTTP_X_DEMO_USER=alias,HTTP_X_SMARTPRO_ROLE='Faculty')
+    self.assertEqual(faculty.get('/api/v1/workspace').status_code,401)
+    path=f'/api/v1/staff/departments/{CSE}/setup'
+    grant=dict(action='RECORD',kind='FACULTY_ACCESS',configuration=dict(userId=uid,validUntil='2027-06-01T00:00:00Z'),authority=self.authority())
+    self.assertEqual(self.post(path,grant,who='staff-policy').status_code,403)
+    self.ok(self.post(path,grant,who='department-admin'))
+    self.assertEqual(self.ok(faculty.get('/api/v1/workspace'))['reviews'],[])
+    oid=self.offering();self.ok(self.appoint(oid,uid='00000000-0000-4000-8000-000000000008'))
+    pid=self.project(oid,guide_id=uid);self.framework(oid)
+    rid,aid,_=self.stage(oid,pid,'stage-1',25,faculty=faculty,faculty_id=uid)
+    other=self.offering();self.ok(self.appoint(other,uid='00000000-0000-4000-8000-000000000008'))
+    other_pid=self.project(other);self.framework(other)
+    other_rid,_,_=self.stage(other,other_pid,'stage-1',25)
+    root=f'/api/v1/academic/departments/{CSE}'
+    self.assertEqual(faculty.get(root+f'/reviews/{other_rid}/results').status_code,403)
+    other_department=self.db.execute('SELECT id FROM departments WHERE id<>%s ORDER BY id LIMIT 1',(CSE,)).fetchone()['id']
+    other_department_path=f'/api/v1/academic/departments/{other_department}/reviews/{rid}/results'
+    self.assertEqual(faculty.get(other_department_path).status_code,403)
+    self.assertEqual(self.client().get(other_department_path).status_code,403)
+    result_path=root+f'/reviews/{rid}/results'
+    before=self.ok(self.client().get(result_path))['results']
+    self.ok(faculty.get(result_path))
+    scoped=self.offering();self.ok(self.appoint(scoped,uid='00000000-0000-4000-8000-000000000008'))
+    scoped_project=self.project(scoped)
+    guide_path=f'/api/v1/staff/departments/{CSE}/projects/{scoped_project}/guide'
+    documents=f'/api/v1/documents/departments/{CSE}'
+    def visible_projects():
+     return {item['id'] for item in self.ok(faculty.get(documents))['projects']}
+    self.assertNotIn(scoped_project,visible_projects())
+    old_guide=str(self.db.execute("SELECT id FROM faculty_assignments WHERE project_id=%s AND assignment_type='GUIDE' AND valid_until IS NULL",(scoped_project,)).fetchone()['id'])
+    new_guide=self.ok(self.post(guide_path,dict(facultyId=uid,expectedGuideId=old_guide)))['id']
+    self.assertIn(scoped_project,visible_projects())
+    end_path=f'/api/v1/staff/departments/{CSE}/assignment-management'
+    end=dict(action='END_ASSIGNMENT',assignmentId=new_guide)
+    self.assertEqual(self.post(end_path,end,who='department-admin').status_code,403)
+    self.ok(self.post(end_path,end))
+    self.assertNotIn(scoped_project,visible_projects())
+    self.ok(faculty.get(result_path))
+    self.assertEqual(self.ok(self.client().get(result_path))['results'],before)
+    self.assertEqual(self.db.execute('SELECT state FROM assessments WHERE id=%s',(aid,)).fetchone()['state'],'FINALIZED')
+  def test_authorized_faculty_grant_expires_on_the_same_client(self):
+   from unittest.mock import patch
+   from smartpro.identity import DEMO_USERS
+   uid=str(uuid4())
+   self.db.execute("INSERT INTO users(id,display_name,email) VALUES(%s,'Isolated finite faculty',%s)",(uid,uid+'@example.invalid'))
+   self.db.execute("INSERT INTO department_role_assignments(user_id,department_id,role_code) VALUES(%s,%s,'STUDENT')",(uid,CSE))
+   alias='finite-faculty'
+   with patch.dict(DEMO_USERS,{alias:uid}):
+    faculty=self.client(alias,'Faculty')
+    expiry=self.db.execute("SELECT clock_timestamp()+interval '5 seconds' AS expiry").fetchone()['expiry']
+    grant=dict(action='RECORD',kind='FACULTY_ACCESS',configuration=dict(userId=uid,validUntil=expiry.isoformat()),authority=self.authority())
+    self.ok(self.post(f'/api/v1/staff/departments/{CSE}/setup',grant,who='department-admin'))
+    self.ok(faculty.get('/api/v1/workspace'))
+    self.db.execute('SELECT pg_sleep_until(%s)',(expiry,))
+    self.assertEqual(faculty.get('/api/v1/workspace').status_code,401)
+    self.ok(self.client(alias,'Student').get('/api/v1/workspace'))
+  def test_public_cannot_execute_owner_privilege_functions(self):
+   public_definers=self.db.execute("""
+      SELECT p.oid::regprocedure::text AS signature FROM pg_proc p
+      JOIN pg_namespace n ON n.oid=p.pronamespace
+      WHERE n.nspname='public' AND p.prosecdef AND EXISTS(
+        SELECT FROM aclexplode(coalesce(p.proacl,acldefault('f',p.proowner))) a
+        WHERE a.grantee=0 AND a.privilege_type='EXECUTE'
+      ) ORDER BY 1
+   """).fetchall()
+   self.assertEqual(public_definers,[])
+  def test_faculty_reference_requires_local_opt_in_and_exact_scope(self):
+   from unittest.mock import patch
+
+   from django.conf import settings as django_settings
+   path=f'/api/v1/faculty-reference/departments/{CSE}'
+   admin=self.client('department-admin')
+   with patch.dict(os.environ,{'SMARTPRO_FACULTY_REFERENCE':'NO'}):
+    self.assertEqual(admin.get(path).status_code,404)
+   assigned=self.offering();self.ok(self.appoint(assigned,uid='00000000-0000-4000-8000-000000000008'))
+   unrelated=self.offering();self.ok(self.appoint(unrelated,uid=FACULTY))
+   with patch.dict(os.environ,{'SMARTPRO_FACULTY_REFERENCE':'YES'}):
+    self.assertEqual(APIClient().get(path).status_code,401)
+    for who,role in [('student-a','Student'),('faculty-a','Faculty'),('tech-admin',None)]:
+     self.assertEqual(self.client(who,role).get(path).status_code,403)
+    self.assertEqual(admin.get(path,REMOTE_ADDR='192.0.2.1').status_code,404)
+    with patch.dict(django_settings.DATABASES['default'],{'NAME':'smartpro_normal_workspace'}):
+     self.assertEqual(admin.get(path).status_code,401)
+    self.assertEqual(admin.get(f'/api/v1/faculty-reference/departments/{uuid4()}').status_code,404)
+    self.assertEqual(admin.post(path,{},format='json').status_code,405)
+    self.assertEqual(admin.get('/demo-assets/bit_main_cse_2026-11-07.json').status_code,404)
+    snapshot=self.ok(admin.get(path))
+    self.assertEqual(snapshot,self.ok(self.client().get(path)))
+    coordinator=self.client('coordinator')
+    self.assertEqual(coordinator.get(path).status_code,403)
+    self.assertEqual(coordinator.get(path,{'offeringId':unrelated}).status_code,403)
+    self.assertEqual(snapshot,self.ok(coordinator.get(path,{'offeringId':assigned})))
+    self.assertEqual(len(snapshot['records']),36)
+    self.assertEqual(sum(row['earlierReference'] is not None for row in snapshot['records']),11)
+    self.assertEqual(sum(row['irinsProfileUrl'] is not None for row in snapshot['records']),9)
+    self.assertEqual(snapshot['irinsReportedProfiles'],39)
+    with patch.dict(os.environ,{'SMARTPRO_ENV':'local'}):
+     self.assertEqual(admin.get(path).status_code,401)
+   reference_names={row['name'] for row in snapshot['records']}
+   users=self.db.execute('SELECT display_name FROM users').fetchall()
+   self.assertTrue(reference_names.isdisjoint({row['display_name'] for row in users}))
+   candidates=self.ok(admin.get(f'/api/v1/courses/departments/{CSE}'))['faculty']
+   self.assertTrue(reference_names.isdisjoint({row['display_name'] for row in candidates}))
+  def test_department_leadership_lifecycle_and_concurrent_successors(self):
+   from unittest.mock import patch
+   from smartpro.identity import DEMO_USERS
+   dept=str(uuid4())
+   self.db.execute("INSERT INTO departments(id,code,name) VALUES(%s,%s,'Isolated leadership department')",(dept,'LEAD-'+uuid4().hex[:8]))
+   identities={alias:str(uuid4()) for alias in ['test-hod','test-first-admin','test-admin','test-extra','test-successor']}
+   for alias,uid in identities.items():
+    self.db.execute('INSERT INTO users(id,display_name,email) VALUES(%s,%s,%s)',(uid,alias,uid+'@example.invalid'))
+    self.db.execute("INSERT INTO department_role_assignments(user_id,department_id,role_code) VALUES(%s,%s,'FACULTY')",(uid,dept))
+   with psycopg.connect(**dict(app,dbname=name)) as runtime:
+    self.assertFalse(runtime.execute("SELECT has_function_privilege('public.smartpro_bootstrap_first_hod(uuid,uuid,text)','EXECUTE')").fetchone()[0])
+   first_hod=str(self.db.execute('SELECT smartpro_bootstrap_first_hod(%s,%s,%s) AS id',(dept,identities['test-hod'],'Synthetic verified fixture')).fetchone()['id'])
+   with self.assertRaises(psycopg.errors.CheckViolation):
+    self.db.execute('SELECT smartpro_bootstrap_first_hod(%s,%s,%s)',(dept,identities['test-extra'],'Duplicate fixture'))
+   base=f'/api/v1/staff/departments/{dept}'
+   with patch.dict(DEMO_USERS,identities):
+    hod=self.client('test-hod','HOD')
+    former=self.client('test-first-admin','Admin')
+    admin=self.client('test-admin','Admin')
+    def change(client,action,**fields):
+     return client.post(base+'/leadership',dict(action=action,**fields),format='json',HTTP_IDEMPOTENCY_KEY=uuid4().hex)
+    first_admin=self.ok(change(hod,'APPOINT_ADMIN',userId=identities['test-first-admin']))['appointmentId']
+    self.ok(former.get(base+'/setup'))
+    self.assertEqual(change(hod,'APPOINT_ADMIN',userId=identities['test-extra']).status_code,409)
+    from threading import Barrier
+    barrier=Barrier(2)
+    def replace(alias):
+     try:
+      barrier.wait(timeout=5)
+      return change(self.client('test-hod','HOD'),'REPLACE_ADMIN',appointmentId=first_admin,userId=identities[alias])
+     finally:close_old_connections()
+    with ThreadPoolExecutor(max_workers=2) as pool:
+     replies=list(pool.map(replace,('test-admin','test-extra')))
+    self.assertEqual(sorted(reply.status_code for reply in replies),[200,409])
+    if replies[1].status_code==200:
+     self.ok(change(hod,'REPLACE_ADMIN',appointmentId=replies[1].json()['appointmentId'],userId=identities['test-admin']))
+    self.assertEqual(former.get(base+'/setup').status_code,401)
+    history=self.ok(change(hod,'HISTORY',page=1,q='test-admin'))
+    self.assertTrue(any(term['appointed_by']=='test-hod' for term in history['history']))
+    self.assertEqual(self.client('faculty-a').post(base+'/leadership',dict(action='HISTORY',page=1,q=''),format='json').status_code,403)
+    self.ok(admin.get(base+'/setup'))
+    self.assertEqual(change(admin,'APPOINT_ADMIN',userId=identities['test-extra']).status_code,403)
+    self.assertEqual(change(admin,'APPOINT_HOD',userId=identities['test-successor']).status_code,409)
+    self.assertEqual(change(admin,'RESIGN_HOD',appointmentId=first_hod).status_code,403)
+    self.ok(change(hod,'SET_ADMIN_CAPACITY',capacity=2))
+    extra=self.client('test-extra','Admin')
+    extra_term=self.ok(change(hod,'APPOINT_ADMIN',userId=identities['test-extra']))['appointmentId']
+    self.ok(extra.get(base+'/setup'))
+    self.ok(change(hod,'END_ADMIN',appointmentId=extra_term))
+    self.assertEqual(extra.get(base+'/setup').status_code,401)
+    self.ok(change(hod,'APPOINT_ADMIN',userId=identities['test-extra']))
+    self.ok(change(hod,'RESIGN_HOD',appointmentId=first_hod))
+    self.assertEqual(hod.get(base+'/setup').status_code,401)
+    self.assertTrue(self.ok(admin.get(base+'/setup'))['leadership']['vacancyByResignation'])
+    self.assertEqual(change(admin,'APPOINT_HOD',userId=identities['test-admin']).status_code,403)
+    def attempt(caller,target):
+     try:return change(self.client(caller,'Admin'),'APPOINT_HOD',userId=identities[target]).status_code
+     finally:close_old_connections()
+    with ThreadPoolExecutor(max_workers=2) as pool:
+     attempts=[pool.submit(attempt,'test-admin','test-successor'),pool.submit(attempt,'test-extra','test-first-admin')]
+     self.assertEqual(sorted(item.result(timeout=10) for item in attempts),[200,409])
+    terms=self.db.execute("SELECT id,valid_until FROM department_role_assignments WHERE department_id=%s AND role_code='HOD' ORDER BY valid_from",(dept,)).fetchall()
+    self.assertEqual(len(terms),2)
+    self.assertEqual(str(terms[0]['id']),first_hod)
+    self.assertIsNotNone(terms[0]['valid_until'])
+    self.assertIsNone(terms[1]['valid_until'])
+  def test_selected_coordinator_role_does_not_borrow_hod_scope(self):
+   hod_id='00000000-0000-4000-8000-000000000004'
+   self.db.execute("INSERT INTO department_role_assignments(user_id,department_id,role_code) VALUES(%s,%s,'FACULTY')",(hod_id,CSE))
+   one=self.offering();self.ok(self.appoint(one,uid=hod_id,permissions=['RESULTS']))
+   two=self.offering();self.ok(self.appoint(two,uid='00000000-0000-4000-8000-000000000008'))
+   pid=self.project(two);self.framework(two);rid,_,_=self.stage(two,pid,'stage-1',20)
+   revision=self.db.execute('SELECT revision FROM academic_review_bindings WHERE review_id=%s',(rid,)).fetchone()['revision']
+   path=f'/api/v1/academic/departments/{CSE}/reviews/{rid}/publish'
+   self.assertEqual(self.post(path,dict(expectedReviewRevision=revision),role='Coordinator').status_code,403)
+   self.assertEqual(self.post(f'/api/v1/documents/departments/{CSE}',dict(action='ASSIGN_REVIEWER',projectId=pid,facultyId=hod_id),role='Coordinator').status_code,403)
+  def test_individual_and_combined_marking_publish_student_scores(self):
+   route=f'/api/v1/staff/departments/{CSE}/setup'
+   def record(kind,configuration):
+    return self.ok(self.post(route,dict(action='RECORD',kind=kind,configuration=configuration,
+      authority=self.authority()),who='department-admin'))['id']
+   for mode in ('INDIVIDUAL','COMBINED'):
+    base=record('PROJECT_POLICY',dict(label='Marking verification '+mode,projectType='MINI',allowStudentRegistration=True))
+    criteria=[dict(label='Individual understanding',scope='STUDENT',maximum='40')]
+    if mode=='COMBINED':criteria.insert(0,dict(label='Team evidence',scope='TEAM',maximum='60'))
+    policy=record('REVIEW_BLUEPRINT',dict(policyVersionId=base,cycleId='11000000-0000-4000-8000-000000000001',
+      label='Verification '+mode,stages=[dict(code='CHECK',label='Marking verification',mode=mode,criteria=criteria)]))
+    scheme=self.db.execute("""SELECT v.id AS scheme_id,m.id AS mode_id FROM review_definitions d
+      JOIN scheme_versions v ON v.review_definition_id=d.id JOIN scheme_modes m ON m.scheme_version_id=v.id
+      WHERE d.policy_version_id=%s AND m.mode_code=%s""",(policy,mode)).fetchone()
+    oid=self.offering(policy);self.ok(self.appoint(oid,uid='00000000-0000-4000-8000-000000000008'))
+    pid=self.project(oid);self.framework(oid,scheme=scheme)
+    rid,aid,scores=self.stage(oid,pid,'stage-1',dict(TEAM=35,STUDENT=23),race=mode=='COMBINED')
+    expected='23.00' if mode=='INDIVIDUAL' else '58.00'
+    release=self.db.execute('SELECT results FROM academic_result_versions WHERE review_id=%s',(rid,)).fetchone()['results']
+    self.assertEqual(list(release.values()),[expected])
+    self.ok(self.command(oid,'PUBLISH_FINAL',dict(projectId=pid,expectedVersion=0),who='coordinator'))
+    result=self.db.execute('SELECT results FROM course_final_results WHERE project_id=%s',(pid,)).fetchone()['results']
+    self.assertEqual(result,release)
+    revision=self.db.execute('SELECT revision FROM academic_review_bindings WHERE review_id=%s',(rid,)).fetchone()['revision']
+    self.assertEqual(self.command(oid,'REQUEST_CORRECTION',dict(reviewId=rid,assessmentId=aid,
+      expectedReviewRevision=revision,scores=scores),who='faculty-a').status_code,403)
+
+  def test_z_evaluation_queue_paginates_the_entire_offering(self):
+   oid=self.offering()
+   self.ok(self.appoint(oid,uid='00000000-0000-4000-8000-000000000008'))
+   pid=self.project(oid)
+   self.db.execute("""INSERT INTO projects(department_id,cycle_id,team_id,project_type,policy_version_id,project_code,title)
+      SELECT department_id,cycle_id,team_id,project_type,policy_version_id,
+      gen_random_uuid()::text,'Page sample '||lpad(n::text,3,'0') FROM projects CROSS JOIN generate_series(1,204) n WHERE id=%s""",(pid,))
+   url=f'/api/v1/courses/offerings/{oid}/evaluation-queue'
+   client=self.client('coordinator')
+   ids=[]
+   for page in range(1,10):
+    result=self.ok(client.get(url,{'page':page,'status':'unassigned'}))
+    self.assertEqual((result['total'],result['page']),(205,page))
+    ids.extend(project['id'] for project in result['projects'])
+   self.assertEqual(len(set(ids)),205)
+   result=self.ok(client.get(url,{'q':'sample 204','page':999}))
+   self.assertEqual((result['total'],result['page']),(1,1))
+   self.assertEqual(result['projects'][0]['title'],'Page sample 204')
+   project_id=result['projects'][0]['id']
+   documents=f'/api/v1/documents/departments/{CSE}'
+   document_page=self.ok(client.get(documents,{'listing':'1','page':9,'offering':oid}))
+   self.assertEqual((document_page['total'],len(document_page['projects'])),(205,5))
+   searched=self.ok(client.get(documents,{'listing':'1','q':'sample 204','offering':oid}))
+   self.assertEqual([row['id'] for row in searched['projects']],[project_id])
+   student=self.client('student-a')
+   self.assertEqual(self.ok(student.get(documents,{'listing':'1','offering':oid}))['total'],205)
+   self.assertEqual([row['id'] for row in self.ok(student.get(documents,{'project':project_id}))['projects']],[project_id])
+   foreign=f'/api/v1/documents/departments/{uuid4()}'
+   self.assertEqual(student.get(foreign,{'project':project_id}).status_code,403)
+   evidence=self.ok(client.get(documents,{'project':project_id}))
+   self.assertEqual([row['id'] for row in evidence['projects']],[project_id])
+   self.assertEqual(self.client('faculty-a').get(documents,{'project':project_id}).status_code,403)
+
+   self.assertEqual(self.ok(client.get(url,{'status':'published'}))['total'],0)
+   self.assertEqual(client.get(url,{'status':'invalid'}).status_code,400)
+
+  def test_readiness_and_admin_configuration_keep_document_reads_bounded(self):
+   url=f'/api/v1/documents/departments/{CSE}'
+   response=self.ok(self.client('department-admin').get(url,{'configuration':'1'}))
+   self.assertEqual(response['projects'],[])
+   self.assertTrue(response['operationalAdmin'])
+   self.assertEqual(self.client('student-a').get(url,{'configuration':'1'}).status_code,403)
+   self.assertEqual(APIClient().get('/health/live').json(),{'status':'ok'})
+   self.assertEqual(APIClient().get('/health/ready').status_code,200)
+   from unittest.mock import patch
+   with patch.dict(os.environ,{'SMARTPRO_DATA_DIR':str(ROOT/'missing-health-test-storage')}):
+    self.assertEqual(APIClient().get('/health/ready').status_code,503)
+
+  def test_verified_identity_requires_bearer_and_rechecks_effective_role(self):
+   from django.test import RequestFactory, override_settings
+   from rest_framework.exceptions import AuthenticationFailed
+   from smartpro.identity import VerifiedIdentityAuthentication
+   from unittest.mock import patch
+   adapter=VerifiedIdentityAuthentication()
+   request=RequestFactory().get('/api/v1/workspace',HTTP_X_DEMO_USER='staff-policy')
+   self.assertIsNone(adapter.authenticate(request))
+   actor='00000000-0000-4000-8000-000000000001'
+   with override_settings(IDENTITY_RESOLVER='fixture.resolve'), patch('django.utils.module_loading.import_string',return_value=lambda _:actor):
+    request=RequestFactory().get('/api/v1/workspace',HTTP_AUTHORIZATION='Bearer synthetic-token',HTTP_X_SMARTPRO_ROLE='Student')
+    self.assertEqual(adapter.authenticate(request)[0].role,'Student')
+    request=RequestFactory().get('/api/v1/workspace',HTTP_AUTHORIZATION='Bearer synthetic-token',HTTP_X_SMARTPRO_ROLE='HOD')
+    with self.assertRaises(AuthenticationFailed):adapter.authenticate(request)
+
+  def test_evaluation_queue_reports_authoritative_readiness_and_scope(self):
+   oid=self.offering()
+   coordinator='00000000-0000-4000-8000-000000000008'
+   self.ok(self.appoint(oid,uid=coordinator))
+   pid=self.project(oid,guide_id=coordinator)
+   self.framework(oid,2)
+   url=f'/api/v1/courses/offerings/{oid}/evaluation-queue'
+   def project():
+    return next(p for p in self.ok(self.client('coordinator').get(url))['projects'] if p['id']==pid)
+   for who,role in [('student-a','Student'),('faculty-a','Faculty'),('faculty-a','Coordinator')]:
+    self.assertIn(self.client(who,role).get(url).status_code,(401,403))
+   other=self.offering()
+   self.assertEqual(self.client('coordinator').get(f'/api/v1/courses/offerings/{other}/evaluation-queue').status_code,403)
+   self.assertIn('Assign evaluators',project()['stages'][0]['blocker'])
+   rid=self.ok(self.command(oid,'CREATE_STAGE',dict(projectId=pid,stageKey='stage-1',facultyIds=[]),who='coordinator'))['id']
+   entry=project()['stages'][0]
+   self.assertEqual(entry['reviewId'],rid)
+   self.assertIsNotNone(entry['ownAssessmentId'])
+   self.assertIn('0 of 1',entry['blocker'])
+   self.assertIn('required/contributing stage',project()['overallBlocker'])
+   root=f'/api/v1/academic/departments/{CSE}'
+   a=entry['ownAssessmentId']
+   self.assertEqual(self.post(root+f'/assessments/{a}/finalize',dict(expectedAssessmentVersion=1),who='faculty-a').status_code,403)
+   self.assertEqual(self.post(root+f'/reviews/{rid}/publish',dict(expectedReviewRevision=0),who='coordinator').status_code,409)
+
+  def test_single_multi_stage_guides_and_final_lock(self):
+   from synthetic_synopsis import pdf_bytes
+   from django.core.files.uploadedfile import SimpleUploadedFile
+   for n in [1,2]:
+    oid=self.offering();self.ok(self.appoint(oid,uid='00000000-0000-4000-8000-000000000008'));pid=self.project(oid);self.framework(oid,n)
+    base=f'/api/v1/documents/departments/{CSE}'
+    vid=self.ok(self.client('student-a').post(base+f'/projects/{pid}/uploads',{'file':SimpleUploadedFile('synopsis.pdf',pdf_bytes(),content_type='application/pdf')},format='multipart',HTTP_IDEMPOTENCY_KEY=uuid4().hex))['documentVersionId']
+    def record():return next(p for p in self.ok(self.client('faculty-a').get(base))['projects'] if p['id']==pid)
+    case=record()['case'];self.ok(self.post(base,dict(action='SUBMIT',projectId=pid,documentVersionId=vid,expectedCaseVersion=case['version']),who='student-a'));case=record()['case']
+    self.ok(self.post(base,dict(action='DECIDE',projectId=pid,attemptId=case['attempts'][-1]['id'],expectedCaseVersion=case['version'],decision='APPROVE',comment='Accepted under the configured synopsis rules'),who='faculty-a'))
+    self.stage(oid,pid,'stage-1',20)
+    case=record()['case'];self.ok(self.command(oid,'REOPEN_SYNOPSIS',dict(projectId=pid,expectedCaseVersion=case['version'],comment='Add the subsequent validation evidence.'),who='faculty-a'))
+    case=record()['case'];self.assertEqual(case['state'],'CHANGES_REQUESTED');self.assertEqual(case['attempts'][0]['state'],'APPROVED');self.assertEqual(len(case['attempts'][0]['feedback']),2)
+    if n==2:
+     self.assertEqual(self.command(oid,'PUBLISH_FINAL',dict(projectId=pid,expectedVersion=0),who='coordinator').status_code,409)
+     self.stage(oid,pid,'stage-2',40)
+    queue_url=f'/api/v1/courses/offerings/{oid}/evaluation-queue'
+    ready=self.ok(self.client('coordinator').get(queue_url))['projects'][0]
+    self.assertIsNone(ready['overallBlocker'])
+    self.assertEqual([stage['publishedVersion'] for stage in ready['stages']],[1]*n)
+    self.ok(self.command(oid,'PUBLISH_FINAL',dict(projectId=pid,expectedVersion=0),who='coordinator'))
+    closed=self.ok(self.client('coordinator').get(queue_url))['projects'][0]
+    self.assertEqual(closed['overallVersion'],1)
+    self.assertIn('exceptional revision',closed['overallBlocker'])
+    details=self.ok(self.client('coordinator').get(f'/api/v1/courses/offerings/{oid}/details'))
+    self.assertEqual((details['studentCount'],details['teamCount'],details['projectCount']),(1,1,1))
+    self.assertEqual(details['reviewProgress'],dict(total=n,published=n))
+    self.assertEqual(details['submissionProgress'],dict(awaitingReview=0,awaitingRevision=0))
+    final=self.db.execute('SELECT results FROM course_final_results WHERE project_id=%s',(pid,)).fetchone()['results'];self.assertEqual(final['00000000-0000-4000-8000-000000000001'],'40.00' if n==1 else '70.00')
+    self.assertEqual(self.command(oid,'REOPEN_SYNOPSIS',dict(projectId=pid,expectedCaseVersion=case['version'],comment='Too late'),who='faculty-a').status_code,403)
+    self.assertEqual(self.client('student-a').post(base+f'/projects/{pid}/uploads',{'file':SimpleUploadedFile('revision.pdf',pdf_bytes(),content_type='application/pdf')},format='multipart',HTTP_IDEMPOTENCY_KEY=uuid4().hex).status_code,403)
+  def test_department_csv_intake_and_explicit_reconciliation(self):
+   student='00000000-0000-4000-8000-000000000001'
+   profile=self.db.execute('SELECT usn,semester_key,section FROM student_profiles WHERE user_id=%s',(student,)).fetchone()
+   dept_code=self.db.execute('SELECT code FROM departments WHERE id=%s',(CSE,)).fetchone()['code']
+   oid=self.offering();self.ok(self.appoint(oid,uid='00000000-0000-4000-8000-000000000008'))
+   pid=self.project(oid);self.framework(oid);rid,_,_=self.stage(oid,pid,'stage-1',20)
+   result_path=f'/api/v1/academic/departments/{CSE}/reviews/{rid}/results'
+   history=self.ok(self.client().get(result_path))['results']
+   path=f'/api/v1/staff/departments/{CSE}/intake'
+   def send(action,body,who='department-admin'):
+    return self.post(path,dict(action=action,**body),who=who)
+   columns='Ref,Name,Dept,Number,Semester,Section\n'
+   record=f'student-001,Isolated Learner,{dept_code},{profile["usn"]},{profile["semester_key"]},B\n'
+   csv_text=columns+record
+   self.assertEqual(self.ok(send('HEADERS',dict(csv=csv_text)))['headers'][0],'Ref')
+   mapping=dict(key='Ref',name='Name',department='Dept',usn='Number',semester='Semester',section='Section')
+   payload=dict(csv=csv_text,source='OFFICIAL',kind='STUDENT',mapping=mapping)
+   self.assertEqual(send('PREVIEW',payload,who='faculty-a').status_code,403)
+   self.assertTrue(self.ok(send('PREVIEW',dict(payload,csv=csv_text+record)))['issues'])
+   self.assertTrue(self.ok(send('PREVIEW',dict(payload,csv=csv_text.replace(dept_code,'WRONG'))))['issues'])
+   self.assertEqual(self.ok(send('PREVIEW',payload))['issues'],[])
+   first=self.ok(send('APPLY',dict(payload,reference='Synthetic approved export',confirmed=True)))['batchId']
+   self.assertEqual(self.ok(send('APPLY',dict(payload,reference='Synthetic approved export',confirmed=True)))['batchId'],first)
+   roles=self.db.execute('SELECT count(*) AS count FROM department_role_assignments').fetchone()['count']
+   fallback=self.ok(send('APPLY',dict(payload,source='FORM_EXPORT',reference='Isolated forms export',confirmed=True)))['batchId']
+   self.assertEqual(self.db.execute('SELECT count(*) AS count FROM department_role_assignments').fetchone()['count'],roles)
+   self.assertEqual(self.db.execute('SELECT section FROM student_profiles WHERE user_id=%s',(student,)).fetchone()['section'],profile['section'])
+   reconciliation=dict(source='FORM_EXPORT',kind='STUDENT',identityKey='student-001',expectedBatchId=fallback,userId=student,confirmed=True)
+   self.ok(send('RECONCILE',reconciliation))
+   self.assertEqual(self.db.execute('SELECT section FROM student_profiles WHERE user_id=%s',(student,)).fetchone()['section'],profile['section'])
+   corrected=self.ok(send('APPLY',dict(payload,csv=csv_text.replace(',B\n',',C\n'),reference='Corrected official export',confirmed=True)))['batchId']
+   self.assertEqual(send('RECONCILE',dict(reconciliation,source='OFFICIAL',expectedBatchId=first)).status_code,409)
+   self.ok(send('RECONCILE',dict(reconciliation,source='OFFICIAL',expectedBatchId=corrected)))
+   self.assertEqual(self.db.execute('SELECT section FROM student_profiles WHERE user_id=%s',(student,)).fetchone()['section'],'C')
+   self.assertEqual(self.ok(self.client().get(result_path))['results'],history)
+   faculty_csv=f'Ref,Name,Dept\nstaff-001,Isolated Faculty,{dept_code}\n'
+   self.ok(send('APPLY',dict(csv=faculty_csv,mapping={k:mapping[k] for k in ('key','name','department')},
+     source='OFFICIAL',kind='FACULTY',reference='Synthetic staff export',confirmed=True)))
+   self.assertEqual(self.db.execute('SELECT count(*) AS count FROM department_role_assignments').fetchone()['count'],roles)
+  def test_department_intake_pages_search_beyond_first_page_and_require_admin(self):
+   path=f'/api/v1/staff/departments/{CSE}/intake'
+   code=self.db.execute('SELECT code FROM departments WHERE id=%s',(CSE,)).fetchone()['code']
+   csv='Ref,Name,Dept\n'+''.join(f'paging-{i},Paging Faculty {i:02d},{code}\n' for i in range(31))
+   response=self.post(path,dict(action='APPLY',csv=csv,mapping=dict(key='Ref',name='Name',department='Dept'),
+      source='OFFICIAL',kind='FACULTY',reference='Synthetic paging export',confirmed=True),who='department-admin')
+   batch_id=self.ok(response)['batchId']
+   admin=self.client('department-admin')
+   setup=self.ok(admin.get(f'/api/v1/staff/departments/{CSE}/setup',dict(intake='metadata')))
+   self.assertEqual(setup['intake'],dict(departmentCode=code))
+   filters=dict(action='LIST',kind='FACULTY',q='Paging Faculty',page=1,batchPage=1)
+   first=self.ok(admin.post(path,filters,format='json'))
+   second=self.ok(admin.post(path,dict(filters,page=2),format='json'))
+   self.assertEqual((first['recordCount'],second['recordCount']),(31,31))
+   self.assertEqual((len(first['records']),len(second['records'])),(25,6))
+   self.assertTrue({row['identity_key'] for row in first['records']}.isdisjoint(row['identity_key'] for row in second['records']))
+   exact=self.ok(admin.post(path,dict(action='LIST',kind='FACULTY',q='paging-30',page=1,batchPage=1),format='json'))
+   self.assertEqual([row['identity_key'] for row in exact['records']],['paging-30'])
+   self.assertTrue(any(batch['id']==batch_id and batch['actor_name'] for batch in first['batches']))
+   self.assertEqual(admin.get(path,dict(page=0)).status_code,400)
+   self.assertEqual(admin.get(path.replace(str(CSE),str(uuid4()))).status_code,403)
+   for role in ('staff-policy','faculty-a','student-a'):
+    self.assertEqual(self.client(role).get(path).status_code,403)
+   self.assertFalse(self.db.execute("SELECT EXISTS(SELECT FROM pg_proc p CROSS JOIN LATERAL aclexplode(p.proacl) a "
+    "WHERE p.oid='public.smartpro_department_intake_page(uuid,uuid,text,text,integer,integer)'::regprocedure "
+    "AND a.grantee=0 AND a.privilege_type='EXECUTE') AS allowed").fetchone()['allowed'])
+  def test_verified_department_directory_pages_and_scope(self):
+   path=f'/api/v1/staff/departments/{CSE}/intake'
+   admin=self.client('department-admin')
+   ids=self.db.execute("INSERT INTO users(display_name,email) SELECT 'Directory Learner '||n,'directory-'||n||'@example.invalid' FROM generate_series(10,40) n RETURNING id,display_name").fetchall()
+   for user in ids:
+    number=user['display_name'].split()[-1]
+    self.db.execute("INSERT INTO student_profiles(user_id,usn,section,semester_key,department_id) VALUES(%s,%s,'B','SYNTHETIC-SEM-3',%s)",(user['id'],'DIRECTORY-'+number,CSE))
+   filters=dict(action='DIRECTORY',kind='STUDENT',q='Directory Learner',page=1)
+   first=self.ok(admin.post(path,filters,format='json'))
+   last=self.ok(admin.post(path,dict(filters,page=2),format='json'))
+   self.assertEqual((first['total'],len(first['records']),len(last['records'])),(31,25,6))
+   self.assertEqual(last['records'][-1]['usn'],'DIRECTORY-40')
+   exact=self.ok(admin.post(path,dict(filters,q='DIRECTORY-40'),format='json'))
+   self.assertEqual(exact['records'],[last['records'][-1]])
+   self.assertEqual(admin.post(path.replace(str(CSE),str(uuid4())),filters,format='json').status_code,403)
+   for who in ('staff-policy','faculty-a','student-a'):
+    self.assertEqual(self.client(who).post(path,filters,format='json').status_code,403)
+   faculty=self.ok(admin.post(path,dict(filters,kind='FACULTY',q=''),format='json'))
+   self.assertGreater(faculty['total'],0)
+   self.assertTrue(all(row['usn'] is None for row in faculty['records']))
+  def test_multipart_import_outcomes_retry_and_stale_preview(self):
+   import json
+   from io import BytesIO
+   from django.core.files.uploadedfile import SimpleUploadedFile
+   from openpyxl import Workbook
+   path=f'/api/v1/staff/departments/{CSE}/intake'
+   code=self.db.execute('SELECT code FROM departments WHERE id=%s',(CSE,)).fetchone()['code']
+   admin=self.client('department-admin')
+   mapping=json.dumps(dict(key='Ref',name='Name',department='Dept'))
+   def send(action,rows,excel=False,request_key=None,**fields):
+    if excel:
+     workbook=Workbook()
+     for row in [('Ref','Name','Dept'),*rows]:workbook.active.append(row)
+     buf=BytesIO()
+     workbook.save(buf)
+     name,content='source.xlsx',buf.getvalue()
+    else:
+     name,content='source.csv',('Ref,Name,Dept\n'+''.join(','.join(row)+'\n' for row in rows)).encode()
+    payload=dict(action=action,file=SimpleUploadedFile(name,content))
+    if action!='HEADERS':
+     payload.update(mapping=mapping,source='OFFICIAL',kind='FACULTY',**fields)
+    return self.client('department-admin').post(path,payload,format='multipart',HTTP_IDEMPOTENCY_KEY=request_key or uuid4().hex)
+   rows=[(f'bulk-{i}',f'Bulk Faculty {i}',code) for i in range(1100)]
+   self.assertEqual(self.ok(send('HEADERS',rows,True))['headers'],['Ref','Name','Dept'])
+   planned=self.ok(send('PREVIEW',rows,True))
+   self.assertEqual(planned['counts']['created'],1100)
+   key=uuid4().hex
+   apply=dict(reference='Isolated workbook export',confirmed='true',expectedRevision=planned['revision'])
+   saved=self.ok(send('APPLY',rows,True,key,**apply))
+   self.assertEqual(saved['counts']['created'],1100)
+   self.assertEqual(self.ok(send('APPLY',rows,True,key,**apply)),saved)
+   self.assertEqual(send('APPLY',rows,True,**apply).status_code,409)
+   changed=[('bulk-0','Corrected Faculty Name',code),rows[1]]
+   planned=self.ok(send('PREVIEW',changed))
+   self.assertEqual(planned['counts'],dict(created=0,updated=1,unchanged=1,rejected=0,conflicts=0))
+   updated=self.ok(send('APPLY',changed,reference='Corrected export',confirmed='true',expectedRevision=planned['revision']))
+   self.assertEqual(updated['counts'],planned['counts'])
+   from threading import Barrier
+   variants=[[(rows[2][0],label,code)] for label in ('Race version A','Race version B')]
+   revisions=[self.ok(send('PREVIEW',variant))['revision'] for variant in variants]
+   barrier=Barrier(2)
+   def race(index):
+    try:
+     barrier.wait(timeout=5)
+     return send('APPLY',variants[index],reference='Concurrent correction',confirmed='true',expectedRevision=revisions[index]).status_code
+    finally:close_old_connections()
+   with ThreadPoolExecutor(max_workers=2) as pool:
+    self.assertEqual(sorted(pool.map(race,range(2))),[200,409])
+   invalid=self.ok(send('PREVIEW',[rows[2],rows[2],('other','Wrong Department','WRONG')]))
+   self.assertEqual((invalid['counts']['conflicts'],invalid['counts']['rejected']),(2,1))
+   self.assertEqual(send('PREVIEW',[('formula','=1+1',code)],True).status_code,400)
+   page=self.ok(admin.get(path,dict(kind='FACULTY')))
+   self.assertTrue(any(batch['id']==updated['batchId'] and batch['outcome']['updated']==1 for batch in page['batches']))
+   name=self.db.execute('SELECT display_name FROM users WHERE id=%s',(FACULTY,)).fetchone()['display_name']
+   same_name=[('possible-match',name,code),('second-match',name,code)]
+   self.ok(send('APPLY',same_name,reference='Ambiguous names',confirmed='true'))
+   matches=self.ok(admin.post(path,dict(action='LIST',kind='FACULTY',q='possible-match',page=1,batchPage=1),format='json'))
+   row=matches['records'][0]
+   self.assertTrue(row['possible_match'])
+   self.assertIsNone(row['linked_user_id'])
+   targets=self.ok(admin.post(path,dict(action='DIRECTORY',kind='FACULTY',q=name,page=1),format='json'))
+   self.assertTrue(any(person['id']==FACULTY for person in targets['records']))
+   verified=dict(action='RECONCILE',kind='FACULTY',source='OFFICIAL',identityKey='possible-match',
+                 expectedBatchId=row['batch_id'],userId=FACULTY,confirmed=True,evidenceReference='Synthetic employee ID verified')
+   self.ok(self.post(path,verified,who='department-admin'))
+   self.assertEqual(self.post(path,dict(verified,identityKey='second-match'),who='department-admin').status_code,409)
+   self.assertTrue(self.db.execute("SELECT EXISTS(SELECT FROM audit_events WHERE action='INTAKE_RECONCILE' "
+     "AND metadata->>'evidenceReference'='Synthetic employee ID verified') AS found").fetchone()['found'])
+   from zipfile import ZipFile
+   unsafe=BytesIO()
+   with ZipFile(unsafe,'w') as archive:
+    archive.writestr('unusual.part','<!DOCTYPE test [<!ENTITY payload "x">]><test/>'.encode('utf-16'))
+   rejected=admin.post(path,dict(action='HEADERS',file=SimpleUploadedFile('unsafe.xlsx',unsafe.getvalue())),format='multipart')
+   self.assertEqual(rejected.status_code,400)
+   self.assertIn('unsupported XML',rejected.json()['detail']['message'])
+
+  def test_department_offering_and_appointment_pages_reach_full_scope(self):
+   oid=self.offering()
+   catalog=f'/api/v1/courses/departments/{CSE}'
+   self.db.execute("INSERT INTO curriculum_types(code,label) SELECT 'D1-OFFERING-'||n,'Directory Offering '||n FROM generate_series(100,304) n")
+   self.db.execute("INSERT INTO curriculum_offerings(curriculum_type_id,department_id,cycle_id,semester_key) "
+    "SELECT id,%s,'11000000-0000-4000-8000-000000000001','SYNTHETIC-SEM-3' FROM curriculum_types WHERE code LIKE 'D1-OFFERING-%%'",(CSE,))
+   admin=self.client('department-admin')
+   first=self.ok(admin.get(catalog,dict(page=1,q='Directory Offering')))
+   final=self.ok(admin.get(catalog,dict(page=9,q='Directory Offering')))
+   self.assertEqual((first['total'],len(first['offerings']),len(final['offerings'])),(205,25,5))
+   self.assertEqual(final['offerings'][-1]['label'],'Directory Offering 304')
+   for version in range(26):self.ok(self.appoint(oid,version=version))
+   for client in (admin,self.client()):
+    details=self.ok(client.get(catalog,dict(page=9,q='Directory Offering',selected=oid,appointmentPage=2)))
+    selected=next(row for row in details['offerings'] if row['id']==oid)
+    self.assertEqual(details['appointmentTotal'],26)
+    self.assertEqual([term['version'] for term in selected['appointments']],[1])
+    self.assertEqual(selected['effective_count'],1)
+    self.assertTrue(selected['appointments'][0]['actor_name'])
+   self.assertEqual(self.client('student-a').get(catalog,dict(page=1)).status_code,403)
+   self.assertEqual(admin.get(catalog.replace(str(CSE),str(uuid4())),dict(page=1)).status_code,403)
+  def test_faculty_identity_crosswalk_and_candidate_discovery(self):
+   from threading import Barrier
+   from unittest.mock import patch
+   base=f'/api/v1/staff/departments/{CSE}'
+   admin=self.client('department-admin')
+   faculty=[]
+   for _ in range(2):
+    uid=str(self.db.execute("INSERT INTO users(display_name) VALUES('Crosswalk Faculty') RETURNING id").fetchone()['id'])
+    self.db.execute("INSERT INTO department_role_assignments(user_id,department_id,role_code) VALUES(%s,%s,'FACULTY')",(uid,CSE))
+    faculty.append(uid)
+   self.db.execute("WITH generated AS (INSERT INTO users(display_name) SELECT 'Candidate Scale '||n FROM generate_series(100,304) n RETURNING id) "
+                   "INSERT INTO department_role_assignments(user_id,department_id,role_code) SELECT id,%s,'FACULTY' FROM generated",(CSE,))
+   candidates=self.ok(admin.post(base+'/appointment-candidates',dict(q='Candidate Scale',page=9),format='json'))
+   self.assertEqual((candidates['total'],len(candidates['records'])),(205,5))
+   self.assertEqual(candidates['records'][-1]['display_name'],'Candidate Scale 304')
+   self.assertEqual(self.client('faculty-a').post(base+'/appointment-candidates',dict(q='',page=1),format='json').status_code,403)
+   self.assertEqual(self.client('faculty-a').get(base+'/records/'+faculty[0]).status_code,403)
+   self.assertEqual(admin.get(base.replace(str(CSE),str(uuid4()))+'/records/'+faculty[0]).status_code,403)
+   oid=self.offering();self.ok(self.appoint(oid,uid=faculty[0]))
+   history=self.db.execute('SELECT to_jsonb(v) AS row FROM course_coordinator_versions v WHERE offering_id=%s',(oid,)).fetchall()
+   from smartpro.setup_views import faculty_crosswalk_roster
+   refs=[r['ref'] for r in faculty_crosswalk_roster()[:2]]
+   def command(i,action,**data):
+    return self.post(base+'/records/'+faculty[i],dict(action=action,**data),who='department-admin')
+   with patch('smartpro.demo_views.faculty_reference_enabled',return_value=True):
+    self.assertEqual(command(0,'PROPOSE',directoryRef=refs[0],source='fixture',identifier='',evidence='').status_code,400)
+    proposals=[]
+    for index,ref in enumerate(refs):
+     data=dict(directoryRef=ref,source='Synthetic register',identifier='SYN-057',evidence='Synthetic checked source')
+     link=self.ok(command(index,'PROPOSE',**data))
+     self.assertEqual(link['state'],'PROPOSED')
+     self.assertEqual(self.ok(command(index,'PROPOSE',**data))['id'],link['id'])
+     proposals.append(link['id'])
+    barrier=Barrier(2)
+    def verify(i):
+     try:
+      barrier.wait(timeout=5)
+      return command(i,'VERIFY',linkId=proposals[i],evidence='Synthetic reviewer verified identifier').status_code
+     finally:close_old_connections()
+    with ThreadPoolExecutor(max_workers=2) as pool:outcomes=list(pool.map(verify,range(2)))
+    self.assertEqual(sorted(outcomes),[200,409])
+    winner=outcomes.index(200)
+    record=self.ok(admin.get(base+'/records/'+faculty[winner]))
+    self.assertEqual(record['links'][0]['state'],'VERIFIED')
+    self.assertTrue(any(event['action']=='FACULTY_IDENTITY_VERIFY' for event in record['history']))
+    self.ok(command(winner,'REVOKE',linkId=proposals[winner],evidence='Synthetic revocation'))
+    self.ok(command(1-winner,'VERIFY',linkId=proposals[1-winner],evidence='Synthetic corrected association'))
+   self.assertEqual(self.db.execute('SELECT to_jsonb(v) AS row FROM course_coordinator_versions v WHERE offering_id=%s',(oid,)).fetchall(),history)
+  def test_finalized_correction_requires_specific_independent_authorization(self):
+   oid=self.offering();self.ok(self.appoint(oid,uid='00000000-0000-4000-8000-000000000008'));pid=self.project(oid);self.framework(oid);rid,aid,scores=self.stage(oid,pid,'stage-1',20)
+   rev=self.db.execute('SELECT revision FROM academic_review_bindings WHERE review_id=%s',(rid,)).fetchone()['revision']
+   changed=[dict(s,marks='21') for s in scores];body=dict(assessmentId=aid,expectedReviewRevision=rev,scores=changed)
+   self.assertEqual(self.post(f'/api/v1/academic/departments/{CSE}/reviews/{rid}/evaluations',body,who='faculty-a').status_code,403)
+   request=self.ok(self.command(oid,'REQUEST_CORRECTION',dict(reviewId=rid,**body),who='faculty-a'))['id']
+   self.ok(self.appoint(oid,uid=FACULTY,permissions=['CORRECTIONS']))
+   self.assertEqual(self.command(oid,'AUTHORIZE_CORRECTION',dict(requestId=request,approved=True),who='faculty-a',role='Coordinator').status_code,403)
+   self.ok(self.command(oid,'AUTHORIZE_CORRECTION',dict(requestId=request,approved=True),who='coordinator'))
+   self.ok(self.command(oid,'APPLY_CORRECTION',dict(requestId=request),who='faculty-a'))
+   releases=self.db.execute('SELECT results FROM academic_result_versions WHERE review_id=%s ORDER BY version_no',(rid,)).fetchall();self.assertEqual([x['results']['00000000-0000-4000-8000-000000000001'] for x in releases],['40.00','42.00'])
+   self.assertEqual(self.command(oid,'APPLY_CORRECTION',dict(requestId=request),who='coordinator',role='Faculty').status_code,403)
+  def test_coordinator_corrects_own_finalized_marks_before_overall_release(self):
+   oid=self.offering();self.ok(self.appoint(oid,uid='00000000-0000-4000-8000-000000000008'))
+   pid=self.project(oid);self.framework(oid);rid,aid,scores=self.stage(oid,pid,'stage-1',20)
+   self.ok(self.appoint(oid,uid=FACULTY,permissions=['CORRECTIONS']))
+   def proposal(mark):
+    revision=self.db.execute('SELECT revision FROM academic_review_bindings WHERE review_id=%s',(rid,)).fetchone()['revision']
+    return dict(reviewId=rid,assessmentId=aid,expectedReviewRevision=revision,scores=[dict(score,marks=mark) for score in scores])
+   body=proposal('21');key=uuid4().hex
+   applied=self.ok(self.command(oid,'REQUEST_CORRECTION',body,who='faculty-a',key=key))
+   self.assertTrue(applied['appliedImmediately'])
+   self.assertEqual(self.ok(self.command(oid,'REQUEST_CORRECTION',body,who='faculty-a',key=key)),applied)
+   self.assertIsNone(self.db.execute('SELECT request_id FROM course_correction_authorizations WHERE request_id=%s',(applied['id'],)).fetchone())
+   def releases():
+    return [x['results']['00000000-0000-4000-8000-000000000001'] for x in self.db.execute('SELECT results FROM academic_result_versions WHERE review_id=%s ORDER BY version_no',(rid,)).fetchall()]
+   self.assertEqual(releases(),['40.00','42.00'])
+   self.ok(self.command(oid,'PUBLISH_FINAL',dict(projectId=pid,expectedVersion=0),who='coordinator'))
+   self.assertEqual(self.command(oid,'REQUEST_CORRECTION',proposal('22'),who='faculty-a').status_code,403)
+   self.assertEqual(releases(),['40.00','42.00'])
+  def test_concurrent_final_publication_closes_approved_ordinary_correction(self):
+   from threading import Barrier
+   oid=self.offering()
+   self.ok(self.appoint(oid,uid='00000000-0000-4000-8000-000000000008'))
+   pid=self.project(oid);self.framework(oid);rid,aid,scores=self.stage(oid,pid,'stage-1',20)
+   rev=self.db.execute('SELECT revision FROM academic_review_bindings WHERE review_id=%s',(rid,)).fetchone()['revision']
+   request=self.ok(self.command(oid,'REQUEST_CORRECTION',dict(reviewId=rid,assessmentId=aid,expectedReviewRevision=rev,
+     scores=[dict(score,marks='21') for score in scores]),who='faculty-a'))['id']
+   self.ok(self.command(oid,'AUTHORIZE_CORRECTION',dict(requestId=request,approved=True),who='coordinator'))
+   barrier=Barrier(2)
+   def publish():
+    try:
+     barrier.wait(timeout=5)
+     return self.command(oid,'PUBLISH_FINAL',dict(projectId=pid,expectedVersion=0),who='coordinator').status_code
+    finally:close_old_connections()
+   with ThreadPoolExecutor(max_workers=2) as workers:
+    statuses=list(workers.map(lambda _:publish(),range(2)))
+   self.assertEqual(sorted(statuses),[200,409])
+   self.assertEqual(self.command(oid,'APPLY_CORRECTION',dict(requestId=request),who='faculty-a').status_code,403)
+   self.assertEqual(self.db.execute('SELECT count(*) AS n FROM course_final_results WHERE project_id=%s',(pid,)).fetchone()['n'],1)
+   self.assertEqual(self.db.execute('SELECT count(*) AS n FROM academic_result_versions WHERE review_id=%s',(rid,)).fetchone()['n'],1)
+
+  def test_deadline_scheduler_dedup_completion_and_revision(self):
+   from datetime import datetime,timedelta,timezone
+   from synthetic_synopsis import pdf_bytes
+   from django.core.files.uploadedfile import SimpleUploadedFile
+   oid=self.offering();self.ok(self.appoint(oid,uid='00000000-0000-4000-8000-000000000008'));pid=self.project(oid);cfg=self.framework(oid)
+   cfg['deadlineRules']=dict(kinds=['DOCUMENT','REVISION','EVALUATION','REVIEW','MILESTONE','FINAL_SUBMISSION'],earliestAt='2026-01-01T00:00:00Z',latestAt='2027-06-10T00:00:00Z',maxReminderHours=168)
+   f=self.ok(self.command(oid,'FRAMEWORK',dict(expectedVersion=1,configuration=cfg,authority=None)))['id'];self.ok(self.command(oid,'PLAN',dict(expectedVersion=1,frameworkId=f,schedules={'stage-1':'2026-12-01T09:00:00Z'}),who='coordinator'))
+   body=dict(deadlineKey='synopsis-submission',expectedVersion=0,projectId=None,kind='DOCUMENT',target='SYNOPSIS',name='Configured synopsis deadline',dueAt=(datetime.now(timezone.utc)-timedelta(hours=1)).isoformat(),reminderHours=[24,1],notifyRoles=['Student','Faculty','Coordinator','HOD'],active=True)
+   d=self.ok(self.command(oid,'DEADLINE',body,who='coordinator'))
+   def dispatch():return self.db.execute('SELECT smartpro_dispatch_course_notifications() n').fetchone()['n']
+   def alerts(who):return self.ok(self.client(who).get('/api/v1/me/course-notifications'))['alerts']
+   dispatch();self.assertTrue(any(a['project_id']==pid and a['bucket']=='OVERDUE' for a in alerts('student-a')))
+   self.assertEqual(dispatch()['generatedInApp'],0)
+   base=f'/api/v1/documents/departments/{CSE}'
+   # The configured window actually closes uploads, not just their warning label.
+   upload=lambda:self.client('student-a').post(base+f'/projects/{pid}/uploads',{'file':SimpleUploadedFile('synopsis.pdf',pdf_bytes(),content_type='application/pdf')},format='multipart',HTTP_IDEMPOTENCY_KEY=uuid4().hex)
+   self.assertEqual(upload().status_code,409)
+   body.update(expectedVersion=d['version'],dueAt=(datetime.now(timezone.utc)+timedelta(hours=20)).isoformat(),reminderHours=[48,24]);d=self.ok(self.command(oid,'DEADLINE',body,who='coordinator'));dispatch()
+   self.assertTrue(any(a['project_id']==pid and a['deadline_id']==d['id'] and a['bucket']=='DUE:24' for a in alerts('student-a')))
+   vid=self.ok(upload())['documentVersionId'];case=next(p for p in self.ok(self.client('student-a').get(base))['projects'] if p['id']==pid)['case']
+   self.ok(self.post(base,dict(action='SUBMIT',projectId=pid,documentVersionId=vid,expectedCaseVersion=case['version']),who='student-a'));dispatch()
+   self.assertFalse(any(a['project_id']==pid for a in alerts('student-a')))
+   self.assertTrue(any(a['project_id']==pid for a in alerts('faculty-a')))
+   self.assertFalse(any(a['project_id']==pid for a in alerts('coordinator') if a['kind']=='EVALUATION'))
+   history=self.db.execute('SELECT count(*) n FROM course_notification_history').fetchone()['n'];self.assertGreater(history,0)
+   self.assertEqual(self.command(oid,'DEADLINE',dict(body,dueAt='2027-12-01T00:00:00Z',expectedVersion=d['version']),who='coordinator').status_code,400)
+  def test_exceptional_overall_revision_preserves_the_original(self):
+   oid=self.offering()
+   self.ok(self.appoint(oid,uid='00000000-0000-4000-8000-000000000008'))
+   pid=self.project(oid)
+   self.framework(oid)
+   rid,aid,scores=self.stage(oid,pid,'stage-1',20)
+   original=self.ok(self.command(oid,'PUBLISH_FINAL',dict(projectId=pid,expectedVersion=0)))['id']
+   expected=dict(projectId=pid,expectedVersion=1)
+   self.assertEqual(self.command(oid,'REQUEST_FINAL_REVISION',expected).status_code,409)
+   revision=self.db.execute('SELECT revision FROM academic_review_bindings WHERE review_id=%s',(rid,)).fetchone()['revision']
+   request=self.ok(self.command(oid,'REQUEST_EXCEPTIONAL_STAGE_CORRECTION',dict(reviewId=rid,assessmentId=aid,expectedReviewRevision=revision,scores=[dict(row,marks='21') for row in scores]),who='faculty-a'))['id']
+   self.assertEqual(self.command(oid,'AUTHORIZE_CORRECTION',dict(requestId=request,approved=True),who='coordinator').status_code,403)
+   self.ok(self.command(oid,'AUTHORIZE_EXCEPTIONAL_STAGE_CORRECTION',dict(requestId=request,approved=True),who='coordinator'))
+   self.ok(self.command(oid,'APPLY_EXCEPTIONAL_STAGE_CORRECTION',dict(requestId=request),who='faculty-a'))
+   final_request=self.ok(self.command(oid,'REQUEST_FINAL_REVISION',expected))['id']
+   self.assertEqual(self.command(oid,'APPLY_FINAL_REVISION',dict(requestId=final_request)).status_code,403)
+   self.ok(self.command(oid,'AUTHORIZE_FINAL_REVISION',dict(requestId=final_request,approved=True),who='coordinator'))
+   self.assertEqual(self.command(oid,'APPLY_FINAL_REVISION',dict(requestId=final_request),who='coordinator').status_code,403)
+   key=uuid4().hex
+   applied=self.ok(self.command(oid,'APPLY_FINAL_REVISION',dict(requestId=final_request),key=key))
+   self.assertEqual(self.ok(self.command(oid,'APPLY_FINAL_REVISION',dict(requestId=final_request),key=key)),applied)
+   versions=self.db.execute('SELECT * FROM course_final_results WHERE project_id=%s ORDER BY version',(pid,)).fetchall()
+   self.assertEqual([row['results']['00000000-0000-4000-8000-000000000001'] for row in versions],['40.00','42.00'])
+   self.assertEqual(str(versions[1]['supersedes_id']),original)
+
+  def test_milestone_completion_and_exact_requirement_permission(self):
+   oid=self.offering()
+   self.ok(self.appoint(oid,uid='00000000-0000-4000-8000-000000000008'))
+   pid=self.project(oid)
+   cfg=self.framework(oid)
+   current=str(self.db.execute("SELECT policy_id FROM submission_offering_requirements WHERE offering_id=%s AND requirement_key='SYNOPSIS'",(oid,)).fetchone()['policy_id'])
+   apply=dict(policyId=current,expectedPolicyId=current)
+   self.assertEqual(self.command(oid,'APPLY_REQUIREMENT',apply,who='coordinator').status_code,403)
+   cfg['requirementPolicyIds']=[current]
+   cfg['deadlineRules']=dict(kinds=['MILESTONE'],earliestAt='2026-01-01T00:00:00Z',latestAt='2027-06-10T00:00:00Z',maxReminderHours=168,completionRoles=['Student'])
+   version=self.ok(self.command(oid,'FRAMEWORK',dict(expectedVersion=1,configuration=cfg,authority=None)))['id']
+   self.ok(self.command(oid,'PLAN',dict(expectedVersion=1,frameworkId=version,schedules={'stage-1':'2026-12-01T09:00:00Z'}),who='coordinator'))
+   self.assertEqual(self.command(oid,'APPLY_REQUIREMENT',dict(apply,expectedPolicyId=None),who='coordinator').status_code,409)
+   self.ok(self.command(oid,'APPLY_REQUIREMENT',apply,who='coordinator'))
+   d=self.ok(self.command(oid,'DEADLINE',dict(deadlineKey='demo-evidence',expectedVersion=0,projectId=pid,kind='MILESTONE',target='GENERAL',name='Evidence checklist',dueAt='2026-11-01T17:00:00Z',reminderHours=[],notifyRoles=['Coordinator'],active=True,completionRole='Student',completionScope='INDIVIDUAL'),who='coordinator'))
+   body=dict(deadlineId=d['id'],projectId=pid)
+   self.assertEqual(self.command(oid,'COMPLETE_MILESTONE',body,who='faculty-a').status_code,403)
+   self.db.execute('SELECT smartpro_dispatch_course_notifications()')
+   def feed(who):return self.ok(self.client(who).get('/api/v1/me/course-notifications'))
+   self.assertTrue(any(task['deadline_id']==d['id'] and task['can_complete'] for task in feed('student-a')['tasks']))
+   self.assertTrue(any(alert['project_id']==pid for alert in feed('coordinator')['alerts']))
+   self.assertFalse(any(alert['project_id']==pid for alert in feed('student-a')['alerts']))
+   self.ok(self.command(oid,'COMPLETE_MILESTONE',body,who='student-a'))
+   self.db.execute('SELECT smartpro_dispatch_course_notifications()')
+   self.assertFalse(any(task['deadline_id']==d['id'] for task in feed('student-a')['tasks']))
+   self.assertFalse(any(alert['project_id']==pid for alert in feed('coordinator')['alerts']))
+
+  def test_guide_handover_preserves_drafts_and_finalized_marks(self):
+   oid=self.offering();self.ok(self.appoint(oid,uid='00000000-0000-4000-8000-000000000008'));pid=self.project(oid);self.framework(oid)
+   rid=self.ok(self.command(oid,'CREATE_STAGE',dict(projectId=pid,stageKey='stage-1',facultyIds=[]),who='coordinator'))['id']
+   old=str(self.db.execute("SELECT id FROM faculty_assignments WHERE project_id=%s AND assignment_type='GUIDE' AND valid_until IS NULL",(pid,)).fetchone()['id'])
+   self.ok(self.post(f'/api/v1/staff/departments/{CSE}/projects/{pid}/guide',dict(facultyId='00000000-0000-4000-8000-000000000008',expectedGuideId=old),who='coordinator'))
+   assignments=self.db.execute('SELECT e.faculty_user_id,a.state,smartpro_evaluator_active(e.id) active FROM evaluator_assignments e JOIN assessments a ON a.evaluator_assignment_id=e.id WHERE e.review_id=%s',(rid,)).fetchall()
+   self.assertEqual(len(assignments),2);self.assertFalse(next(a for a in assignments if str(a['faculty_user_id'])==FACULTY)['active'])
+   self.assertTrue(next(a for a in assignments if str(a['faculty_user_id'])=='00000000-0000-4000-8000-000000000008')['active'])
+   detail=self.ok(self.client('coordinator').get(f'/api/v1/courses/offerings/{oid}/details'));self.assertEqual(detail['projectCount'],1)
+  def test_coordinator_activation_renewal_and_last_guard_under_admin(self):
+   oid=self.offering();student=self.client('student-a')
+   self.assertNotIn(oid,[x['id'] for x in self.ok(student.get('/api/v1/me/curriculum-offerings'))['results']])
+   denied=student.post('/api/v1/teams',dict(offeringId=oid,name='Blocked team'),format='json',HTTP_IDEMPOTENCY_KEY=uuid4().hex);self.assertEqual(denied.status_code,403)
+   key=uuid4().hex;a=self.ok(self.appoint(oid,key=key));self.assertEqual(a,self.ok(self.appoint(oid,key=key)));self.activate(oid)
+   self.assertIn(oid,[x['id'] for x in self.ok(student.get('/api/v1/me/curriculum-offerings'))['results']])
+   denied=self.appoint(oid,version=1,active=False)
+   self.assertEqual(denied.status_code,409)
+   self.assertIn('last coordinator',denied.json()['detail']['message'])
+   uid='00000000-0000-4000-8000-000000000008';self.ok(self.appoint(oid,uid=uid,who='department-admin'))
+   self.ok(self.appoint(oid,version=1,active=False));self.ok(self.appoint(oid,uid=uid,version=1,permissions=['OVERVIEW','RESULTS']))
+   self.assertEqual(self.appoint(oid,uid=uid,version=1).status_code,409)
+   history=self.ok(self.client().get(f'/api/v1/courses/departments/{CSE}'))['offerings'];row=next(o for o in history if o['id']==oid)
+   self.assertEqual(len(row['appointments']),4);self.assertTrue(row['has_coordinator'])
+   external=next(a for a in row['appointments'] if a['actor_id']=='00000000-0000-4000-8000-000000000012')
+   self.assertEqual(external['authority']['source'],'ADMIN_APPOINTMENT')
+   self.assertTrue(external['authority']['adminRoleId'])
+  def test_exact_offering_scope_roles_and_private_storage(self):
+   one=self.offering();two=self.offering()
+   uid=str(self.db.execute("INSERT INTO users(display_name,email) VALUES('Scoped faculty',%s) RETURNING id",(uuid4().hex+'@example.invalid',)).fetchone()['id'])
+   self.db.execute("INSERT INTO department_role_assignments(user_id,department_id,role_code) VALUES(%s,%s,'FACULTY')",(uid,CSE));self.ok(self.appoint(one,uid=uid))
+   from smartpro.identity import Principal
+   scoped=APIClient();scoped.force_authenticate(Principal(uid,role='Coordinator',role_choices=('Coordinator','Faculty')))
+   self.assertEqual([o['id'] for o in self.ok(scoped.get(f'/api/v1/courses/departments/{CSE}'))['offerings']],[one])
+   for who in ['student-a','faculty-a','tech-admin','coordinator','staff-policy']:self.assertEqual(self.appoint(two,who=who).status_code,403)
+   with psycopg.connect(**dict(app,dbname=name),autocommit=True) as runtime:
+    with self.assertRaises(psycopg.errors.InsufficientPrivilege):runtime.execute('SELECT * FROM course_coordinator_versions')
+   self.assertEqual(self.appoint(one,uid='00000000-0000-4000-8000-000000000001').status_code,403)
+  def test_cross_offering_document_case_staff_and_course_read_denials(self):
+   from smartpro.identity import Principal
+   from synthetic_synopsis import pdf_bytes
+   from django.core.files.uploadedfile import SimpleUploadedFile
+   one=self.offering();two=self.offering();uid=str(self.db.execute("INSERT INTO users(display_name,email) VALUES('Scoped verifier',%s) RETURNING id",(uuid4().hex+'@example.invalid',)).fetchone()['id'])
+   self.db.execute("INSERT INTO department_role_assignments(user_id,department_id,role_code) VALUES(%s,%s,'FACULTY')",(uid,CSE));self.ok(self.appoint(one,uid=uid));self.ok(self.appoint(two,uid='00000000-0000-4000-8000-000000000008'))
+   p1=self.project(one);p2=self.project(two);base=f'/api/v1/documents/departments/{CSE}'
+   self.ok(self.post(base,dict(action='ASSIGN_REVIEWER',projectId=p2,facultyId=uid)))
+   vid=self.ok(self.client('student-a').post(base+f'/projects/{p2}/uploads',{'file':SimpleUploadedFile('private.pdf',pdf_bytes(),content_type='application/pdf')},format='multipart',HTTP_IDEMPOTENCY_KEY=uuid4().hex))['documentVersionId']
+   case=str(self.db.execute('SELECT id FROM submission_cases WHERE project_id=%s',(p2,)).fetchone()['id'])
+   scoped=APIClient();scoped.force_authenticate(Principal(uid,role='Coordinator',role_choices=('Coordinator','Faculty')))
+   self.assertEqual([p['id'] for p in self.ok(scoped.get(base))['projects']],[p1])
+   self.assertEqual(scoped.get(f'/api/v1/document-versions/{vid}/content').status_code,403)
+   self.assertEqual(scoped.get(f'/api/v1/submission-cases/{case}').status_code,403)
+   self.assertEqual(scoped.get(f'/api/v1/courses/offerings/{two}/details').status_code,403)
+   self.assertEqual([p['id'] for p in self.ok(scoped.get(f'/api/v1/staff/departments/{CSE}/projects'))['results']],[p1])
+   self.assertEqual([o['id'] for o in self.ok(scoped.get(f'/api/v1/staff/departments/{CSE}/policies'))['results']],[one])
+   faculty=APIClient();faculty.force_authenticate(Principal(uid,role='Faculty',role_choices=('Coordinator','Faculty')))
+   self.assertEqual(faculty.get(f'/api/v1/document-versions/{vid}/content').status_code,200)
+  def test_concurrent_last_removal_rolls_back_and_preserves_history(self):
+   oid=self.offering();self.ok(self.appoint(oid));self.activate(oid);other='00000000-0000-4000-8000-000000000008';self.ok(self.appoint(oid,uid=other))
+   def revoke(uid):
+    close_old_connections()
+    try:return self.appoint(oid,uid=uid,version=1,active=False)
+    finally:close_old_connections()
+   with ThreadPoolExecutor(max_workers=2) as pool:results=list(pool.map(revoke,[FACULTY,other]))
+   self.assertEqual(sorted(r.status_code for r in results),[200,409])
+   self.assertEqual(self.db.execute('SELECT count(*) n FROM course_coordinator_versions WHERE offering_id=%s',(oid,)).fetchone()['n'],3)
+ try:
+  suite=unittest.TestSuite([Contracts(test_name)]) if test_name else unittest.defaultTestLoader.loadTestsFromTestCase(Contracts)
+  result=unittest.TextTestRunner(verbosity=2).run(suite);return 0 if result.wasSuccessful() else 1
+ finally:
+  connection.close();storage.cleanup()
+  with psycopg.connect(**dict(owner,dbname='postgres'),autocommit=True) as manager:
+   assert name.startswith('smartpro_test_demo_acceptance_courses_');manager.execute(sql.SQL('DROP DATABASE {} WITH (FORCE)').format(sql.Identifier(name)))
+if __name__=='__main__':raise SystemExit(main())

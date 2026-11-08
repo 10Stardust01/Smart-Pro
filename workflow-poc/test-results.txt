@@ -1,0 +1,4 @@
+CURRENT: PostgreSQL 16.15 acceptance run: 91 passed, 4 policy cases skipped, 0 failed, 0 errors.
+13 original workflow cases + 17 additional API cases passed; database cases: 61 passed, 4 policy skips.
+Full evidence: ../evidence/acceptance.xml and acceptance-summary.json.
+The original 13-test SQLite baseline also passed; original code/results are retained in evidence/SMARTPRO.original.zip.
