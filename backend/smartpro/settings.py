@@ -42,9 +42,18 @@ if HOSTED and not IDENTITY_RESOLVER and not STAGING_REVIEWER_AUTH:
 if STAGING_REVIEWER_AUTH and IDENTITY_RESOLVER:
     raise ImproperlyConfigured('Use exactly one identity adapter in staging')
 if HOSTED and os.getenv('SMARTPRO_DOCUMENT_API') == 'YES':
-    storage_root = os.getenv('SMARTPRO_DATA_DIR', '')
-    if not storage_root or not Path(storage_root).is_absolute():
-        raise ImproperlyConfigured('Hosted document storage requires an absolute private data directory')
+    storage_backend = os.getenv('SMARTPRO_STORAGE_BACKEND', 'filesystem')
+    if storage_backend == 's3':
+        needed = ('SMARTPRO_S3_BUCKET', 'SMARTPRO_S3_ENDPOINT_URL',
+                  'SMARTPRO_S3_ACCESS_KEY_ID', 'SMARTPRO_S3_SECRET_ACCESS_KEY')
+        if any(not os.getenv(k) for k in needed):
+            raise ImproperlyConfigured('Hosted private object storage is incomplete')
+    elif storage_backend == 'filesystem':
+        storage_root = os.getenv('SMARTPRO_DATA_DIR', '')
+        if not storage_root or not Path(storage_root).is_absolute():
+            raise ImproperlyConfigured('Hosted document storage requires an absolute private data directory')
+    else:
+        raise ImproperlyConfigured('Unknown private document storage backend')
 ROOT_URLCONF = 'smartpro.urls'
 WSGI_APPLICATION = 'smartpro.wsgi.application'
 INSTALLED_APPS = ['rest_framework', 'smartpro']
