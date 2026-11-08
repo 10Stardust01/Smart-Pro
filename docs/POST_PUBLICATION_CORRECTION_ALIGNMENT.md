@@ -58,7 +58,9 @@ introduced. Existing historic migration candidates 001–058 are unchanged.
   stale result version, changed stage scores, declined decision and replay
   remain denied or idempotent as applicable.
 - Browser tests of authorization panels, reviewer session, role switching,
-  stage history and overall result history.
+  stage history and overall result history. Queue permission and final revision
+  authorizer projection are included in candidate 059; the Guide-only frontend
+  request entry point remains to be verified.
 - Verify live storage and DB backups together before any eventual migration.
 
 ## Genuine remaining question

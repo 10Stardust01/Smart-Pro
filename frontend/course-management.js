@@ -198,8 +198,8 @@ function finalRevisionPanel(course,projects,state,esc){
    return `<article class="project-card"><h3>${esc(title)} · overall revision</h3>
    <p>${esc(item.display_name)} · ${item.applied?'Published':pending?'Awaiting authorization':item.approved?'Authorized':'Declined'}</p>
    <p>Proposed totals ${Object.values(item.snapshot.results).map(esc).join(', ')}</p>
-   ${pending&&canAuthorize&&item.requester_id!==actor?`<form data-form="final-revision-authorization" data-offering="${course.id}" data-id="${item.id}"><label>Decision<select name="approved"><option value="true">Authorize this exact result</option><option value="false">Decline</option></select></label><button class="secondary">Record decision</button></form>`:''}
-   ${item.approved&&!item.applied&&item.requester_id===actor&&canPublish?`<button class="secondary" data-action="apply-final-revision" data-id="${item.id}" data-offering="${course.id}">Publish authorized overall revision</button>`:''}</article>`;
+   ${pending&&canAuthorize?`<form data-form="final-revision-authorization" data-offering="${course.id}" data-id="${item.id}"><label>Decision<select name="approved"><option value="true">Authorize this exact result</option><option value="false">Decline</option></select></label><button class="secondary">Record decision</button></form>`:''}
+   ${item.approved&&!item.applied&&(item.requester_id===actor||item.authorizer_id===actor)&&canPublish?`<button class="secondary" data-action="apply-final-revision" data-id="${item.id}" data-offering="${course.id}">Publish authorized overall revision</button>`:''}</article>`;
  }).join('');
- return `<section class="panel"><h2>Exceptional overall result revisions</h2><p>The revised result needs separate authorization against the exact published stage evidence.</p>${requestButtons}${requests||'<p>No overall revision has been requested.</p>'}</section>`;
+ return `<section class="panel"><h2>Exceptional overall result revisions</h2><p>The responsible Coordinator approves or declines the exact revision, including when also the Guide or evaluator. Previously published results remain intact.</p>${requestButtons}${requests||'<p>No overall revision has been requested.</p>'}</section>`;
 }

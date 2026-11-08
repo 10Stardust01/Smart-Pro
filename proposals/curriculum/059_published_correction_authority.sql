@@ -82,5 +82,28 @@ BEGIN
   RAISE EXCEPTION 'Reviewed final revision application guard changed; stop for review';
  END IF;
  EXECUTE replace(definition,old,replacement);
+ -- Queue action eligibility must match the exceptional-only authority.
+ -- The original pre-publication outside-panel restriction still applies.
+ definition:=pg_get_functiondef('public.smartpro_course_evaluation_queue(uuid,uuid,text,text,text,integer)'::regprocedure);
+ old:=$old
+canAuthorizeCorrection',can_authorize AND
+         (NOT coalesce(outside_panel,true) OR NOT EXISTS(SELECT FROM public.evaluator_assignments
+           WHERE review_id=review.id AND faculty_user_id=actor)),$old$;
+ replacement:=$new
+canAuthorizeCorrection',can_authorize AND
+         (release_version IS NOT NULL OR NOT coalesce(outside_panel,true) OR NOT EXISTS(SELECT FROM public.evaluator_assignments
+           WHERE review_id=review.id AND faculty_user_id=actor)),$new$;
+ IF (length(definition)-length(replace(definition,old,'')))<>length(old) THEN
+  RAISE EXCEPTION 'Reviewed evaluation queue authorizer projection changed; stop for review';
+ END IF;
+ EXECUTE replace(definition,old,replacement);
+ -- Expose the actual authorizing Coordinator for reviewer UI visibility.
+ definition:=pg_get_functiondef('public.smartpro_course_details(uuid,uuid,text)'::regprocedure);
+ old:=$old$SELECT q.*,a.approved,u.display_name,EXISTS(SELECT FROM public.course_final_revision_applications WHERE request_id=q.id) AS applied$old$;
+ replacement:=$new$SELECT q.*,a.approved,a.actor_id AS authorizer_id,u.display_name,EXISTS(SELECT FROM public.course_final_revision_applications WHERE request_id=q.id) AS applied$new$;
+ IF (length(definition)-length(replace(definition,old,'')))<>length(old) THEN
+  RAISE EXCEPTION 'Reviewed final revision projection changed; stop for review';
+ END IF;
+ EXECUTE replace(definition,old,replacement);
 END $migration$;
 COMMIT;
