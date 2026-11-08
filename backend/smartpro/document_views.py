@@ -15,6 +15,7 @@ from rest_framework import serializers
 from rest_framework.decorators import api_view
 from rest_framework.exceptions import ValidationError
 
+from . import private_storage
 from .staff import StaffUnavailable, _execute, staff_sql_command
 from .student_views import private_response
 from .views import domain
@@ -178,46 +179,63 @@ def upload(request, department_id, project_id):
     session = command(actor, dept, 'START_UPLOAD', context, key + ':start')
     if size > session['maxBytes']:
         raise ValidationError('PDF exceeds the approved requirement size')
-    path = domain.object_path(session['uploadId'] + '.pdf')
-    # Atomic no-replace publication. Crashes leave retryable immutable objects,
-    # never a persistent lock or a half-written visible PDF.
-    staging = path.with_name(uuid4().hex + '.staging')
-    try:
-        with staging.open('xb') as stream:
-            stream.write(content)
-            stream.flush()
-            os.fsync(stream.fileno())
+    if private_storage.enabled():
         try:
-            os.link(staging, path)
-        except FileExistsError:
-            if hashlib.sha256(path.read_bytes()).hexdigest() != digest:
-                raise ValidationError('Retry key already identifies different uploaded bytes')
-        # Persist the directory entry before the database advertises a ready
-        # object on filesystems that expose POSIX directory synchronization.
-        if hasattr(os, 'O_DIRECTORY'):
-            directory = os.open(path.parent, os.O_RDONLY | os.O_DIRECTORY)
-            try:
-                os.fsync(directory)
-            finally:
-                os.close(directory)
+            private_storage.put_immutable(session['uploadId'] + '.pdf', bytes(content), digest)
+        except ValueError:
+            raise ValidationError('The document identity or bytes are invalid') from None
+        except IOError:
+            raise StaffUnavailable('Private document storage is unavailable') from None
         result = command(actor, dept, 'COMPLETE_UPLOAD',
                          {**context, 'uploadId': session['uploadId'], 'sha256': digest, 'size': size}, key + ':complete')
-    finally:
-        staging.unlink(missing_ok=True)
+    else:
+        path = domain.object_path(session['uploadId'] + '.pdf')
+        # Atomic no-replace publication. Crashes leave retryable immutable objects,
+        # never a persistent lock or a half-written visible PDF.
+        staging = path.with_name(uuid4().hex + '.staging')
+        try:
+            with staging.open('xb') as stream:
+                stream.write(content)
+                stream.flush()
+                os.fsync(stream.fileno())
+            try:
+                os.link(staging, path)
+            except FileExistsError:
+                if hashlib.sha256(path.read_bytes()).hexdigest() != digest:
+                    raise ValidationError('Retry key already identifies different uploaded bytes')
+            # Persist the directory entry before the database advertises a ready
+            # object on filesystems that expose POSIX directory synchronization.
+            if hasattr(os, 'O_DIRECTORY'):
+                directory = os.open(path.parent, os.O_RDONLY | os.O_DIRECTORY)
+                try:
+                    os.fsync(directory)
+                finally:
+                    os.close(directory)
+            result = command(actor, dept, 'COMPLETE_UPLOAD',
+                             {**context, 'uploadId': session['uploadId'], 'sha256': digest, 'size': size}, key + ':complete')
+        finally:
+            staging.unlink(missing_ok=True)
     return private_response(result)
 
 
 def verified_file(actor,version_id,role=None):
     metadata = (_execute('SELECT public.smartpro_role_file(%s,%s,%s)',(actor,version_id,role)) if role else _execute('SELECT public.smartpro_document_file(%s,%s)', (actor, version_id)))
-    path = domain.object_path(metadata['key'])
-    try:
-        if not path.is_file():
-            raise FileNotFoundError
-        with path.open('rb') as stream:
-            data = stream.read(domain.MAX_SIZE + 1)
-    except OSError:
-        logger.warning('document_storage_rejected reason=unavailable')
-        raise StaffUnavailable('Stored document is unavailable') from None
+    if private_storage.enabled():
+        try:
+            data = private_storage.read(metadata['key'])
+        except (OSError, ValueError):
+            logger.warning('document_storage_rejected reason=unavailable')
+            raise StaffUnavailable('Stored document is unavailable') from None
+    else:
+        path = domain.object_path(metadata['key'])
+        try:
+            if not path.is_file():
+                raise FileNotFoundError
+            with path.open('rb') as stream:
+                data = stream.read(domain.MAX_SIZE + 1)
+        except OSError:
+            logger.warning('document_storage_rejected reason=unavailable')
+            raise StaffUnavailable('Stored document is unavailable') from None
     if len(data) != metadata['bytes'] or len(data) > domain.MAX_SIZE:
         logger.warning('document_storage_rejected reason=size_mismatch')
         raise StaffUnavailable('Stored document is unavailable')
