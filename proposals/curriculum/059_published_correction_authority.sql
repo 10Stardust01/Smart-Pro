@@ -45,7 +45,7 @@ BEGIN
  PERFORM 1 FROM public.academic_governance_settings WHERE department_id=o.department_id AND enabled FOR UPDATE;
  IF NOT FOUND THEN RAISE EXCEPTION 'Academic controls disabled' USING ERRCODE='42501'; END IF;
  IF action='REQUEST_FINAL_REVISION' THEN
-   IF role<>'Faculty' OR NOT public.smartpro_current_project_guide(actor,(input->>'projectId')::uuid) THEN
+   IF NOT public.smartpro_current_project_guide(actor,(input->>'projectId')::uuid) THEN
      RAISE EXCEPTION 'Current assigned Project Guide required' USING ERRCODE='42501';
    END IF;
  ELSE
