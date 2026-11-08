@@ -1,16 +1,15 @@
 # Finalized academic-policy implementation (historical local baseline)
 
-**Later user-approved product decision (pending faculty ratification):** After an
-overall result has been published, the assigned Project Guide may request a
-specific correction. The offering's responsible Coordinator may approve or
-reject it even if the same person is the Guide, was an evaluator, or made the
-request. There is no independent-person, second-approver or mandatory HOD
-escalation. Original and corrected published result versions, exact change,
-reason and audit evidence must remain. The historical independent-authorization
-passages below describe the *older* course implementation; they do not override
-the later exceptional-only decision. Ordinary pre-publication correction rules
-are not changed by this decision. Candidate 059 on the review branch prepares
-this alignment and remains unapplied to the live deployment pending tests.
+**Finalized product decision (pending faculty ratification):** After overall
+publication, the assigned Project Guide directly proposes a corrected overall
+student mark and reason. The offering Coordinator approves or rejects it, even
+when acting as Guide/evaluator/requester. Approval atomically appends an
+exceptional corrected overall-result version; stage marks are not reopened or
+recalculated. No HOD escalation, independent authorizer or separate apply step.
+Original release, exact correction and decision audit are retained. The historical
+independent-authorization passages below concern older ordinary workflows.
+Pre-publication corrections remain unchanged. Candidate 059 is prepared only;
+the live deployment and database are unaffected.
 
 The user's continuation instruction authorizes implementing configurable quorum,
 aggregation, original-evaluator mark corrections, coordinator retrospective roster

@@ -6,9 +6,11 @@ Render Free already hosts the reviewer service from `deployment/reviewer-staging
 (commit `0d5281e`); Neon reports a `free_v3` PostgreSQL 16 project with a
 populated staging database. This corrects older local-only/deployment-pending
 statements below; it is **not** production or institutional sign-off.
-The new review branch prepares candidate 059 for the finalized exceptional
-published-result correction authority, tests and frontend labels. It is
-**not installed or deployed**. See [requirements register](REQUIREMENTS_COMPLETION_REGISTER.md).
+Draft PR #1 prepares the finalized **direct Guide-to-Coordinator overall-result
+correction**, without reopening or recalculating any review stage. Candidate
+059, the role-specific forms and regression tests are **not deployed or
+database-acceptance tested**. Approval is modeled as the one atomic decision
+that appends a new result version, preserving the predecessor and audit. See [requirements register](REQUIREMENTS_COMPLETION_REGISTER.md).
 
 Original results and the current live deployment have not been modified.
 

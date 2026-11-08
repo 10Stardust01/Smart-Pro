@@ -1,0 +1,39 @@
+name: SMART-PRO direct result correction PostgreSQL contracts
+on:
+  pull_request:
+    paths:
+      - 'proposals/curriculum/059_published_correction_authority.sql'
+      - 'scripts/test_course_workflow.py'
+      - 'scripts/ci_course_direct_correction.py'
+      - '.github/workflows/direct-result-correction.yml'
+permissions:
+  contents: read
+jobs:
+  direct-correction-contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: smartpro_owner
+          POSTGRES_PASSWORD: synthetic_ci_owner_only
+          POSTGRES_DB: smartpro_test
+        ports: [5432:5432]
+        options: >-
+          --health-cmd "pg_isready -U smartpro_owner -d smartpro_test"
+          --health-interval 3s --health-timeout 3s --health-retries 20
+    env:
+      DATABASE_ADMIN_URL: postgresql://smartpro_owner:synthetic_ci_owner_only@127.0.0.1:5432/smartpro_test
+      DATABASE_URL: postgresql://smartpro_api:synthetic_ci_app_only@127.0.0.1:5432/smartpro_test
+      ALLOW_SMARTPRO_TEST_DB: 'YES'
+      PYTHONDONTWRITEBYTECODE: '1'
+      DJANGO_SECRET_KEY: synthetic-only-direct-correction-ci
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r requirements-lock.txt -r backend/requirements.txt
+      - name: Install synthetic schema and validate direct correction
+        run: python scripts/ci_course_direct_correction.py

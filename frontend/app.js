@@ -194,7 +194,7 @@ async function load({reuseWorkspace=false}={}) {
   context.role=state.role;
   if(!previousRole&&personalRole()&&new URLSearchParams(location.search).has('work'))readWorkLocation();
   if(!previousRole&&(departmentRole()||state.role==='Coordinator'))readCourseLocation();
-  const next = {departmentRecord:null,appointmentCandidates:null,directoryListing:null,intakeListing:null,intakeTargets:null,courses:null,courseDetail:null,courseEvaluationQueue:null,courseEvaluationError:'',workListing:null,courseDocumentListing:null,courseNotifications:null,reviewManagement:null,requirementManagement:null,assignmentManagement:null,configurationManagement:null,management:null,proposalConfig:null,proposalError:'',documentError:'',setup:null,workspace:w,profile:null,offerings:[],memberships:[],projects:[],staff:null,academic:null,result:null,error:''};
+  const next = {departmentRecord:null,appointmentCandidates:null,directoryListing:null,intakeListing:null,intakeTargets:null,courses:null,courseDetail:null,courseEvaluationQueue:null,courseEvaluationError:'',workListing:null,courseDocumentListing:null,courseNotifications:null,guideFinalCorrections:null,reviewManagement:null,requirementManagement:null,assignmentManagement:null,configurationManagement:null,management:null,proposalConfig:null,proposalError:'',documentError:'',setup:null,workspace:w,profile:null,offerings:[],memberships:[],projects:[],staff:null,academic:null,result:null,error:''};
   // Resolve the role first, then load independent panels together.
   const staffCourse=['Coordinator','HOD'].includes(state.role)&&state.view==='courses';
   const workBrowser=personalRole()||state.role==='HOD'&&state.view==='documents';
@@ -324,7 +324,8 @@ async function load({reuseWorkspace=false}={}) {
   const projects=loadProjects();
   await Promise.all([
     projects,loadDocuments(),loadSetup(),loadCandidates(),loadCourses(),loadConfiguration(),
-    uiContext.courseManagement&&['overview','notifications'].includes(state.view)&&get('/api/v1/me/course-notifications').then(value=>{next.courseNotifications=value;})
+    uiContext.courseManagement&&['overview','notifications'].includes(state.view)&&get('/api/v1/me/course-notifications').then(value=>{next.courseNotifications=value;}),
+    uiContext.courseManagement&&state.role==='Faculty'&&state.view==='documents'&&get('/api/v1/me/published-corrections').then(value=>{next.guideFinalCorrections=value;}).catch(error=>{if(error.status!==503)throw error;})
   ]);
   if(generation!==state.generation)return;
   if((w.access.faculty||w.access.admin)&&next.documents) next.projects=[...new Map([...next.projects,...next.documents.projects].map(p=>[p.id,p])).values()];
@@ -499,7 +500,7 @@ function evaluationView(student = false, scoped = false) {
   const reviewProject=state.documents?.projects.find(p=>p.id===r.projectId);
   const courseFinal=uiContext.courseManagement&&reviewProject?.overallFinalPublished;
   const stage=scoped?queueStage(r.id):null;
-  const exceptional=courseFinal&&reviewProject?.exceptionalStageCorrectionsAllowed===true;
+  const exceptional=false; // Published overall results do not reopen recorded stage marks.
   const markHere=assessment&&canMarkHere(r.id,assessment.id);
   let editor = '';
   if (assessment && (state.role==='Faculty'||markHere) && !student) {
@@ -512,7 +513,7 @@ function evaluationView(student = false, scoped = false) {
       const score = assessment.scores.find(s => s.criterionId === c.id && s.studentId === (member?.id || null));
       return `<div class="row"><span>${esc(c.label)} · ${esc(member?.name || 'Team')}</span><strong>${esc(score?.marks ?? '—')} / ${esc(c.maximum)}</strong></div>`;
     })).join('') : '';
-    editor = `<section class="panel"><div class="panel-title"><div><h2>${finalized ? 'Your finalized evaluation' : 'Your draft evaluation'}</h2><p class="muted">${esc(r.projectTitle)} · ${esc(assessment.facultyName)}</p></div>${badge(assessment.state,finalized ? 'green' : 'amber')}</div>${savedMarks}${finalized&&courseFinal&&!exceptional?'<p class="notice">Overall results are published. Changes must follow the exceptional published-result revision process.</p>':`${finalized?`<details class="secondary-task"><summary>${exceptional?'Propose exceptional stage evidence':'Request correction'}</summary>${exceptional?'<p class="notice">The published overall result stays in force. The proposed stage evidence needs separate authorization before it can support an exceptional overall revision.</p>':''}`:''}<form data-form="marks">${inputs}<div class="section-spacer">${reason()}</div><div class="actions"><button class="primary" type="submit">${finalized ? (uiContext.courseManagement?(exceptional?'Submit exceptional proposal':'Submit revised scores'):r.state === 'PUBLISHED' ? 'Publish correction' : 'Save finalized revision') : 'Save draft marks'}</button>${!finalized ? button('Finalize assessment','finalize',`type="button" data-id="${assessment.id}" data-version="${assessment.version}" ${assessment.scores.length < r.criteria.reduce((n,c) => n+(c.scope === 'TEAM' ? 1 : r.roster.length),0) ? 'disabled' : ''}`,'secondary') : ''}</div><p class="hint">${finalized ? (exceptional?'The responsible offering Coordinator reviews this exact exceptional change; no separate independent authorizer is required.':uiContext.courseManagement?'Submit revised scores for these criteria. Your course coordinator must authorize an ordinary correction. If you are the effective coordinator for this offering with correction responsibility, the service can apply your own correction immediately before overall publication. Previous marks stay in history.':'Only the original evaluator may revise this historical contribution. Earlier versions remain preserved.') : 'Save all marks before finalizing. Finalization locks the assessment; later corrections require specific authorization.'}</p></form>${finalized?'</details>':''}`}</section>`;
+    editor = `<section class="panel"><div class="panel-title"><div><h2>${finalized ? 'Your finalized evaluation' : 'Your draft evaluation'}</h2><p class="muted">${esc(r.projectTitle)} · ${esc(assessment.facultyName)}</p></div>${badge(assessment.state,finalized ? 'green' : 'amber')}</div>${savedMarks}${finalized&&courseFinal&&!exceptional?'<p class="notice">Overall results are published. Recorded stage marks are unchanged; the assigned Project Guide can request a direct overall correction in Project work.</p>':`${finalized?`<details class="secondary-task"><summary>${exceptional?'Propose exceptional stage evidence':'Request correction'}</summary>${exceptional?'<p class="notice">The published overall result stays in force. The proposed stage evidence needs separate authorization before it can support an exceptional overall revision.</p>':''}`:''}<form data-form="marks">${inputs}<div class="section-spacer">${reason()}</div><div class="actions"><button class="primary" type="submit">${finalized ? (uiContext.courseManagement?(exceptional?'Submit exceptional proposal':'Submit revised scores'):r.state === 'PUBLISHED' ? 'Publish correction' : 'Save finalized revision') : 'Save draft marks'}</button>${!finalized ? button('Finalize assessment','finalize',`type="button" data-id="${assessment.id}" data-version="${assessment.version}" ${assessment.scores.length < r.criteria.reduce((n,c) => n+(c.scope === 'TEAM' ? 1 : r.roster.length),0) ? 'disabled' : ''}`,'secondary') : ''}</div><p class="hint">${finalized ? (exceptional?'The responsible offering Coordinator reviews this exact exceptional change; no separate independent authorizer is required.':uiContext.courseManagement?'Submit revised scores for these criteria. Your course coordinator must authorize an ordinary correction. If you are the effective coordinator for this offering with correction responsibility, the service can apply your own correction immediately before overall publication. Previous marks stay in history.':'Only the original evaluator may revise this historical contribution. Earlier versions remain preserved.') : 'Save all marks before finalizing. Finalization locks the assessment; later corrections require specific authorization.'}</p></form>${finalized?'</details>':''}`}</section>`;
   } else if (state.workspace.access.admin && !student) {
     editor = `<section class="panel"><div class="panel-title"><h2>Evaluation oversight</h2>${badge(r.state,r.state === 'PUBLISHED' ? 'green' : 'amber')}</div>${r.assessments.map(a => `<div class="row"><div><h3>${esc(a.facultyName)}</h3><p class="muted">Assigned faculty evaluator</p></div>${badge(a.state,a.state === 'FINALIZED' ? 'green' : 'amber')}</div>`).join('')}<div class="notice">Publication requires the pinned policy’s quorum and complete finalized source marks. A roster correction does not award marks automatically.</div>${scoped?'':`<form data-form="publish">${reason()}<div class="actions"><button class="primary" type="submit">Publish stage results</button></div></form>`}</section>`;
   }
@@ -835,8 +836,7 @@ document.addEventListener('click', async event => {
     const courseActions={
       'apply-course-requirement':()=>({action:'APPLY_REQUIREMENT',policyId:target.dataset.id,expectedPolicyId:target.dataset.current||null}),
       'complete-course-milestone':()=>({action:'COMPLETE_MILESTONE',deadlineId:target.dataset.id,projectId:target.dataset.project}),
-      'request-final-revision':()=>({action:'REQUEST_FINAL_REVISION',projectId:target.dataset.project,expectedVersion:Number(target.dataset.version)}),
-      'apply-final-revision':()=>({action:'APPLY_FINAL_REVISION',requestId:target.dataset.id})
+
     };
     if(courseActions[action])await api(`/api/v1/courses/offerings/${target.dataset.offering}/commands`,'POST',courseActions[action]());
     if(action==='apply-course-correction')await api(`/api/v1/courses/offerings/${target.dataset.offering}/commands`,'POST',{action:target.dataset.exceptional==='yes'?'APPLY_EXCEPTIONAL_STAGE_CORRECTION':'APPLY_CORRECTION',requestId:target.dataset.id},evaluatorContext());
@@ -1003,7 +1003,15 @@ document.addEventListener('submit', async event => {
     if(type==='course-plan')await coursePost(form.dataset.offering,'PLAN',{expectedVersion:Number(form.dataset.version),frameworkId:values.frameworkId,schedules:Object.fromEntries([...form.querySelectorAll('[data-stage]')].map(el=>[el.dataset.stage,new Date(el.value).toISOString()]))});
     if(type==='course-stage')await coursePost(form.dataset.offering,'CREATE_STAGE',{projectId:values.projectId,stageKey:values.stageKey,facultyIds:new FormData(form).getAll('facultyIds')});
     if(type==='course-final'){outcome='Overall result published. Its release is in project history.';await coursePost(form.dataset.offering,'PUBLISH_FINAL',{projectId:form.dataset.project,expectedVersion:0});}
-    if(type==='final-revision-authorization')await coursePost(form.dataset.offering,'AUTHORIZE_FINAL_REVISION',{requestId:form.dataset.id,approved:values.approved==='true'});
+    if(type==='guide-final-correction'){
+      outcome='Correction request submitted to the responsible Coordinator. The published result is unchanged.';
+      await coursePost(form.dataset.offering,'REQUEST_FINAL_REVISION',{projectId:form.dataset.project,expectedVersion:Number(form.dataset.version),studentId:values.studentId,marks:values.marks,reason:values.reason});
+    }
+    if(type==='final-revision-authorization'){
+      const approved=values.approved==='true';
+      await coursePost(form.dataset.offering,'AUTHORIZE_FINAL_REVISION',{requestId:form.dataset.id,approved});
+      outcome=approved?'Correction approved. The revised overall result is published; its predecessor is retained.':'Correction declined. Published marks are unchanged.';
+    }
     if(type==='course-correction-authorization')await coursePost(form.dataset.offering,form.dataset.exceptional==='yes'?'AUTHORIZE_EXCEPTIONAL_STAGE_CORRECTION':'AUTHORIZE_CORRECTION',{requestId:form.dataset.id,approved:values.approved==='true'});
     if(type==='course-deadline'){
       const reminderHours=values.reminderHours.trim()?values.reminderHours.split(',').map(v=>Number(v.trim())):[];
@@ -1050,7 +1058,7 @@ document.addEventListener('submit', async event => {
       const scores = [...form.querySelectorAll('[data-criterion]')].map(input => ({criterionId:input.dataset.criterion,studentId:input.dataset.student || null,marks:input.value}));
       if(state.role==='Coordinator'&&!canMarkHere(r.id,a.id))throw new Error('This assessment is not assigned to you.');
       if (a.state === 'DRAFT') await api(deptBase()+`/assessments/${a.id}/draft`,'POST',{expectedAssessmentVersion:a.version,scores,reason:values.reason},evaluatorContext());
-      else if(uiContext.courseManagement){const project=state.documents.projects.find(p=>p.id===r.projectId),offeringId=project?.offeringId;if(!offeringId)throw new Error('Open the assigned project to check its offering.');const result=await api(`/api/v1/courses/offerings/${offeringId}/commands`,'POST',{action:project.overallFinalPublished?'REQUEST_EXCEPTIONAL_STAGE_CORRECTION':'REQUEST_CORRECTION',reviewId:r.id,expectedReviewRevision:r.revision,assessmentId:a.id,scores,reason:values.reason},evaluatorContext());
+      else if(uiContext.courseManagement){const project=state.documents.projects.find(p=>p.id===r.projectId),offeringId=project?.offeringId;if(!offeringId)throw new Error('Open the assigned project to check its offering.');const result=await api(`/api/v1/courses/offerings/${offeringId}/commands`,'POST',{action:'REQUEST_CORRECTION',reviewId:r.id,expectedReviewRevision:r.revision,assessmentId:a.id,scores,reason:values.reason},evaluatorContext());
         outcome=result.appliedImmediately?'Correction applied. The original scores remain in history.':'Correction submitted for coordinator authorization.';}
       else await api(deptBase()+`/reviews/${r.id}/evaluations`,'POST',{expectedReviewRevision:r.revision,assessmentId:a.id,scores,reason:values.reason});
     }

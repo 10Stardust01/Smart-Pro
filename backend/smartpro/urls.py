@@ -18,6 +18,7 @@ urlpatterns = [
     path("health/ready", health.ready),
     path('api/v1/faculty-reference/departments/<uuid:department_id>', demo_views.faculty_reference),
     path('api/v1/me/course-notifications', course_views.notifications),
+    path('api/v1/me/published-corrections', course_views.guide_final_corrections),
     path('api/v1/staff/departments/<uuid:department_id>/leadership', setup_views.leadership),
     path('api/v1/staff/departments/<uuid:department_id>/records/<uuid:person_id>', setup_views.department_record),
     path('api/v1/staff/departments/<uuid:department_id>/appointment-candidates', setup_views.appointment_candidates),

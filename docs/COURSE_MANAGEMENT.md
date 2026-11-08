@@ -22,17 +22,15 @@ Assigning a stage includes the active primary guide as an evaluator. Handover
 retains prior evaluation evidence. The authorized primary guide may reopen an
 approved synopsis before overall publication. Stage publication leaves the ordinary
 document workflow open. Overall publication closes ordinary document changes.
-The older course implementation uses a specific independently authorized
-original-evaluator correction for ordinary, pre-overall-publication changes.
-**Later approved product design (not yet faculty-ratified):** after overall
-publication the assigned Project Guide may request the exact correction, and
-the responsible offering Coordinator may decide it even as the same person or
-a participating evaluator. No extra approver or HOD is required. Any new
-published result appends a version derived from exact stage evidence and retains
-its predecessor. Forward-only candidate 059 prepares this exception without
-altering earlier publication or pre-publication rules; verify it before live use.
-The existing stage-evidence prerequisite is retained pending clarification on
-whether a Guide may request new scores before that evidence is corrected.
+Ordinary pre-overall-publication finalized-mark corrections retain their existing
+evaluator/Coordinator authorization rules. **Finalized product decision (not
+faculty-ratified):** after overall publication, the assigned Guide requests a
+specific correction directly to a student's overall result with a reason.
+The responsible Coordinator approves or rejects it, even when the Guide and
+Coordinator are the same person. Approval appends a corrected overall version
+without editing or recalculating completed stage results. Both original and
+corrected overall versions, exact change, decision and audit history remain.
+Candidate 059 prepares this direct workflow; do not deploy before isolated tests.
 
 The deadline worker checks approved obligations and creates deduplicated in-app
 warnings. A completed obligation stops showing as active, and an authorized date

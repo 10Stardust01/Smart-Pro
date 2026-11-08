@@ -774,89 +774,60 @@ def main(test_name=None):
    self.assertFalse(any(a['project_id']==pid for a in alerts('coordinator') if a['kind']=='EVALUATION'))
    history=self.db.execute('SELECT count(*) n FROM course_notification_history').fetchone()['n'];self.assertGreater(history,0)
    self.assertEqual(self.command(oid,'DEADLINE',dict(body,dueAt='2027-12-01T00:00:00Z',expectedVersion=d['version']),who='coordinator').status_code,400)
-  def test_exceptional_overall_revision_preserves_the_original(self):
-   oid=self.offering()
-   self.ok(self.appoint(oid,uid='00000000-0000-4000-8000-000000000008'))
-   pid=self.project(oid)
-   self.framework(oid)
-   rid,aid,scores=self.stage(oid,pid,'stage-1',20)
-   original=self.ok(self.command(oid,'PUBLISH_FINAL',dict(projectId=pid,expectedVersion=0)))['id']
-   expected=dict(projectId=pid,expectedVersion=1)
-   self.assertEqual(self.command(oid,'REQUEST_FINAL_REVISION',expected).status_code,409)
-   revision=self.db.execute('SELECT revision FROM academic_review_bindings WHERE review_id=%s',(rid,)).fetchone()['revision']
-   request=self.ok(self.command(oid,'REQUEST_EXCEPTIONAL_STAGE_CORRECTION',dict(reviewId=rid,assessmentId=aid,expectedReviewRevision=revision,scores=[dict(row,marks='21') for row in scores]),who='faculty-a'))['id']
-   self.assertEqual(self.command(oid,'AUTHORIZE_CORRECTION',dict(requestId=request,approved=True),who='coordinator').status_code,403)
-   self.ok(self.command(oid,'AUTHORIZE_EXCEPTIONAL_STAGE_CORRECTION',dict(requestId=request,approved=True),who='coordinator'))
-   self.ok(self.command(oid,'APPLY_EXCEPTIONAL_STAGE_CORRECTION',dict(requestId=request),who='faculty-a'))
-   final_request=self.ok(self.command(oid,'REQUEST_FINAL_REVISION',expected))['id']
-   self.assertEqual(self.command(oid,'APPLY_FINAL_REVISION',dict(requestId=final_request)).status_code,403)
-   self.ok(self.command(oid,'AUTHORIZE_FINAL_REVISION',dict(requestId=final_request,approved=True),who='coordinator'))
-   self.assertEqual(self.command(oid,'APPLY_FINAL_REVISION',dict(requestId=final_request),who='coordinator').status_code,403)
-   key=uuid4().hex
-   applied=self.ok(self.command(oid,'APPLY_FINAL_REVISION',dict(requestId=final_request),key=key))
-   self.assertEqual(self.ok(self.command(oid,'APPLY_FINAL_REVISION',dict(requestId=final_request),key=key)),applied)
-   versions=self.db.execute('SELECT * FROM course_final_results WHERE project_id=%s ORDER BY version',(pid,)).fetchall()
-   self.assertEqual([row['results']['00000000-0000-4000-8000-000000000001'] for row in versions],['40.00','42.00'])
-   self.assertEqual(str(versions[1]['supersedes_id']),original)
-
-  def test_published_correction_same_person_guide_evaluator_coordinator(self):
-   oid=self.offering()
-   self.ok(self.appoint(oid,uid='00000000-0000-4000-8000-000000000008'))
-   pid=self.project(oid)
-   self.framework(oid)
-   rid,aid,scores=self.stage(oid,pid,'stage-1',20)
-   self.ok(self.appoint(oid,uid=FACULTY,permissions=['OVERVIEW','RESULTS','CORRECTIONS']))
-   original=self.ok(self.command(oid,'PUBLISH_FINAL',dict(projectId=pid,expectedVersion=0),who='coordinator'))['id']
-   revision=self.db.execute('SELECT revision FROM academic_review_bindings WHERE review_id=%s',(rid,)).fetchone()['revision']
-   changed=[dict(row,marks='21') for row in scores]
-   stage_request=self.ok(self.command(oid,'REQUEST_EXCEPTIONAL_STAGE_CORRECTION',
-     dict(reviewId=rid,assessmentId=aid,expectedReviewRevision=revision,scores=changed),
-     who='faculty-a',role='Faculty'))['id']
-   self.ok(self.command(oid,'AUTHORIZE_EXCEPTIONAL_STAGE_CORRECTION',
-     dict(requestId=stage_request,approved=True),who='faculty-a',role='Coordinator'))
-   self.ok(self.command(oid,'APPLY_EXCEPTIONAL_STAGE_CORRECTION',
-     dict(requestId=stage_request),who='faculty-a',role='Faculty'))
-   # Guide makes the exact overall revision request with Faculty responsibility.
-   final_request=self.ok(self.command(oid,'REQUEST_FINAL_REVISION',
-     dict(projectId=pid,expectedVersion=1,reason='Correct verified stage evidence'),
-     who='faculty-a',role='Faculty'))['id']
-   # Same person may be the Guide, evaluator and responsible Coordinator.
-   self.ok(self.command(oid,'AUTHORIZE_FINAL_REVISION',
-     dict(requestId=final_request,approved=True),who='faculty-a',role='Coordinator'))
-   self.ok(self.command(oid,'APPLY_FINAL_REVISION',
-     dict(requestId=final_request),who='faculty-a',role='Coordinator'))
-   releases=self.db.execute('SELECT id,version,supersedes_id,results FROM course_final_results WHERE project_id=%s ORDER BY version',(pid,)).fetchall()
-   self.assertEqual([r['results']['00000000-0000-4000-8000-000000000001'] for r in releases],['40.00','42.00'])
-   self.assertEqual(str(releases[-1]['supersedes_id']),original)
-   self.assertEqual(len(releases),2)
-
-  def test_guide_requests_and_coordinator_applies_exact_overall_revision(self):
-   oid=self.offering()
-   self.ok(self.appoint(oid,uid='00000000-0000-4000-8000-000000000008'))
+  def test_direct_correction_does_not_reopen_stage_evidence(self):
+   oid=self.offering();self.ok(self.appoint(oid,uid='00000000-0000-4000-8000-000000000008'))
    pid=self.project(oid);self.framework(oid)
    rid,aid,scores=self.stage(oid,pid,'stage-1',20)
-   self.ok(self.command(oid,'PUBLISH_FINAL',dict(projectId=pid,expectedVersion=0),who='coordinator'))
-   revision=self.db.execute('SELECT revision FROM academic_review_bindings WHERE review_id=%s',(rid,)).fetchone()['revision']
-   changed=[dict(row,marks='21') for row in scores]
-   stage_request=self.ok(self.command(oid,'REQUEST_EXCEPTIONAL_STAGE_CORRECTION',
-     dict(reviewId=rid,assessmentId=aid,expectedReviewRevision=revision,scores=changed),who='faculty-a'))['id']
-   self.ok(self.command(oid,'AUTHORIZE_EXCEPTIONAL_STAGE_CORRECTION',
-     dict(requestId=stage_request,approved=True),who='coordinator'))
-   self.ok(self.command(oid,'APPLY_EXCEPTIONAL_STAGE_CORRECTION',
-     dict(requestId=stage_request),who='faculty-a'))
-   self.assertEqual(self.command(oid,'REQUEST_FINAL_REVISION',
-     dict(projectId=pid,expectedVersion=1,reason='Unrelated actor cannot request'),
-     who='coordinator',role='Faculty').status_code,403)
-   guide_request=self.ok(self.command(oid,'REQUEST_FINAL_REVISION',
-     dict(projectId=pid,expectedVersion=1,reason='Correct stage result following review'),
+   original=self.ok(self.command(oid,'PUBLISH_FINAL',dict(projectId=pid,expectedVersion=0)))['id']
+   frozen=self.db.execute('SELECT to_jsonb(v) AS evidence FROM academic_result_versions v WHERE review_id=%s ORDER BY version_no',(rid,)).fetchall()
+   proposal=dict(projectId=pid,expectedVersion=1,studentId='00000000-0000-4000-8000-000000000001',marks='42.00',reason='Correct an incorrect published overall mark')
+   self.assertEqual(self.command(oid,'REQUEST_FINAL_REVISION',proposal).status_code,403)
+   k=uuid4().hex
+   req=self.ok(self.command(oid,'REQUEST_FINAL_REVISION',proposal,who='faculty-a',key=k))
+   self.assertEqual(req,self.ok(self.command(oid,'REQUEST_FINAL_REVISION',proposal,who='faculty-a',key=k)))
+   self.assertEqual(self.command(oid,'REQUEST_FINAL_REVISION',dict(proposal,marks='43.00'),who='faculty-a',key=k).status_code,409)
+   self.assertEqual(self.command(oid,'AUTHORIZE_FINAL_REVISION',dict(requestId=req['id'],approved=True),who='student-a').status_code,403)
+   decision=dict(requestId=req['id'],approved=True)
+   dk=uuid4().hex
+   ok=self.ok(self.command(oid,'AUTHORIZE_FINAL_REVISION',decision,who='coordinator',key=dk))
+   self.assertEqual(ok,self.ok(self.command(oid,'AUTHORIZE_FINAL_REVISION',decision,who='coordinator',key=dk)))
+   v=self.db.execute('SELECT * FROM course_final_results WHERE project_id=%s ORDER BY version',(pid,)).fetchall()
+   self.assertEqual([row['results']['00000000-0000-4000-8000-000000000001'] for row in v],['40.00','42.00'])
+   self.assertEqual(str(v[-1]['supersedes_id']),original)
+   self.assertEqual(v[0]['sources'],v[-1]['sources'])
+   self.assertEqual(self.db.execute('SELECT to_jsonb(v) AS evidence FROM academic_result_versions v WHERE review_id=%s ORDER BY version_no',(rid,)).fetchall(),frozen)
+   self.assertEqual(self.command(oid,'AUTHORIZE_FINAL_REVISION',decision,who='coordinator').status_code,409)
+   self.assertEqual(self.command(oid,'REQUEST_EXCEPTIONAL_STAGE_CORRECTION',dict(reviewId=rid,assessmentId=aid,expectedReviewRevision=0,scores=scores),who='faculty-a').status_code,400)
+
+  def test_guide_coordinator_same_person_can_propose_and_approve(self):
+   oid=self.offering();self.ok(self.appoint(oid,uid='00000000-0000-4000-8000-000000000008'))
+   pid=self.project(oid);self.framework(oid);self.stage(oid,pid,'stage-1',20)
+   self.ok(self.appoint(oid,uid=FACULTY,permissions=['CORRECTIONS']))
+   self.ok(self.command(oid,'PUBLISH_FINAL',dict(projectId=pid,expectedVersion=0)))
+   req=self.ok(self.command(oid,'REQUEST_FINAL_REVISION',dict(projectId=pid,expectedVersion=1,
+     studentId='00000000-0000-4000-8000-000000000001',marks='42.00',reason='Correct published total'),
      who='faculty-a',role='Faculty'))['id']
-   self.ok(self.command(oid,'AUTHORIZE_FINAL_REVISION',
-     dict(requestId=guide_request,approved=True),who='coordinator'))
-   self.ok(self.command(oid,'APPLY_FINAL_REVISION',
-     dict(requestId=guide_request),who='coordinator'))
-   versions=self.db.execute('SELECT version,results FROM course_final_results WHERE project_id=%s ORDER BY version',(pid,)).fetchall()
-   self.assertEqual([x['version'] for x in versions],[1,2])
-   self.assertEqual([x['results']['00000000-0000-4000-8000-000000000001'] for x in versions],['40.00','42.00'])
+   self.ok(self.command(oid,'AUTHORIZE_FINAL_REVISION',dict(requestId=req,approved=True),who='faculty-a',role='Coordinator'))
+   self.assertEqual([r['version'] for r in self.db.execute('SELECT version FROM course_final_results WHERE project_id=%s ORDER BY version',(pid,)).fetchall()],[1,2])
+   self.assertEqual(self.db.execute('SELECT count(*) n FROM course_final_revision_authorizations WHERE request_id=%s',(req,)).fetchone()['n'],1)
+
+  def test_decline_and_stale_direct_correction_do_not_change_previous_release(self):
+   oid=self.offering();self.ok(self.appoint(oid,uid='00000000-0000-4000-8000-000000000008'))
+   pid=self.project(oid);self.framework(oid);self.stage(oid,pid,'stage-1',20)
+   self.ok(self.command(oid,'PUBLISH_FINAL',dict(projectId=pid,expectedVersion=0)))
+   proposal=dict(projectId=pid,expectedVersion=1,
+     studentId='00000000-0000-4000-8000-000000000001',marks='42.00',reason='Correct published total')
+   self.assertEqual(self.command(oid,'REQUEST_FINAL_REVISION',proposal,who='coordinator',role='Faculty').status_code,403)
+   self.assertEqual(self.command(oid,'REQUEST_FINAL_REVISION',dict(proposal,marks='9999'),who='faculty-a').status_code,400)
+   self.assertEqual(self.command(oid,'REQUEST_FINAL_REVISION',dict(proposal,reason=''),who='faculty-a').status_code,400)
+   denied=self.ok(self.command(oid,'REQUEST_FINAL_REVISION',proposal,who='faculty-a'))['id']
+   self.ok(self.command(oid,'AUTHORIZE_FINAL_REVISION',dict(requestId=denied,approved=False),who='coordinator'))
+   self.assertEqual(self.db.execute('SELECT count(*) n FROM course_final_results WHERE project_id=%s',(pid,)).fetchone()['n'],1)
+   stale=self.ok(self.command(oid,'REQUEST_FINAL_REVISION',dict(proposal,marks='43.00'),who='faculty-a'))['id']
+   good=self.ok(self.command(oid,'REQUEST_FINAL_REVISION',dict(proposal,marks='44.00'),who='faculty-a'))['id']
+   self.ok(self.command(oid,'AUTHORIZE_FINAL_REVISION',dict(requestId=good,approved=True),who='coordinator'))
+   self.assertEqual(self.command(oid,'AUTHORIZE_FINAL_REVISION',dict(requestId=stale,approved=True),who='coordinator').status_code,409)
+   self.assertEqual(self.db.execute('SELECT count(*) n FROM course_final_results WHERE project_id=%s',(pid,)).fetchone()['n'],2)
 
   def test_milestone_completion_and_exact_requirement_permission(self):
    oid=self.offering()

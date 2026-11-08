@@ -31,12 +31,12 @@ trial credits, or add charge-incurring services. Verify the relevant plan and
 limits before every infrastructure change. Keep the existing live service,
 database, and immutable academic history intact.
 
-**Policy alignment pending:** current course correction code enforces
-independence for certain exceptional published-result authorizations, while a
-later user-approved (not faculty-ratified) product rule permits the responsible
-Coordinator to approve a specific Guide-requested correction even if they are
-the same person or the Coordinator evaluated those marks. Do not silently alter
-the live database. See
+**Policy alignment in draft PR:** the live deployment still has the older
+stage-based exceptional-result workflow. The review branch proposes direct
+Guide-requested corrections to published overall marks, with a single responsible
+Coordinator decision (including same-person approval), preserved historical
+results and no stage regrading. Do not alter the live database without reviewed
+migration acceptance. See
 [post-publication correction alignment](docs/POST_PUBLICATION_CORRECTION_ALIGNMENT.md)
 for the exact gap and required regression checks.
 

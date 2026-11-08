@@ -1,95 +1,41 @@
-# Post-publication correction alignment — 9 November 2026
+# Direct overall-result correction — finalized product direction
 
-## Decision authority and scope
+SMART-PRO remains a project lifecycle and academic evaluation platform, not a
+faculty HR application.
 
-The user-approved (not faculty-ratified) product decision is specific:
-the **currently assigned Project Guide** may submit a correction request to
-a project result **after overall result publication**. The responsible,
-currently appointed offering **Coordinator** can approve or reject it even
-if the Coordinator evaluated the marks, requested it, or is the Guide.
-No independent authorizer, extra HOD, committee or self-approval ban is
-added. The exact requested change, request reason, authority, previous
-published result, revised result, and audit evidence must be retained.
+After an overall result is published, its **currently assigned Project Guide**
+can propose an exact corrected **overall mark for a student** with a reason.
+The responsible offering **Coordinator** approves or rejects the specific
+request, even if the Coordinator is the Guide, requester or original evaluator.
+No HOD, independent approver, extra authorization or separate apply action.
 
-Ordinary pre-overall-publication corrections are **not** silently changed.
-Department review configurations, stage/evaluator responsibilities, rubrics,
-marking mode, quorum, weights and publication rights remain versioned and
-must continue to be respected. Do not give Admins or students grading powers.
+Approval appends a new `course_final_results` version in the SAME transaction.
+Previous results and the existing published review-stage scores stay immutable.
+The correction's exact old/new mark, student, reason, actor, approval, preceding
+result ID and successor version remain in the existing request,
+authorization/application, result and audit records. The recorded stage
+sources are copied unchanged as provenance; the new overall result is an
+**authorized exceptional correction**, not represented as a new calculation
+of unchanged stage marks. Declining a request does not alter the result.
 
-## Confirmed repository discrepancy
+Candidate `059_published_correction_authority.sql` on the review branch replaces
+the previous proposed stage-recalculation 059; candidates 001–058 and live Neon
+are untouched. Backend `REQUEST_FINAL_REVISION` now carries project ID,
+expected published version, student ID, new overall mark and reason.
+`AUTHORIZE_FINAL_REVISION` records the Coordinator decision and, if approved,
+immediately issues the corrected result. Previously exposed exceptional stage
+API aliases and `APPLY_FINAL_REVISION` are rejected.
 
-Existing candidate 038/042 SQL and frontend reject original-requester or
-panel-member authorization for exceptional published corrections as well
-as ordinary ones. Installed Neon staging routines still contain those
-restrictions. The reviewer-staging branch is live at `0d5281e`.
+A Guide sees the correction form from their Project work page; the Coordinator
+sees pending decisions under course Results. UI access is supported by server
+authorization and exact current role/assignment checks.
 
-## Prepared, not installed
+**Status: code and targeted regression tests prepared only.** These changes
+are not merged, not installed in Neon, not deployed on Render and not yet
+tested against an isolated PostgreSQL database or in a full browser journey.
+Run those checks before any staging rollout. No trial/paid services.
 
-The isolated forward migration
-`proposals/curriculum/059_published_correction_authority.sql`:
-
-1. Permits a current Coordinator with correction responsibility to decide
-   an **exceptional** stage change despite being the evaluator/requester.
-   Ordinary stage-correction authorization remains unchanged.
-2. Permits the same Coordinator to authorize an exceptional overall revision
-   despite participating or having originated the request.
-3. Permits the current assigned Guide, with a live Faculty responsibility,
-   to request an exact revised overall release **after its supporting stage
-   evidence is updated**. The calculation still uses pinned framework
-   sources, not arbitrary total override.
-4. Permits the approving Coordinator, if independently authorized to
-   publish by the pinned framework and current appointment, to apply that
-   exact overall request. Previous releases remain immutable.
-
-Existing version checks, request records, authorization rows, calculated
-snapshot equality, immutable result append and transaction/audit rules remain.
-No new tables, default academic settings, HOD approval or student flags are
-introduced. Existing historic migration candidates 001–058 are unchanged.
-
-## Acceptance checks before any staging change
-
-- Disposable PostgreSQL 16 install through 059; no live database writes.
-- Same Guide/evaluator/Coordinator requests, authorizes and applies an
-  exceptional stage and overall correction. Original result preserved.
-- Guide and Coordinator are different: Guide requests exact overall change;
-  appointed Coordinator approves and publishes.
-- Ordinary prepublication self-authorization remains blocked.
-- Forged/expired guide, foreign offering, unappointed coordinator,
-  stale result version, changed stage scores, declined decision and replay
-  remain denied or idempotent as applicable. A non-Guide Faculty actor is now
-  explicitly checked in the prepared course contract; more denial tests await
-  the isolated database run.
-- Browser tests of authorization panels, reviewer session, role switching,
-  stage history and overall result history. Queue permission and final revision
-  authorizer projection are included in candidate 059; the Guide-only frontend
-  request entry point remains to be verified.
-- Verify live storage and DB backups together before any eventual migration.
-
-## Clarification pending — what stage marks mean
-
-A stage mark is a recorded score from an individual review under its pinned
-rubric. Example: Review 1 is 30/40 and Review 2 is 50/60, giving 80/100 under
-an illustrative sum policy. If Review 2's criterion evidence should be 55/60,
-the revised overall result would be 85/100 under that same illustrative policy.
-**These numbers are examples, not institutional rubric or calculation defaults.**
-
-The proposed simpler interaction is: the assigned Guide submits the exact
-affected review/criterion and old/new mark plus reason; the responsible
-Coordinator approves or rejects; the application preserves the original stage
-and overall releases, records the approved stage correction, then derives a
-new overall result from the *pinned* calculation. There would be **no separate
-evaluator-first approval step**. This is only an explanatory proposal at this
-point, **not yet a confirmed product decision**. It must not be silently
-implemented as a new authority or as an arbitrary total override. Candidate 059
-still requires previously corrected stage evidence and needs further alignment
-if the direct proposal is confirmed.
-
-## Other readiness gaps
-
-The register links historical evidence; most older `Verified` rows are
-verified in synthetic local tests, not the current Render/Neon combination.
-Live free-tier hosting exists, but institutional onboarding/identity,
-faculty appointment amendment authority, provider-specific backup/recovery,
-PDF isolation, screen-reader verification, formal capacity acceptance and
-academic-rule ratification remain separate gates. Do not activate real
-student/academic records or use paid/trial services.
+Other project decisions stand: configurable/pinned review stages and rubrics,
+scoped Guide/evaluator responsibilities, prior version history and minimal
+Admin account/access controls. No student marks-flagging feature or invented
+approval role has been added.
