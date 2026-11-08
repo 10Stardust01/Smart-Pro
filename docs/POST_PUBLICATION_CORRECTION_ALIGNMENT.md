@@ -65,15 +65,24 @@ introduced. Existing historic migration candidates 001–058 are unchanged.
   request entry point remains to be verified.
 - Verify live storage and DB backups together before any eventual migration.
 
-## Genuine remaining question
+## Clarification pending — what stage marks mean
 
-**Does the Guide need to be able to request new criterion marks/overall
-student totals *before* the underlying evaluator's stage result has been
-corrected, or only request the release of already corrected, verified
-stage evidence?** Existing course calculations forbid inventing new marks
-outside approved rubric/evaluator evidence. Candidate 059 keeps that
-constraint; a direct score-proposal interface needs an explicit product
-decision so it cannot silently bypass approved academic evaluation.
+A stage mark is a recorded score from an individual review under its pinned
+rubric. Example: Review 1 is 30/40 and Review 2 is 50/60, giving 80/100 under
+an illustrative sum policy. If Review 2's criterion evidence should be 55/60,
+the revised overall result would be 85/100 under that same illustrative policy.
+**These numbers are examples, not institutional rubric or calculation defaults.**
+
+The proposed simpler interaction is: the assigned Guide submits the exact
+affected review/criterion and old/new mark plus reason; the responsible
+Coordinator approves or rejects; the application preserves the original stage
+and overall releases, records the approved stage correction, then derives a
+new overall result from the *pinned* calculation. There would be **no separate
+evaluator-first approval step**. This is only an explanatory proposal at this
+point, **not yet a confirmed product decision**. It must not be silently
+implemented as a new authority or as an arbitrary total override. Candidate 059
+still requires previously corrected stage evidence and needs further alignment
+if the direct proposal is confirmed.
 
 ## Other readiness gaps
 
