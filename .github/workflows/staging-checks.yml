@@ -27,8 +27,7 @@ jobs:
         run: python -m compileall -q backend scripts
       - name: Parse frontend module without executing it
         run: |
-          cp frontend/app.js /tmp/smartpro-app.mjs
-          node --check /tmp/smartpro-app.mjs
+          for source in frontend/*.js; do node --check "$source"; done
       - name: Check Django staging startup wiring
         env:
           PYTHONPATH: backend

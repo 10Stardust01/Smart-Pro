@@ -385,15 +385,19 @@ function render() {
   if((w.access.operations||w.access.admin)&&state.role!=='Coordinator'&&!nav.some(n=>n[0]==='setup')) nav.push(['setup','⚙','Academic setup']);
   if ((personalRole()||state.role==='HOD'||state.documents||state.documentError) && !(state.role==='Coordinator'&&uiContext.courseManagement) && !nav.some(n=>n[0]==='documents')) nav.push(['documents','▣',personalRole()?'Project work':'Submissions & reviews']);
   if (!nav.some(n => n[0] === state.view)) state.view = 'overview';
-  const role = w.access.admin ? (state.role==='HOD' ? 'Head of department' : 'Appointed coordinator') : w.access.operations ? 'Operational Admin' : w.access.student ? 'Student workspace' : w.access.faculty ? 'Faculty workspace' : 'Restricted identity';
+  const role=({Student:'Student',Faculty:'Faculty member',Coordinator:'Course coordinator',HOD:'Head of department',Admin:'Department administrator'})[state.role]||'Department member';
   const sectionBody = state.navigationPending
     ? '<section class="panel navigation-loading" role="status" aria-live="polite"><span class="loading-indicator" aria-hidden="true"></span><strong>Loading your selected workspace…</strong><p class="muted">Checking the latest authorized records.</p></section>'
     : content();
-  $('#app').innerHTML = `<div class="shell"><aside class="sidebar">${brand}<div class="nav-label">${esc(state.role||'Academic')} workspace</div><nav class="nav" aria-label="Main navigation">${nav.map(([id,icon,label]) => `<button class="${state.view === id ? 'active' : ''}" data-go="${id}" ${state.view === id ? 'aria-current="page"' : ''}><span class="symbol" aria-hidden="true">${icon}</span>${label}</button>`).join('')}</nav><div class="sidebar-bottom"><strong>${esc(academicText(w.department?.name || 'SMART-PRO'))}</strong>Academic project management</div></aside><div class="main-wrap"><header class="topbar"><div class="breadcrumbs">${esc(academicText(w.department?.name || 'Department workspace'))}<strong>${esc(nav.find(n => n[0] === state.view)[2])}</strong></div><div class="account"><span class="avatar">${esc(w.actor.name.split(' ').map(v => v[0]).slice(0,2).join(''))}</span><span><strong>${esc(w.actor.name)}</strong><small>${role}</small></span>${w.roleChoices?.length>1?`<label class="role-switch">Working as<select id="activeRole">${w.roleChoices.map(r=>option(r,r,state.role)).join('')}</select></label>`:''}<button class="quiet" data-action="logout">${uiContext.demo?'Switch test account':'Sign out'}</button></div></header><main id="main" tabindex="-1" class="main ${state.busy ? 'loading' : ''}" aria-busy="${state.busy}">${state.error ? `<div class="error" role="alert">${esc(state.error)}</div>` : ''}${sectionBody}${!state.navigationPending&&state.view==='overview'&&uiContext.courseManagement&&(state.courseNotifications?.tasks?.length||state.courseNotifications?.alerts?.length)?notificationPanel(state,esc,displayDate):''}<div class="footer">SMART-PRO · Academic project management</div></main></div></div>`;
+  $('#app').innerHTML = `<div class="shell"><aside class="sidebar">${brand}<div class="nav-label">${esc(state.role||'Academic')} workspace</div><nav class="nav" aria-label="Main navigation">${nav.map(([id,icon,label]) => `<button class="${state.view === id ? 'active' : ''}" data-go="${id}" ${state.view === id ? 'aria-current="page"' : ''}><span class="symbol" aria-hidden="true">${icon}</span>${label}</button>`).join('')}</nav><div class="sidebar-bottom"><strong>${esc(academicText(w.department?.name || 'SMART-PRO'))}</strong>Academic project management</div></aside><div class="main-wrap"><header class="topbar"><div class="breadcrumbs">${esc(academicText(w.department?.name || 'Department workspace'))}<strong>${esc(nav.find(n => n[0] === state.view)[2])}</strong></div><div class="account"><span class="avatar">${esc(w.actor.name.split(' ').map(v => v[0]).slice(0,2).join(''))}</span><span><strong>${esc(w.actor.name)}</strong><small>${role}</small></span>${w.roleChoices?.length>1?`<label class="role-switch">Working as<select id="activeRole">${w.roleChoices.map(r=>option(r,r,state.role)).join('')}</select></label>`:''}<button class="quiet" data-action="logout">${uiContext.demo?'Switch test account':'Sign out'}</button></div></header><main id="main" tabindex="-1" class="main ${state.busy ? 'loading' : ''}" aria-busy="${state.busy}">${state.error ? `<div class="error" role="alert">${esc(state.error)}</div>` : ''}${sectionBody}${!state.navigationPending&&state.view==='overview'&&uiContext.courseManagement&&(state.courseNotifications?.tasks?.length||state.courseNotifications?.alerts?.length)?notificationPanel(state,esc,displayDate):''}<div class="footer"><span>SMART-PRO</span><span>Academic project records</span></div></main></div></div>`;
 }
 
-function heading(eyebrow,title,subtitle) { return `<div class="heading"><div><div class="eyebrow">${esc(eyebrow)}</div><h1>${esc(title)}</h1><p class="muted">${esc(subtitle)}</p></div><div class="heading-tools">${badge(academicText(state.workspace.department?.code || 'Restricted'),'green')} ${button('Refresh','refresh','','secondary')}</div></div>`; }
-function stats(items) { return `<div class="stats">${items.map(([label,value,detail,icon]) => `<div class="stat"><div><div class="stat-label">${esc(label)}</div><div class="stat-value">${esc(value)}</div><small>${esc(detail)}</small></div><span class="stat-icon">${icon}</span></div>`).join('')}</div>`; }
+function heading(eyebrow,title,subtitle) {
+ return `<header class="heading"><div class="heading-copy"><span class="eyebrow">${esc(eyebrow)}</span><h1>${esc(title)}</h1>${subtitle?`<p>${esc(subtitle)}</p>`:''}</div><div class="heading-tools">${badge(academicText(state.workspace.department?.code||'Department'))} ${button('Refresh','refresh','','secondary')}</div></header>`;
+}
+function stats(items) {
+ return `<div class="dashboard-metrics">${items.map(([label,value,detail])=>`<div class="metric"><span class="metric-label">${esc(label)}</span><strong class="metric-value">${esc(value)}</strong>${detail?`<small>${esc(detail)}</small>`:''}</div>`).join('')}</div>`;
+}
 function projectCards(projects=state.projects) {
   return projects.length ? projects.map(p => {
     const reviews = state.workspace.reviews.filter(r => r.projectId === p.id);
@@ -408,36 +412,23 @@ function activity(limit = 5) {
 }
 
 function academicPriority(w) {
-  if(w.access.student){
-    const offering=state.offerings.find(o=>o.id===selectedOffering());
-    const [title,action,destination]=!w.enrolled?['Confirm your enrollment','Open enrollment','enrollment']:
-      state.projects.length?['Continue your project','Open project work','documents']:
-      !state.memberships.length?['Find or create your team','Open teams','teams']:
-      ['Register your project','Open my projects','projects'];
-    return `<section class="panel priority-panel"><div class="eyebrow">Student workspace</div><h2>${title}</h2>
-      ${offering?`<p>Current offering · ${esc(displayOffering(offering))}</p>`:''}
-      <div class="actions"><button class="primary" data-go="${destination}">${action}</button>
-      ${state.projects.length?'<button class="secondary" data-go="results">View published results</button>':''}</div></section>`;
-  }
-  if(w.access.faculty && !w.access.admin){
-    return `<section class="panel priority-panel"><div class="eyebrow">Faculty workspace</div><h2>Review your assigned work</h2>
-      <p>Open a project for guide feedback or go directly to an assigned assessment.</p>
-      <div class="actions"><button class="primary" data-go="documents">Open assigned projects</button>
-      <button class="secondary" data-go="evaluations">Open assigned evaluations</button></div></section>`;
-  }
-  return '';
+ if(w.access.student){
+   const current=state.projects[0],offering=state.offerings.find(o=>o.id===selectedOffering());
+   const [title,action,destination]=!w.enrolled?['Complete enrollment','View enrollment','enrollment']:current?['Continue your project','Open project work','documents']:!state.memberships.length?['Join or create a team','Browse teams','teams']:['Register your project','Open proposals','projects'];
+   return `<section class="dashboard-hero"><div class="hero-copy"><span class="eyebrow">NEXT STEP</span><h2>${esc(title)}</h2>${current?`<p class="hero-detail">${esc(current.title)}</p>`:offering?`<p class="hero-detail">${esc(displayOffering(offering))}</p>`:''}<div class="actions"><button class="primary" data-go="${destination}">${esc(action)} <span aria-hidden="true">→</span></button>${current?'<button class="secondary" data-go="history">Project history</button>':''}</div></div><div class="hero-decoration" aria-hidden="true"><span class="hero-circle"></span><span class="hero-orbit"></span><span class="hero-mark">S</span></div></section>`;
+ }
+ if(w.access.faculty&&!w.access.admin)return `<section class="dashboard-hero"><div class="hero-copy"><span class="eyebrow">FACULTY DESK</span><h2>Assigned work</h2><p class="hero-detail">${state.projects.length} project${state.projects.length===1?'':'s'} in your workspace</p><div class="actions"><button class="primary" data-go="documents">View assigned projects →</button><button class="secondary" data-go="evaluations">Evaluations</button></div></div><div class="hero-decoration" aria-hidden="true"><span class="hero-circle"></span><span class="hero-orbit"></span><span class="hero-mark">S</span></div></section>`;
+ return '';
 }
-
-function overview() {
-  const w = state.workspace;
-  if(departmentRole())return departmentOverview(state,esc,heading);
-  if (!w.access.admin && !w.access.student && !w.access.faculty) return heading('ACCESS STATUS','Academic access is restricted','Technical administration alone does not grant academic authority.')+`<section class="panel">${empty('No academic permissions assigned','Contact your department administrator if you need access.')}${button('Choose another identity','logout')}</section>`;
-  const title = w.access.admin ? 'Department overview' : w.access.student ? 'Student overview' : 'Faculty overview';
-  return heading('YOUR DEPARTMENT AT A GLANCE',title,w.access.admin ? 'Monitor project progress, review work and published results.' : w.access.student ? 'Your enrollment, team and project journey — connected.' : 'Use the assigned rubric, finalize your assessment, and preserve each correction.')+
-    academicPriority(w)+stats([['Projects loaded',state.projects.length,'For this workspace','◇'],['Assigned reviews',w.reviews.length,'Current & historical reviews','▤'],['Published results',w.reviews.filter(r => r.state === 'PUBLISHED').length,'Versioned and preserved','✓'],[w.access.student ? 'Current team' : 'Workspace',w.access.student ? state.memberships.length : 'Active',w.access.student ? 'For this curriculum offering' : 'Scoped department access','♧']])+
-    `<div class="grid"><section class="panel"><div class="panel-title"><div><h2>${w.access.student ? 'My projects' : 'Project workspace'}</h2><p class="muted">Current submissions and academic progress</p></div></div>${projectCards(state.projects.slice(0,3))}${state.projects.length>3?`<div class="actions"><button class="secondary" data-go="${w.access.admin?'projects':'documents'}">Browse all project work</button></div>`: ''}${w.access.student ? `<div class="actions"><button class="secondary" data-go="teams">Find or create a team →</button><button class="quiet" data-go="projects">Submit a proposal</button></div>` : ''}</section><aside><section class="panel"><div class="panel-title"><div><h2>${w.access.student ? 'Enrollment snapshot' : 'Your workspace'}</h2><p class="muted">${esc(academicText(w.department?.name))}</p></div><span class="pill-icon">▣</span></div>${w.access.student ? enrollmentSummary() : `<p>${w.access.admin?'Open an offering to review progress and manage coordinator appointments.':'Open an assigned evaluation to review the rubric or continue entering marks.'}</p><div class="actions"><button class="secondary" data-go="${w.access.admin ? (uiContext.courseManagement?'courses':'department') : 'evaluations'}">${w.access.admin ? (uiContext.courseManagement?'Open Course Management':'Department settings') : 'Open evaluations'} →</button></div>`}</section><section class="panel"><div class="panel-title"><h2>Recent activity</h2><button class="quiet" data-go="audit">View all →</button></div>${activity()}</section></aside></div>`;
+function overview(){
+ const w=state.workspace;
+ if(departmentRole())return departmentOverview(state,esc,heading);
+ if(!w.access.student&&!w.access.faculty)return heading('ACCESS','Workspace unavailable','Contact your department administrator.')+`<section class="panel">${empty('No academic access','Your account has no current academic assignment.')}</section>`;
+ const student=w.access.student;
+ return heading(student?'STUDENT WORKSPACE':'FACULTY WORKSPACE',student?'Overview':'Faculty overview',student?'Current project and academic records.':'Assigned projects, assessments and feedback.')+
+  academicPriority(w)+stats([['Projects',state.projects.length,'Authorized records'],['Reviews',w.reviews.length,'Assigned or historical'],['Published results',w.reviews.filter(r=>r.state==='PUBLISHED').length,'Available releases']])+
+  `<div class="dashboard-grid"><section class="panel dashboard-primary"><div class="panel-title"><div><span class="section-kicker">PROJECTS</span><h2>${student?'My projects':'Assigned projects'}</h2></div><button class="quiet" data-go="${student?'projects':'documents'}">View all →</button></div>${projectCards(state.projects.slice(0,3))}${state.projects.length>3?`<div class="actions"><button class="secondary" data-go="${student?'projects':'documents'}">More projects</button></div>`:''}</section><aside class="dashboard-aside"><section class="panel"><h2>${student?'Enrollment':'Evaluation desk'}</h2>${student?enrollmentSummary():`<p class="muted">${w.reviews.length} assigned or historical reviews.</p><button class="secondary" data-go="evaluations">Open evaluations</button>`}</section><section class="panel"><div class="panel-title"><h2>Recent activity</h2><button class="quiet" data-go="audit">View all</button></div>${activity(4)}</section></aside></div>`;
 }
-
 document.addEventListener('toggle',event=>{
   const panel=event.target;
   if(panel instanceof HTMLDetailsElement && panel.open && panel.hasAttribute('data-faculty-reference')){
@@ -547,14 +538,12 @@ function evaluationView(student = false, scoped = false) {
 function auditView(){return heading('ACTIVITY','Your academic activity','Changes retain their actor, date and history.')+`<section class="panel"><h2>Recent activity</h2>${state.workspace.audit.map(a=>`<article class="project-card"><h3>${esc(natural(a.action))}</h3><p>${displayDate(a.occurred_at)}</p><p>${esc(a.metadata?.reason||a.metadata?.input?.reason||a.metadata?.request?.reason||'Recorded in the academic audit history.')}</p></article>`).join('')||empty('No activity in this workspace yet','Completed actions will appear here.')}</section>`;}
 
 function referencePanel(){
-  if(state.view==='overview'||state.view==='records'&&state.role==='Admin')return facultyReferencePanel(state,uiContext,esc);
-  if(state.view==='courses' && state.role==='Coordinator' && (!state.courseSection || state.courseSection==='overview')
-    && state.courses?.offerings.some(offering=>offering.id===state.courseId)){
-    return facultyReferencePanel(state,uiContext,esc,state.courseId);
-  }
-  return '';
+ // Keep research reference available in specific administrative and assignment contexts.
+ if(state.role==='Admin'&&state.view==='records')return facultyReferencePanel(state,uiContext,esc);
+ if(state.role==='HOD'&&state.view==='department')return facultyReferencePanel(state,uiContext,esc);
+ if(state.view==='courses'&&state.role==='Coordinator'&&['appointments','assignments'].includes(state.courseSection)&&state.courses?.offerings.some(o=>o.id===state.courseId))return facultyReferencePanel(state,uiContext,esc,state.courseId);
+ return '';
 }
-
 function courseAssessment(){
   const course=state.courses?.offerings.find(o=>o.id===state.courseId);
   if(!course)return courseManagement(state,esc,displayDate,localDate);

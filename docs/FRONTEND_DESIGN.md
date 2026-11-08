@@ -19,3 +19,15 @@ SMART-PRO's own layouts and assets.
 - Put wide tables in a labeled, keyboard-focusable scrolling region.
   At small widths, stack form columns and keep page content within the viewport.
 - Keep artwork and dependencies local and lightweight. Respect reduced motion.
+
+## Institutional redesign
+
+Hazzel / Clear Education informs more than colors: editorial headings, whitespace,
+warm white panels, quiet charcoal type and restrained teal linework. Landing views
+prioritize the next real task, relevant metrics and academic records rather than
+feature inventories. Faculty reference data is retained, but its provenance is
+shown only on demand within assignment or records contexts.
+
+The Django API, role authorization, native ES module runtime and academic records
+remain unchanged in this phase. Manual Playwright synthetic-browser tests guard
+responsive rendering and role-specific navigation.

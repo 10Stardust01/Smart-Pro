@@ -8,7 +8,7 @@ export function courseManagement(state,esc,displayDate,localDate){
  if(!data)return '<section class="panel"><h1>Course Management</h1><p>Course management could not be loaded. Refresh to check your current access.</p></section>';
  const course=data.offerings.find(o=>o.id===state.courseId);
  const title=o=>`${o.label} · ${o.semester_key} · ${o.cycle_label}`;
- const header='<div class="heading"><div><div class="eyebrow">ACADEMIC COORDINATION</div><h1>Course Management</h1><p>Appointments, approved requirements and academic work, organized by offering.</p></div></div>';
+ const header='<header class="heading"><div class="heading-copy"><span class="eyebrow">COURSE OPERATIONS</span><h1>Course Management</h1><p>Offerings, reviews and results.</p></div></header>';
  if(!course)return header+`<section class="panel"><h2 id="department-offerings">${state.role==='Coordinator'?'Your assigned offerings':'Department offerings'}</h2>${offeringFilters(state,esc,data)}<div class="course-cards">${data.offerings.map(o=>`<article class="project-card"><h3>${esc(title(o))}</h3><p>${o.has_coordinator?(o.availability==='ACTIVE'?'Coordinator appointed':'Offering '+o.availability.toLowerCase()):'Student access withheld — appoint a coordinator'}</p><button class="primary" data-action="open-course" data-id="${o.id}">Manage offering</button></article>`).join('')||'<p>No effective offering appointment is recorded for your current responsibility. The department Admin manages course appointments.</p>'}</div>${offeringPager('offerings',data.page,data.total)}</section>`;
  const evidence=state.documents?.projects||[],list=state.courseDocumentListing;
  const projects=(list?.projects||evidence).filter(p=>p.offeringId===course.id).map(p=>({...p,overallFinalPublished:p.overallFinalPublished||state.courseDetail?.overallResults.some(r=>r.project_id===p.id)})),ids=new Set(projects.map(p=>p.id)),reviews=state.workspace.reviews.filter(r=>ids.has(r.projectId));
@@ -18,16 +18,10 @@ export function courseManagement(state,esc,displayDate,localDate){
  let body='';
  if(section==='overview'){
   const detail=state.courseDetail;
-  const stats=[
-   ['Students in teams',detail?.studentCount],
-   ['Teams',detail?.teamCount],
-   ['Projects',detail?.projectCount],
-   ['Published review stages',detail?.reviewProgress?detail.reviewProgress.published+' / '+detail.reviewProgress.total:null],
-   ['Effective coordinators',course.effective_count??course.appointments.filter(a=>a.current).length],
-  ];
-  body=`<section class="panel"><h2>Offering overview</h2><div class="stats">${stats.map(([label,value])=>`<div class="stat"><div><div class="stat-label">${label}</div><div class="stat-value">${value??'—'}</div></div></div>`).join('')}</div><p>${course.has_coordinator?'An effective coordinator is accountable for this offering.':'Student access is withheld until an eligible coordinator is appointed. Existing academic evidence is preserved.'}</p>
-  ${detail?.submissionProgress?`<h3>Pending submissions</h3><p>${detail.submissionProgress.awaitingReview} awaiting review · ${detail.submissionProgress.awaitingRevision} awaiting revision</p>`:''}
-  <div class="actions">${state.role==='Admin'?`<button class="secondary" data-action="offering-settings" data-id="${course.id}">Review offering settings</button><button class="primary" data-action="course-section" data-section="appointments">Manage coordinators</button>`:''}${state.role!=='Admin'?'<button class="secondary" data-action="course-section" data-section="submissions">View submissions</button>':''}<button class="secondary" data-action="course-section" data-section="results">View results</button>${state.role==='Coordinator'?'<button class="primary" data-action="course-section" data-section="evaluation">Open project evaluation</button>':''}<button class="quiet" data-action="course-section" data-section="deadlines">Check deadlines</button></div><h3>Your responsibilities</h3><p>${state.role==='Coordinator'?course.responsibilities.map(k=>esc(responsibilities[k])).join(' · '):state.role==='HOD'?'Departmental academic oversight':'Operational administration under HOD instruction'}</p></section>`;
+  const metrics=[['Students in teams',detail?.studentCount],['Teams',detail?.teamCount],['Projects',detail?.projectCount],['Published stages',detail?.reviewProgress?`${detail.reviewProgress.published} / ${detail.reviewProgress.total}`:null]];
+  const awaiting=detail?.submissionProgress?.awaitingReview??0,revising=detail?.submissionProgress?.awaitingRevision??0;
+  body=`<div class="course-overview"><section class="panel course-metrics"><div class="panel-title"><div><span class="section-kicker">OFFERING STATUS</span><h2>At a glance</h2></div></div><div class="dashboard-metrics">${metrics.map(([label,value])=>`<div class="metric"><span class="metric-label">${esc(label)}</span><strong class="metric-value">${esc(value??'—')}</strong></div>`).join('')}</div></section>
+   <section class="panel course-attention"><div class="panel-title"><div><span class="section-kicker">TO REVIEW</span><h2>Pending submissions</h2></div>${awaiting?`<span class="badge amber">${awaiting} pending</span>`:'<span class="badge green">Up to date</span>'}</div><div class="attention-numbers"><div><strong>${awaiting}</strong><span>Awaiting review</span></div><div><strong>${revising}</strong><span>Awaiting revision</span></div></div><div class="actions">${state.role!=='Admin'?'<button class="primary" data-action="course-section" data-section="submissions">View submissions →</button>':''}<button class="secondary" data-action="course-section" data-section="results">Results</button><button class="quiet" data-action="course-section" data-section="deadlines">Deadlines</button></div></section></div>`;
  }
  if(section==='evaluation')body=evaluationQueue(course,scoped,esc,displayDate,localDate);
  if(section==='appointments'){
