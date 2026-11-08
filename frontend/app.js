@@ -12,7 +12,7 @@ const selectedOffering = () => state.offeringId || state.workspace?.department?.
 const documentsBase = () => `/api/v1/documents/departments/${state.workspace.department.id}`;
 const documentCommand = (action,body) => api(documentsBase(),'POST',{action,...body});
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const state = {alias:sessionStorage.getItem('smartpro.identity'),view:'overview',workspace:null,profile:null,offerings:[],memberships:[],projects:[],staff:null,academic:null,reviewId:null,result:null,error:'',busy:false,generation:0};
+const state = {alias:sessionStorage.getItem('smartpro.identity'),view:'overview',workspace:null,profile:null,offerings:[],memberships:[],projects:[],staff:null,academic:null,reviewId:null,result:null,error:'',busy:false,generation:0,navigationPending:false,forceFullRefresh:false,studentMetadataValidUntil:0};
 state.role=sessionStorage.getItem('smartpro.role.'+state.alias);
 let controller = new AbortController();
 const uiContext=await (await fetch('/api/v1/ui/context')).json();
@@ -180,12 +180,13 @@ async function api(path, method = 'GET', body, context = {alias:state.alias,role
   return value;
 }
 
-async function load() {
+async function load({reuseWorkspace=false}={}) {
   if(!state.alias)return;
   const generation = state.generation;
   const context = {alias:state.alias,role:state.role,signal:controller.signal};
   const get = path => api(path,'GET',undefined,context);
-  const w = await get('/api/v1/workspace');
+  const w = reuseWorkspace && state.workspace && !state.workspace.chooseRole && state.workspace.activeRole===state.role
+    ? state.workspace : await get('/api/v1/workspace');
   if (generation !== state.generation) return;
   if(w.chooseRole){state.workspace=w;return;}
   const previousRole=state.role;
@@ -205,7 +206,16 @@ async function load() {
     (state.view==='documents'?state.projectId:['evaluations','results'].includes(state.view)?assessmentEvidence:null):null;
   const loadProjects=async()=>{
     if (w.access.student && w.enrolled && !w.access.admin) {
-      const [profile,offerings,memberships] = await Promise.all(['/api/v1/me/profile','/api/v1/me/curriculum-offerings','/api/v1/me/memberships'].map(get));
+      // Reuse only short-lived, in-memory details for navigation, never after a write.
+      // Memberships and projects always come from authorized server requests.
+      const reused = reuseWorkspace && Date.now() < state.studentMetadataValidUntil
+        && state.profile && state.offerings?.length;
+      const [profile,offerings,memberships] = await Promise.all([
+        reused ? Promise.resolve(state.profile) : get('/api/v1/me/profile'),
+        reused ? Promise.resolve({results:state.offerings}) : get('/api/v1/me/curriculum-offerings'),
+        get('/api/v1/me/memberships')
+      ]);
+      if(!reused)next.studentMetadataValidUntil=Date.now()+8000;
       next.profile = profile;
       next.offerings = offerings.results;
       next.offeringId = offerings.results.some(o=>o.id===state.offeringId)?state.offeringId:(offerings.results.find(o=>o.id===w.department?.offeringId)?.id||offerings.results[0]?.id);
@@ -314,7 +324,7 @@ async function load() {
   const projects=loadProjects();
   await Promise.all([
     projects,loadDocuments(),loadSetup(),loadCandidates(),loadCourses(),loadConfiguration(),
-    uiContext.courseManagement&&get('/api/v1/me/course-notifications').then(value=>{next.courseNotifications=value;})
+    uiContext.courseManagement&&['overview','notifications'].includes(state.view)&&get('/api/v1/me/course-notifications').then(value=>{next.courseNotifications=value;})
   ]);
   if(generation!==state.generation)return;
   if((w.access.faculty||w.access.admin)&&next.documents) next.projects=[...new Map([...next.projects,...next.documents.projects].map(p=>[p.id,p])).values()];
@@ -376,7 +386,10 @@ function render() {
   if ((personalRole()||state.role==='HOD'||state.documents||state.documentError) && !(state.role==='Coordinator'&&uiContext.courseManagement) && !nav.some(n=>n[0]==='documents')) nav.push(['documents','▣',personalRole()?'Project work':'Submissions & reviews']);
   if (!nav.some(n => n[0] === state.view)) state.view = 'overview';
   const role = w.access.admin ? (state.role==='HOD' ? 'Head of department' : 'Appointed coordinator') : w.access.operations ? 'Operational Admin' : w.access.student ? 'Student workspace' : w.access.faculty ? 'Faculty workspace' : 'Restricted identity';
-  $('#app').innerHTML = `<div class="shell"><aside class="sidebar">${brand}<div class="nav-label">${esc(state.role||'Academic')} workspace</div><nav class="nav" aria-label="Main navigation">${nav.map(([id,icon,label]) => `<button class="${state.view === id ? 'active' : ''}" data-go="${id}" ${state.view === id ? 'aria-current="page"' : ''}><span class="symbol" aria-hidden="true">${icon}</span>${label}</button>`).join('')}</nav><div class="sidebar-bottom"><strong>${esc(academicText(w.department?.name || 'SMART-PRO'))}</strong>Academic project management</div></aside><div class="main-wrap"><header class="topbar"><div class="breadcrumbs">${esc(academicText(w.department?.name || 'Department workspace'))}<strong>${esc(nav.find(n => n[0] === state.view)[2])}</strong></div><div class="account"><span class="avatar">${esc(w.actor.name.split(' ').map(v => v[0]).slice(0,2).join(''))}</span><span><strong>${esc(w.actor.name)}</strong><small>${role}</small></span>${w.roleChoices?.length>1?`<label class="role-switch">Working as<select id="activeRole">${w.roleChoices.map(r=>option(r,r,state.role)).join('')}</select></label>`:''}<button class="quiet" data-action="logout">${uiContext.demo?'Switch test account':'Sign out'}</button></div></header><main id="main" tabindex="-1" class="main ${state.busy ? 'loading' : ''}" aria-busy="${state.busy}">${state.error ? `<div class="error" role="alert">${esc(state.error)}</div>` : ''}${content()}${state.view==='overview'&&uiContext.courseManagement&&(state.courseNotifications?.tasks?.length||state.courseNotifications?.alerts?.length)?notificationPanel(state,esc,displayDate):''}<div class="footer">SMART-PRO · Academic project management</div></main></div></div>`;
+  const sectionBody = state.navigationPending
+    ? '<section class="panel navigation-loading" role="status" aria-live="polite"><span class="loading-indicator" aria-hidden="true"></span><strong>Loading your selected workspace…</strong><p class="muted">Checking the latest authorized records.</p></section>'
+    : content();
+  $('#app').innerHTML = `<div class="shell"><aside class="sidebar">${brand}<div class="nav-label">${esc(state.role||'Academic')} workspace</div><nav class="nav" aria-label="Main navigation">${nav.map(([id,icon,label]) => `<button class="${state.view === id ? 'active' : ''}" data-go="${id}" ${state.view === id ? 'aria-current="page"' : ''}><span class="symbol" aria-hidden="true">${icon}</span>${label}</button>`).join('')}</nav><div class="sidebar-bottom"><strong>${esc(academicText(w.department?.name || 'SMART-PRO'))}</strong>Academic project management</div></aside><div class="main-wrap"><header class="topbar"><div class="breadcrumbs">${esc(academicText(w.department?.name || 'Department workspace'))}<strong>${esc(nav.find(n => n[0] === state.view)[2])}</strong></div><div class="account"><span class="avatar">${esc(w.actor.name.split(' ').map(v => v[0]).slice(0,2).join(''))}</span><span><strong>${esc(w.actor.name)}</strong><small>${role}</small></span>${w.roleChoices?.length>1?`<label class="role-switch">Working as<select id="activeRole">${w.roleChoices.map(r=>option(r,r,state.role)).join('')}</select></label>`:''}<button class="quiet" data-action="logout">${uiContext.demo?'Switch test account':'Sign out'}</button></div></header><main id="main" tabindex="-1" class="main ${state.busy ? 'loading' : ''}" aria-busy="${state.busy}">${state.error ? `<div class="error" role="alert">${esc(state.error)}</div>` : ''}${sectionBody}${!state.navigationPending&&state.view==='overview'&&uiContext.courseManagement&&(state.courseNotifications?.tasks?.length||state.courseNotifications?.alerts?.length)?notificationPanel(state,esc,displayDate):''}<div class="footer">SMART-PRO · Academic project management</div></main></div></div>`;
 }
 
 function heading(eyebrow,title,subtitle) { return `<div class="heading"><div><div class="eyebrow">${esc(eyebrow)}</div><h1>${esc(title)}</h1><p class="muted">${esc(subtitle)}</p></div><div class="heading-tools">${badge(academicText(state.workspace.department?.code || 'Restricted'),'green')} ${button('Refresh','refresh','','secondary')}</div></div>`; }
@@ -595,7 +608,7 @@ window.addEventListener('resize',keepActiveNavigationVisible);
 function afterRender() {
   keepActiveNavigationVisible();
   document.querySelectorAll('[data-progress]').forEach(el=>{el.style.width=el.dataset.progress+'%';});
-  if(state.view==='teams'&&state.workspace?.enrolled)loadTeams();
+  if(!state.navigationPending&&state.view==='teams'&&state.workspace?.enrolled)loadTeams();
 }
 function fillReviewSchemes() {
  const form=document.querySelector('form[data-form="assign"]');if(!form)return;
@@ -643,14 +656,27 @@ function show() {
 async function work(fn, message, refresh=load) {
   if (state.busy) return;
   const generation = state.generation;
-  state.busy = true; state.error = ''; clearToast(); $('#main')?.classList.add('loading'); $('#main')?.setAttribute('aria-busy','true');
-  try { await fn(); if (generation !== state.generation) return; await refresh(); if (message && generation === state.generation) toast(typeof message==='function'?message():message); }
+  state.busy = true; state.error = ''; clearToast();
+  if(state.navigationPending) show();
+  else {
+    const main=$('#main');
+    main?.classList.add('loading');
+    main?.setAttribute('aria-busy','true');
+    main?.insertAdjacentHTML('afterbegin','<p class="request-status" role="status">Working on your request…</p>');
+  }
+  try {
+    await fn();
+    if(generation !== state.generation)return;
+    if(!state.navigationPending)state.studentMetadataValidUntil=0;
+    await refresh({reuseWorkspace:state.navigationPending&&!state.forceFullRefresh});
+    if(message && generation===state.generation)toast(typeof message==='function'?message():message);
+  }
   catch (error) {
     if (error.name !== 'AbortError' && generation === state.generation) {
       state.error=state.workspace?error.message:workspaceOpenError(error,uiContext.demo);
     }
   }
-  finally { if (generation === state.generation) { state.busy = false; show(); } }
+  finally { if (generation === state.generation) { state.busy = false; state.navigationPending=false; state.forceFullRefresh=false; show(); } }
 }
 
 function confirmChange(message, label) {
@@ -675,10 +701,17 @@ function focusHeading(selector) {
 
 document.addEventListener('click', async event => {
   const nav = event.target.closest('[data-go]');
-  if (nav && !state.busy) {
-    state.view = nav.dataset.go;state.openFromHistory=false;state.projectId=null;state.courseReviewId=null;
+  if (nav) {
+    // Read-only navigation can supersede an in-flight navigation, but not a write.
+    if(nav.dataset.go===state.view)return;
+    if(state.busy&&!state.navigationPending)return;
+    if(state.navigationPending){
+      controller.abort();controller=new AbortController();state.generation++;state.busy=false;
+    }
+    state.view=nav.dataset.go;state.openFromHistory=false;state.projectId=null;state.courseReviewId=null;
     if(state.role==='Coordinator'||departmentRole())writeCourseLocation();
     if(personalRole())writeWorkLocation();
+    state.navigationPending=true;
     await work(async () => {},'');
     focusHeading('#main h1');
     return;
@@ -797,6 +830,8 @@ document.addEventListener('click', async event => {
   }
   if(personalRole()&&['open-project','open-review','all-documents','work-page'].includes(action))writeWorkLocation();
   if((state.role==='Coordinator'||departmentRole())&&['open-review','open-course','close-course','course-section','return-to-course','course-project-evidence','assessment-evidence','queue-page'].includes(action))writeCourseLocation();
+  const readOnlyActions=new Set(['refresh','open-review','open-course','close-course','course-section','return-to-course','course-project-evidence','assessment-evidence','queue-page','work-page','all-documents','open-project']);
+  if(readOnlyActions.has(action)){state.navigationPending=true;state.forceFullRefresh=action==='refresh';}
   await work(async () => {
     if(['end-assignment','revoke-operation'].includes(action))await api(staffBase()+'/assignment-management','POST',action==='end-assignment'?{action:'END_ASSIGNMENT',assignmentId:target.dataset.id}:{action:'REVOKE_OPERATION',grantId:target.dataset.id});
     if(action==='revoke-faculty-delegation')await api(deptBase()+'/delegations/revoke','POST',{expectedRevision:state.academic.revision,grantId:target.dataset.id});
@@ -830,7 +865,7 @@ document.addEventListener('change', async event => {
   if(event.target.id==='staffOfferingChoice'){state.staffOfferingId=event.target.value;show();return;}
   if(event.target.id==='projectId')fillReviewSchemes();
   if(event.target.id==='offeringChoice') {controller.abort();controller=new AbortController();state.generation++;state.busy=false;state.offeringId=event.target.value;state.workPage=1;state.proposalDraft=null;state.projectId=null;if(personalRole())writeWorkLocation();state.projects=[];state.memberships=[];state.documents=null;show();await work(async()=>{},'');}
-  if (event.target.id === 'reviewSelect') { state.reviewId = event.target.value; if(personalRole())writeWorkLocation(); await work(async () => {},''); }
+  if (event.target.id === 'reviewSelect') { state.reviewId = event.target.value; if(personalRole())writeWorkLocation(); state.navigationPending=true; await work(async () => {},''); }
 });
 function filterProjects(){const term=($('#projectSearch')?.value||'').toLowerCase(),status=$('#reviewFilter')?.value||'';let count=0;document.querySelectorAll('[data-search-record]').forEach(record=>{record.hidden=!record.dataset.searchRecord.toLowerCase().includes(term)||(status&&record.dataset.reviewStatus!==status);if(!record.hidden)count++;});if($('#searchEmpty'))$('#searchEmpty').hidden=count>0;}
 document.addEventListener('change',event=>{if(event.target.id==='courseFramework'){state.selectedCourseFramework=event.target.value;show();}if(event.target.id==='reviewFilter')filterProjects();});
@@ -1055,6 +1090,7 @@ async function switchRole(role){
   state.courseReviewId=null;
   writeCourseLocation(true);writeWorkLocation(true);
   state.workspace=null;
+  state.studentMetadataValidUntil=0;
   state.proposalDraft=null;
   state.projectId=null;
   state.offeringId=null;
@@ -1094,6 +1130,7 @@ window.addEventListener('popstate',async()=>{
   state.generation++;
   state.busy=false;
   if(personalRole())readWorkLocation();else readCourseLocation();
+  state.navigationPending=true;
   await work(async()=>{},'');
   focusHeading('#main h1');
 });

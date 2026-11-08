@@ -95,6 +95,12 @@ small { font-size: .85rem; }
 .heading-tools { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; align-items: center; }
 .footer { margin-top: 28px; padding-top: 16px; border-top: 1px solid var(--line); color: var(--muted); font-size: .8rem; }
 .loading { cursor: progress; pointer-events: none; }
+.request-status { background: var(--accent-wash); color: var(--accent-deep); border: 1px solid var(--line); border-radius: var(--radius); padding: 10px 14px; margin-bottom: 16px; font-weight: 600; }
+.navigation-loading { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; min-height: 105px; }
+.navigation-loading .muted { width: 100%; margin-left: 30px; }
+.loading-indicator { display: inline-block; width: 18px; height: 18px; border: 2px solid var(--line); border-top-color: var(--accent); border-radius: 50%; animation: smartpro-spin .7s linear infinite; }
+@keyframes smartpro-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .loading-indicator { animation: none; } }
 
 .panel, .stat, .course-header {
   min-width: 0; background: var(--surface); border: 1px solid var(--line);
