@@ -780,6 +780,12 @@ def main(test_name=None):
    rid,aid,scores=self.stage(oid,pid,'stage-1',20)
    original=self.ok(self.command(oid,'PUBLISH_FINAL',dict(projectId=pid,expectedVersion=0)))['id']
    frozen=self.db.execute('SELECT to_jsonb(v) AS evidence FROM academic_result_versions v WHERE review_id=%s ORDER BY version_no',(rid,)).fetchall()
+   assigned=self.db.execute("""SELECT public.smartpro_current_project_guide(%s,%s) AS allowed,
+      (SELECT jsonb_agg(to_jsonb(g)) FROM faculty_assignments g WHERE g.project_id=%s) AS guide_assignments,
+      public.smartpro_role_choices(%s) AS roles,
+      (SELECT jsonb_agg(to_jsonb(r)) FROM department_role_assignments r WHERE r.user_id=%s) AS faculty_roles""",
+      (FACULTY,pid,pid,FACULTY,FACULTY)).fetchone()
+   self.assertTrue(assigned['allowed'],f"Assigned Guide scope in synthetic fixture: {assigned}")
    proposal=dict(projectId=pid,expectedVersion=1,studentId='00000000-0000-4000-8000-000000000001',marks='42.00',reason='Correct an incorrect published overall mark')
    self.assertEqual(self.command(oid,'REQUEST_FINAL_REVISION',proposal).status_code,403)
    k=uuid4().hex
@@ -928,4 +934,7 @@ def main(test_name=None):
   connection.close();storage.cleanup()
   with psycopg.connect(**dict(owner,dbname='postgres'),autocommit=True) as manager:
    assert name.startswith('smartpro_test_demo_acceptance_courses_');manager.execute(sql.SQL('DROP DATABASE {} WITH (FORCE)').format(sql.Identifier(name)))
-if __name__=='__main__':raise SystemExit(main())
+if __name__=='__main__':
+ if len(sys.argv)>2 or (len(sys.argv)==2 and not sys.argv[1].startswith('test_')):
+  raise SystemExit('Explicit single course test name required')
+ raise SystemExit(main(sys.argv[1] if len(sys.argv)==2 else None))

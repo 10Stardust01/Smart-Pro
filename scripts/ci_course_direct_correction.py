@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 from uuid import uuid4
 import sys
+import subprocess
 
 import psycopg
 from psycopg import sql
@@ -77,7 +78,6 @@ def main():
     config={'DATABASE_ADMIN_URL':os.environ['DATABASE_ADMIN_URL'].replace('/smartpro_test','/'+TARGET),
             'DATABASE_URL':os.environ['DATABASE_URL'].replace('/smartpro_test','/'+TARGET)}
     destination.write_text(json.dumps(config),encoding='utf-8')
-    from test_course_workflow import main as test_course
     # Each contract gets its own ephemeral clone; older full-suite tests may
     # intentionally mutate role/leadership records and require PDF binaries.
     checks=(
@@ -90,7 +90,10 @@ def main():
     failures=0
     for name in checks:
         print('Running isolated course contract:',name,flush=True)
-        if test_course(name)!=0:failures+=1
+        # New process avoids Django's cached database connection outliving its
+        # per-test disposable database, unlike calling main() repeatedly.
+        run=subprocess.run([sys.executable,str(ROOT/'scripts/test_course_workflow.py'),name],cwd=ROOT)
+        if run.returncode!=0:failures+=1
     return 1 if failures else 0
 
 
