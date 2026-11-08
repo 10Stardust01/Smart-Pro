@@ -5,6 +5,7 @@ Never connect to or reset Neon, live staging, or a non-test database.
 import json
 import os
 from pathlib import Path
+from uuid import uuid4
 import sys
 
 import psycopg
@@ -27,12 +28,13 @@ def main():
         raise RuntimeError('Only matching loopback test application database can be used')
     reset_test_database()
     create_test_login()
+    scratch='smartpro_test_demo_ci_seed_'+uuid4().hex[:10]
     with psycopg.connect(**dict(admin,dbname='postgres'),autocommit=True) as manager:
         if manager.execute('SELECT 1 FROM pg_database WHERE datname=%s',(TARGET,)).fetchone():
             raise RuntimeError('Test fixture target already exists, refusing overwrite')
         manager.execute(sql.SQL('CREATE DATABASE {} TEMPLATE {}').format(
-            sql.Identifier(TARGET),sql.Identifier('smartpro_test')))
-    with psycopg.connect(**dict(admin,dbname=TARGET),autocommit=True,row_factory=dict_row) as db:
+            sql.Identifier(scratch),sql.Identifier('smartpro_test')))
+    with psycopg.connect(**dict(admin,dbname=scratch),autocommit=True,row_factory=dict_row) as db:
         execute_file(db,ROOT/'proposals/curriculum/010_prepare.sql')
         with db.transaction():
             for suffix in [1,2]:
@@ -64,6 +66,9 @@ def main():
             db.execute("""INSERT INTO staff_department_controls(department_id,enabled)
                 VALUES(%s,true)""",(CSE,))
         seed(db)
+    with psycopg.connect(**dict(admin,dbname='postgres'),autocommit=True) as manager:
+        manager.execute(sql.SQL('CREATE DATABASE {} TEMPLATE {}').format(
+            sql.Identifier(TARGET),sql.Identifier(scratch)))
     destination=ROOT/'.test-data'/'pg-memberships.env.json'
     destination.parent.mkdir(exist_ok=True)
     config={'DATABASE_ADMIN_URL':os.environ['DATABASE_ADMIN_URL'].replace('/smartpro_test','/'+TARGET),
