@@ -16,6 +16,17 @@ const state = {alias:sessionStorage.getItem('smartpro.identity'),view:'overview'
 state.role=sessionStorage.getItem('smartpro.role.'+state.alias);
 let controller = new AbortController();
 const uiContext=await (await fetch('/api/v1/ui/context')).json();
+if(uiContext.reviewerAuth && !uiContext.identities.includes(state.alias)){
+  state.alias=null;
+  state.role=null;
+  sessionStorage.removeItem('smartpro.identity');
+}
+function csrfToken(){
+  return decodeURIComponent((document.cookie.match(/(?:^|;\s*)csrftoken=([^;]*)/)||[])[1]||'');
+}
+function reviewerHeaders(alias){
+  return uiContext.reviewerAuth ? {'X-CSRFToken':csrfToken()} : {'X-Demo-User':alias};
+}
 const identities=uiContext.identities.map(alias=>[alias,uiContext.people?.[alias]||alias.replaceAll('-',' '),(uiContext.responsibilities?.[alias]?.join(' · ')||'Restricted access'),(uiContext.people?.[alias]||alias).split(' ').map(p=>p[0]).slice(0,2).join('')]);
 const courseSections = new Set(['overview','appointments','requirements','plan','evaluation','assignments','submissions','deadlines','results','history']);
 const departmentRole=()=>['Admin','HOD'].includes(state.role);
@@ -128,7 +139,7 @@ const displayDate = value => value ? new Date(value).toLocaleString(undefined, {
 const localDate = value => { const d = new Date(value); return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0,16); };
 
 async function api(path, method = 'GET', body, context = {alias:state.alias,role:state.role,signal:controller.signal}) {
-  const headers = {'X-Demo-User':context.alias, Accept:'application/json'};
+  const headers = {Accept:'application/json',...reviewerHeaders(context.alias)};
   if(context.role)headers['X-Smartpro-Role']=context.role;
   const privateCommand=path.endsWith('/intake')||path.includes('/records/')||path.endsWith('/appointment-candidates')||path.endsWith('/leadership')&&body?.action==='HISTORY';
   const fingerprint = privateCommand?'':`${context.alias}:${path}:${JSON.stringify(body)}`;
@@ -340,7 +351,7 @@ function toast(text) {
 }
 
 function login() {
-  $('#app').innerHTML = `<div class="login"><section class="login-story">${brand}<div class="eyebrow">ONE DEPARTMENT. EVERY MILESTONE.</div><h1>Good projects start<br>with a connected<br>department.</h1><p>A shared place for students, faculty and department leaders to move from an idea to a confident evaluation.</p><div class="story-bottom">ENROLL &nbsp; / &nbsp; COLLABORATE &nbsp; / &nbsp; BUILD &nbsp; / &nbsp; EVALUATE</div></section><main class="login-form" id="main" tabindex="-1"><div class="login-box"><div class="eyebrow">${uiContext.demo?'LOCAL DEVELOPMENT':'SMART-PRO'}</div><h1>${uiContext.demo?'Choose your workspace':'Sign-in configuration pending'}</h1><p>${uiContext.demo?'Use an explicit test identity to exercise real departmental workflows.':'Verified institutional sign-in must be configured before access is enabled.'}</p>${state.error ? `<div class="error" role="alert">${esc(state.error)}</div>` : ''}${identities.map(([alias,name,description,initials]) => `<button class="person-option" data-action="login" data-alias="${alias}"><span class="avatar">${initials}</span><span><strong>${name}</strong><small>${description}</small></span><span>→</span></button>`).join('')}<p class="login-foot">${uiContext.demo?'Synthetic test identities only. Real-user access remains disabled.':'Verified institutional sign-in is required. Contact your application administrator.'}</p></div></main></div>`;
+  $('#app').innerHTML = `<div class="login"><section class="login-story">${brand}<div class="eyebrow">ONE DEPARTMENT. EVERY MILESTONE.</div><h1>Good projects start<br>with a connected<br>department.</h1><p>A shared place for students, faculty and department leaders to move from an idea to a confident evaluation.</p><div class="story-bottom">ENROLL &nbsp; / &nbsp; COLLABORATE &nbsp; / &nbsp; BUILD &nbsp; / &nbsp; EVALUATE</div></section><main class="login-form" id="main" tabindex="-1"><div class="login-box"><div class="eyebrow">${uiContext.demo?'LOCAL DEVELOPMENT':uiContext.reviewerAuth?'AUTHORIZED REVIEWER':'SMART-PRO'}</div><h1>${uiContext.demo?'Choose your workspace':uiContext.reviewerAuth?'Continue to your workspace':'Sign-in configuration pending'}</h1><p>${uiContext.demo?'Use an explicit test identity to exercise real departmental workflows.':uiContext.reviewerAuth?'This reviewer session has been verified. Continue with your assigned academic responsibilities.':'Verified institutional sign-in must be configured before access is enabled.'}</p>${state.error ? `<div class="error" role="alert">${esc(state.error)}</div>` : ''}${identities.map(([alias,name,description,initials]) => `<button class="person-option" data-action="login" data-alias="${alias}"><span class="avatar">${initials}</span><span><strong>${name}</strong><small>${description}</small></span><span>→</span></button>`).join('')}<p class="login-foot">${uiContext.demo?'Synthetic test identities only. Real-user access remains disabled.':uiContext.reviewerAuth?'Permissions are checked on every request.':'Verified institutional sign-in is required. Contact your application administrator.'}</p></div></main></div>`;
 }
 
 function navigation() {
@@ -715,7 +726,7 @@ document.addEventListener('click', async event => {
     try {
       const context={alias:state.alias,role:state.role,generation:state.generation,signal:controller.signal};
       const page=Number(target.dataset.page||1);
-      const response=await fetch(`/api/v1/document-versions/${target.dataset.id}/content${action==='download-document'?'?download=1':'?preview=1&page='+page}`,{headers:{'X-Demo-User':context.alias,...(context.role?{'X-Smartpro-Role':context.role}:{})},signal:context.signal});
+      const response=await fetch(`/api/v1/document-versions/${target.dataset.id}/content${action==='download-document'?'?download=1':'?preview=1&page='+page}`,{headers:{...reviewerHeaders(context.alias),...(context.role?{'X-Smartpro-Role':context.role}:{})},signal:context.signal});
       if(!response.ok) throw new Error((await response.json()).detail?.message||'Document access denied');
       const blob=await response.blob(); if(context.generation!==state.generation) return;
       if(action==='download-document') {
@@ -747,6 +758,13 @@ document.addEventListener('click', async event => {
   if(['end-assignment','revoke-operation','revoke-faculty-delegation'].includes(action)&&!target.dataset.confirmed){target.insertAdjacentHTML('afterend',`<button class="danger" data-action="${action}" data-id="${target.dataset.id}" data-confirmed="yes">Confirm and preserve history</button>`);target.disabled=true;return;}
   if(action==='revoke-coordinator'&&!target.dataset.confirmed){target.insertAdjacentHTML('afterend',`<button class="danger" data-action="revoke-coordinator" data-id="${target.dataset.id}" data-confirmed="yes">Confirm revocation and end delegated access</button>`);target.disabled=true;return;}
   if(action==='approve-setup'&&!target.dataset.confirmed){const article=target.closest('article');article.querySelector('details').open=true;target.insertAdjacentHTML('afterend',`<button class="primary" data-action="approve-setup" data-id="${target.dataset.id}" data-confirmed="yes">Confirm academic authorization</button>`);target.disabled=true;return;}
+  if (action === 'logout' && uiContext.reviewerAuth) {
+    const response=await fetch('/reviewer/logout',{method:'POST',headers:reviewerHeaders(state.alias)});
+    if(!response.ok){state.error='Sign-out failed. Please try again.';show();return;}
+    sessionStorage.removeItem('smartpro.identity');
+    location.assign('/reviewer/login');
+    return;
+  }
   if (action === 'logout' || action === 'login') {
     state.intakeDraft=null;state.intakeOutcome=null;state.departmentRecordId=null;state.candidateQuery='';state.candidatePage=1;state.targetQuery='';state.targetPage=1;state.recordScope='directory';state.departmentOfferingSearch='';state.departmentAvailability='ALL';state.departmentOfferingPage=1;state.appointmentPage=1;state.leadershipPage=1;state.leadershipSearch='';state.intakeQuery='';state.intakeKind='STUDENT';state.intakePage=1;state.batchPage=1;state.workQuery='';state.workPage=1;state.workOffering='';
     if(previewURL) URL.revokeObjectURL(previewURL); state.offeringId=null;state.projectId=null;state.staffOfferingId=null;state.role=null;state.proposalDraft=null;
@@ -997,7 +1015,7 @@ document.addEventListener('submit', async event => {
       const pending='smartpro.upload.'+context.alias+':'+form.dataset.project+':'+(form.dataset.requirement||'SYNOPSIS')+':'+file.name+':'+file.size+':'+file.lastModified;
       const key=sessionStorage.getItem(pending)||crypto.randomUUID();sessionStorage.setItem(pending,key);
       const body=new FormData();body.append('file',file);
-      await pdfUploadResult(fetch(documentsBase()+`/projects/${form.dataset.project}/uploads${form.dataset.requirement?'?requirementKey='+encodeURIComponent(form.dataset.requirement):''}`,{method:'POST',headers:{'X-Demo-User':context.alias,...(context.role?{'X-Smartpro-Role':context.role}:{}),'Idempotency-Key':key},body,signal:context.signal}),()=>sessionStorage.removeItem(pending));
+      await pdfUploadResult(fetch(documentsBase()+`/projects/${form.dataset.project}/uploads${form.dataset.requirement?'?requirementKey='+encodeURIComponent(form.dataset.requirement):''}`,{method:'POST',headers:{...reviewerHeaders(context.alias),...(context.role?{'X-Smartpro-Role':context.role}:{}),'Idempotency-Key':key},body,signal:context.signal}),()=>sessionStorage.removeItem(pending));
       outcome='PDF version saved. Submit the saved version for faculty review.';
     }
     if (type === 'create-team') await api('/api/v1/teams','POST',{offeringId:selectedOffering(),name:values.name});
@@ -1058,7 +1076,7 @@ async function submitProposal(draft){
   const project=await api('/api/v1/projects','POST',{offeringId:draft.offeringId,teamId:draft.teamId,title:draft.title,description:draft.description},{...context,key:pending.key});
   if(draft.file){
    const body=new FormData();body.append('file',draft.file);
-   const result=await pdfUploadResult(fetch(`/api/v1/documents/departments/${dept}/projects/${project.id}/uploads`,{method:'POST',headers:{'X-Demo-User':context.alias,'X-Smartpro-Role':context.role,'Idempotency-Key':pending.key+':file'},body,signal:context.signal}));
+   const result=await pdfUploadResult(fetch(`/api/v1/documents/departments/${dept}/projects/${project.id}/uploads`,{method:'POST',headers:{...reviewerHeaders(context.alias),'X-Smartpro-Role':context.role,'Idempotency-Key':pending.key+':file'},body,signal:context.signal}));
    const documents=await api(`/api/v1/documents/departments/${dept}?project=${project.id}`,'GET',undefined,context);
    const current=documents.projects.find(p=>p.id===project.id);
    if(!pending.caseVersion){pending.caseVersion=current.case.version;sessionStorage.setItem(cacheKey,JSON.stringify(pending));}
