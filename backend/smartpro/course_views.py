@@ -107,9 +107,11 @@ def command(request,offering_id):
     if action in ('AUTHORIZE_CORRECTION','AUTHORIZE_FINAL_REVISION') and type(body['approved']) is not bool:
         raise ValidationError('Choose a specific decision')
     if action=='REQUEST_FINAL_REVISION':
-        body['marks']=serializers.RegexField(regex=r'^[0-9]{1,8}([.][0-9]{1,4})?    body['_actingRole']=request.user.role
-    if exceptional:
-        body['_exceptional'] = True
+        body['marks']=serializers.RegexField(regex=r'^[0-9]{1,8}([.][0-9]{1,4})?$',max_length=20).run_validation(body['marks'])
+        body['reason']=serializers.CharField(min_length=1,max_length=500,trim_whitespace=True).run_validation(body['reason'])
+    if action=='REOPEN_SYNOPSIS':
+        body['comment']=serializers.CharField(max_length=4000,allow_blank=True).run_validation(body['comment'])
+    body['_actingRole']=request.user.role
     service='smartpro_course_command'
     if action=='DEADLINE':
         service='smartpro_course_deadline_command'
