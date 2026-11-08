@@ -20,6 +20,7 @@ FRONTEND = ROOT / "frontend"
 OUTPUT = ROOT / "browser-artifacts"
 ALIAS = "browser-test"
 DEPARTMENT_ID = "10000000-0000-4000-8000-000000000001"
+OFFERING_ID = "00000000-0000-4000-8000-000000000123"
 ROLES = ("Student", "Faculty", "Coordinator", "HOD", "Admin")
 
 
@@ -91,9 +92,23 @@ def fixture(role: str, path: str) -> dict:
     if path == "/api/v1/workspace":
         return workspace(role)
     if path.startswith("/api/v1/courses/departments/"):
+        course = {
+            "id": OFFERING_ID, "label": "Project Work", "semester_key": "Semester 3",
+            "cycle_label": "2026–27", "has_coordinator": True, "availability": "ACTIVE",
+            "responsibilities": ["OVERVIEW", "SUBMISSIONS", "RESULTS"],
+            "effective_count": 1, "appointments": [],
+        }
+        offerings = [course] if role == "Coordinator" else []
         return {
-            "offerings": [], "page": 1, "total": 0,
+            "offerings": offerings, "page": 1, "total": len(offerings),
             "appointmentPage": 1, "appointmentTotal": 0, "faculty": [],
+        }
+    if role == "Coordinator" and path.endswith("/details"):
+        return {
+            "studentCount": 42, "teamCount": 12, "projectCount": 10,
+            "reviewProgress": {"published": 2, "total": 4},
+            "submissionProgress": {"awaitingReview": 2, "awaitingRevision": 1},
+            "overallResults": [], "requirements": [], "history": [],
         }
     if path.endswith("/appointment-candidates"):
         return {"records": [], "total": 0, "page": 1}
@@ -132,10 +147,17 @@ def exercise(browser, origin: str, role: str, mobile: bool = False) -> dict:
     page.on("pageerror", lambda error: errors.append(str(error)))
     label = role.lower() + ("-mobile" if mobile else "-desktop")
     try:
-        page.goto(origin, wait_until="domcontentloaded", timeout=20000)
+        entry = origin + f"?offering={OFFERING_ID}&section=overview" if role == "Coordinator" else origin
+        page.goto(entry, wait_until="domcontentloaded", timeout=20000)
         expect(page.locator(".sidebar")).to_be_visible(timeout=15000)
         expect(page.locator("nav[aria-label='Main navigation'] button").first).to_be_visible()
         expect(page.locator("main#main h1").first).to_be_visible()
+        if role == "Coordinator":
+            expect(page.get_by_text("Pending submissions")).to_be_visible(timeout=15000)
+            expect(page.get_by_text("Your responsibilities")).to_have_count(0)
+            expect(page.locator("[data-faculty-reference]")).to_have_count(0)
+        if role in ("Student", "Faculty", "HOD", "Admin"):
+            expect(page.locator(".dashboard-hero")).to_be_visible(timeout=15000)
         page.screenshot(path=str(OUTPUT / f"{label}-overview.png"), full_page=True)
 
         target = "enrollment" if role == "Student" else "audit"
