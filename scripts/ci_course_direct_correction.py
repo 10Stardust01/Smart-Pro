@@ -65,6 +65,9 @@ def main():
                 VALUES(%s,true)""",(CSE,))
             db.execute("""INSERT INTO staff_department_controls(department_id,enabled)
                 VALUES(%s,true)""",(CSE,))
+            db.execute("""INSERT INTO academic_evaluation_policies(
+                department_id,version_no,evaluator_quorum,aggregation,evaluator_weights,approved_by,reason)
+                VALUES(%s,1,1,'MEAN','{}'::jsonb,%s,'Synthetic CI evaluation policy')""",(CSE,HOD))
         seed(db)
     with psycopg.connect(**dict(admin,dbname='postgres'),autocommit=True) as manager:
         manager.execute(sql.SQL('CREATE DATABASE {} TEMPLATE {}').format(
