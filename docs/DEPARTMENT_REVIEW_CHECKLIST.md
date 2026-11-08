@@ -5,10 +5,8 @@ Use the department's approved test accounts and sample records for the walkthrou
 - [ ] **HOD and course coordinator.** Check that each offering has the correct
   coordinator, review stages, marking rules, submission deadlines and result
   publishers. Confirm that each coordinator sees the offerings assigned to them.
-- [ ] **HOD and Registrar.** Record who can approve and enter a faculty appointment.
-  Decide who can change its end date, end it early or reinstate it, and what
-  approval must be recorded. Confirm how the department will handle an urgent
-  access removal while retaining marks already submitted.
+- [ ] **Department Admin.** Test changing and terminating a faculty appointment, as authorized by the product owner's 9 November 2026 decision. Confirm current access changes correctly while previous marks and appointment history remain intact. No HOD or independent co-approval is specified. Reinstatement is not yet decided.
+- [ ] **HOD and Registrar.** Confirm account provisioning and institutional identity evidence; do not re-open the already decided Admin amendment/termination authority.
 - [ ] **HOD and Admin.** Review the Admin replacement and ordinary HOD handover
   using test accounts. Name the institutional approver for exceptional succession
   if the HOD cannot resign, and the authorized operator for the first HOD.
