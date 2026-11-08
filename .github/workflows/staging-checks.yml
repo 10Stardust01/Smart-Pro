@@ -102,7 +102,10 @@ jobs:
               assert login.status_code == 200, login.status_code
               assert login.headers["Referrer-Policy"] == "same-origin"
               assert "csrftoken" in client.cookies
-              payload = {"username": "student", "password": password}
+              import re
+              match = re.search(r'name="csrfmiddlewaretoken" value="([^"]+)"', login.content.decode("utf-8"))
+              assert match, "Hidden CSRF form token missing"
+              payload = {"username": "student", "password": password, "csrfmiddlewaretoken": match.group(1)}
               missing_referer = client.post("/reviewer/login", payload, secure=True)
               assert missing_referer.status_code == 403, missing_referer.status_code
               authorized = client.post(
