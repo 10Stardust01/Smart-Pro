@@ -7,9 +7,6 @@ import logging
 import os
 from uuid import UUID
 
-import boto3
-from botocore.config import Config
-from botocore.exceptions import BotoCoreError, ClientError
 
 logger = logging.getLogger(__name__)
 MAX_BYTES = 2 * 1024 * 1024
@@ -39,6 +36,10 @@ def _validate_key(key):
 
 
 def _client():
+    # S3 is an optional hosted extra; local development must import without boto3.
+    import boto3
+    from botocore.config import Config
+
     if not config_ready():
         raise RuntimeError("S3 private storage is not configured")
     return boto3.client(
@@ -59,6 +60,7 @@ def _client():
 
 def read(key):
     """Read only a bounded private PDF; caller must authorize via SQL first."""
+    from botocore.exceptions import BotoCoreError, ClientError
     key = _validate_key(key)
     try:
         response = _client().get_object(Bucket=os.environ["SMARTPRO_S3_BUCKET"], Key=key)
@@ -77,6 +79,7 @@ def read(key):
 
 def put_immutable(key, content, expected_sha256):
     """Publish bytes once, never overwrite different bytes on retries."""
+    from botocore.exceptions import BotoCoreError, ClientError
     key = _validate_key(key)
     if not isinstance(content, (bytes, bytearray)) or len(content) > MAX_BYTES:
         raise ValueError("Private PDF must be at most 2 MiB")
