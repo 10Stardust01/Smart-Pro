@@ -1,0 +1,4 @@
+# Render-hosted SMART-PRO WSGI runtime.
+# Keep application dependencies identical to local; add a production WSGI server.
+-r requirements.txt
+gunicorn==23.0.0
