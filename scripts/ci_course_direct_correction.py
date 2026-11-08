@@ -78,7 +78,20 @@ def main():
             'DATABASE_URL':os.environ['DATABASE_URL'].replace('/smartpro_test','/'+TARGET)}
     destination.write_text(json.dumps(config),encoding='utf-8')
     from test_course_workflow import main as test_course
-    return test_course()
+    # Each contract gets its own ephemeral clone; older full-suite tests may
+    # intentionally mutate role/leadership records and require PDF binaries.
+    checks=(
+        'test_direct_correction_does_not_reopen_stage_evidence',
+        'test_guide_coordinator_same_person_can_propose_and_approve',
+        'test_decline_and_stale_direct_correction_do_not_change_previous_release',
+        'test_finalized_correction_requires_specific_independent_authorization',
+        'test_coordinator_corrects_own_finalized_marks_before_overall_release',
+    )
+    failures=0
+    for name in checks:
+        print('Running isolated course contract:',name,flush=True)
+        if test_course(name)!=0:failures+=1
+    return 1 if failures else 0
 
 
 if __name__=='__main__':
