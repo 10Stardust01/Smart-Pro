@@ -9,8 +9,11 @@ from . import document_views
 from . import setup_views
 from . import operation_views, lifecycle_views
 from . import course_views
+from . import reviewer_auth
 
 urlpatterns = [
+    path("reviewer/login", reviewer_auth.login),
+    path("reviewer/logout", reviewer_auth.logout),
     path("health/live", health.live),
     path("health/ready", health.ready),
     path('api/v1/faculty-reference/departments/<uuid:department_id>', demo_views.faculty_reference),
