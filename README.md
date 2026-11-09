@@ -35,7 +35,8 @@ database, and immutable academic history intact.
 
 **Correction alignment:** reviewed source includes 059, 060, 061, forward-only 062 correction paging and
 candidate 063 Admin-scoped non-HOD Faculty management (PR #7), but Neon
-staging already has **059 and 060 only**. The remaining **061 request-visibility
+**main** staging still has **059 and 060 only**; the existing Neon validation
+branch successfully rehearsed **061–063**. The remaining **061 request-visibility
 change is not installed** on Neon main or the existing validation branch.
 Do not re-run 059 or 060, or mistake a code merge for a hosted release. See
 [post-publication correction alignment](docs/POST_PUBLICATION_CORRECTION_ALIGNMENT.md)

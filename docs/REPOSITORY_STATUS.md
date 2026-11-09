@@ -1,3 +1,13 @@
+## 10 November 2026 — forward-only 061–063 Neon Free validation completed
+
+The existing Neon validation branch now contains candidates 059–063. Only
+061, 062 and 063 were added, in separate atomic transactions; Neon main and
+Render remained unchanged at 059/060. Published overall/stage versions, audit
+rows and READY file metadata were unchanged, and scoped Coordinator/Admin reads
+succeeded. Function ownership, fixed search paths and grants were inspected.
+This does **not** prove recoverability of the three underlying private PDFs.
+[Detailed evidence and remaining hosted release gates](NEON_061_063_VALIDATION_20261110.md).
+
 ## Candidate 063: non-HOD Faculty role and departmental details (10 Nov 2026)
 
 Candidate 063 (PR #7) introduces only Department Admin authority over other
