@@ -33,7 +33,7 @@ trial credits, or add charge-incurring services. Verify the relevant plan and
 limits before every infrastructure change. Keep the existing live service,
 database, and immutable academic history intact.
 
-**Correction alignment:** reviewed source includes 059, 060 and 061, but Neon
+**Correction alignment:** reviewed source includes 059, 060, 061, and forward-only 062 correction paging, but Neon
 staging already has **059 and 060 only**. The remaining **061 request-visibility
 change is not installed** on Neon main or the existing validation branch.
 Do not re-run 059 or 060, or mistake a code merge for a hosted release. See

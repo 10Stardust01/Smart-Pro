@@ -1,3 +1,18 @@
+## Correction pagination candidate 062 (10 November 2026)
+
+The new 062 source adds two role-scoped read functions: one selected Guide
+project and one offering's exceptional correction request pages, 25 per page.
+An anchor timestamp keeps newly submitted requests from shifting existing
+pages. Existing Guide project-work listing was already paginated, so the
+correction form no longer depends on the legacy 100-project correction list.
+The old 061 API shape remains for compatibility but the new UI uses 062.
+Isolated PostgreSQL contracts exercised 126 correction requests, 126 additional
+Guide projects, role restrictions, and original release preservation.
+[PR #6](https://github.com/10Stardust01/Smart-Pro/pull/6) contains the tested
+code; this has **not** been installed in Neon or deployed to Render. The
+existing staged database has 059/060, and must receive 061 before 062 through
+a controlled forward-only migration with paired database/PDF recovery checks.
+
 # Source consolidation and hosted state (10 November 2026)
 
 [Consolidated development checkpoint](CONSOLIDATED_DEVELOPMENT_CHECKPOINT.md)

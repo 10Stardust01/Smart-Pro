@@ -28,7 +28,7 @@ def main(test_name=None):
   @classmethod
   def setUpClass(cls):
    cls.db=psycopg.connect(**dict(owner,dbname=name),autocommit=True,row_factory=dict_row);install_documents(cls.db)
-   for candidate in ['037_course_coordination.sql','038_course_assessment_lifecycle.sql','039_course_deadlines_notifications.sql','040_course_integration.sql','041_course_scope_guards.sql','042_course_authorized_operations.sql','043_runtime_function_grants.sql','044_coordinator_own_corrections.sql','045_admin_course_appointments.sql','046_department_leadership.sql','047_department_intake.sql','048_course_evaluation_queue.sql','049_paginated_evaluation_queue.sql','050_document_project_pages.sql','051_department_intake_pages.sql','052_department_directory.sql','053_department_import_outcomes.sql','054_department_offering_pages.sql','055_leadership_history_pages.sql','056_coordinator_catalog_scope_prefilter.sql','057_department_identity_navigation.sql','058_course_command_lock_order.sql','059_published_correction_authority.sql','060_published_stage_evidence_rerelease.sql','061_published_correction_read_visibility.sql']:execute_file(cls.db,ROOT/'proposals/curriculum'/candidate)
+   for candidate in ['037_course_coordination.sql','038_course_assessment_lifecycle.sql','039_course_deadlines_notifications.sql','040_course_integration.sql','041_course_scope_guards.sql','042_course_authorized_operations.sql','043_runtime_function_grants.sql','044_coordinator_own_corrections.sql','045_admin_course_appointments.sql','046_department_leadership.sql','047_department_intake.sql','048_course_evaluation_queue.sql','049_paginated_evaluation_queue.sql','050_document_project_pages.sql','051_department_intake_pages.sql','052_department_directory.sql','053_department_import_outcomes.sql','054_department_offering_pages.sql','055_leadership_history_pages.sql','056_coordinator_catalog_scope_prefilter.sql','057_department_identity_navigation.sql','058_course_command_lock_order.sql','059_published_correction_authority.sql','060_published_stage_evidence_rerelease.sql','061_published_correction_read_visibility.sql','062_paged_published_correction_reads.sql']:execute_file(cls.db,ROOT/'proposals/curriculum'/candidate)
   @classmethod
   def tearDownClass(cls):cls.db.close();connection.close()
   def client(self,who='staff-policy',role=None):
@@ -843,6 +843,71 @@ def main(test_name=None):
    self.assertEqual(str(rows[1]['supersedes_id']),initial)
    self.assertEqual([x['results']['00000000-0000-4000-8000-000000000001'] for x in rows],['40.00','42.00'])
    self.assertNotEqual(rows[0]['sources'],rows[1]['sources'])
+
+  def test_paged_published_corrections_over_125_and_authority(self):
+   """Use isolated synthetic rows to expose old 100-item truncation."""
+   from urllib.parse import quote
+   oid=self.offering()
+   self.ok(self.appoint(oid,uid='00000000-0000-4000-8000-000000000008'))
+   pid=self.project(oid);self.framework(oid);self.stage(oid,pid,'stage-1',20)
+   original=self.ok(self.command(oid,'PUBLISH_FINAL',dict(projectId=pid,expectedVersion=0)))['id']
+   base=f'/api/v1/courses/offerings/{oid}/final-revisions'
+   guide='/api/v1/me/published-corrections'
+   ids=[]
+   for n in range(126):
+    ids.append(self.ok(self.command(oid,'REQUEST_FINAL_REVISION',dict(
+      projectId=pid,expectedVersion=1,
+      studentId='00000000-0000-4000-8000-000000000001',
+      marks='42.00',reason='Synthetic request '+str(n)),who='faculty-a'))['id'])
+   head=self.ok(self.client('coordinator').get(base+'?page=1'))
+   self.assertEqual((head['total'],len(head['requests']),head['pageSize']),(126,25,25))
+   seen=[]
+   for n in range(1,7):
+    row=self.ok(self.client('coordinator').get(
+      base+'?page='+str(n)+'&anchor='+quote(head['anchor'],safe='')))
+    seen.extend(q['id'] for q in row['requests'])
+   self.assertEqual(set(seen),set(ids))
+   self.assertEqual(len(seen),126)
+   self.assertEqual(self.client('student-a').get(base).status_code,403)
+   self.assertEqual(self.client('faculty-a').get(base).status_code,403)
+   self.assertEqual(self.client('coordinator').get(base+'?page=0').status_code,400)
+   first=self.ok(self.client('faculty-a').get(guide+f'?projectId={pid}'))
+   self.assertEqual((first['project']['projectId'],first['total']), (pid,126))
+   seen=[]
+   for n in range(1,7):
+    row=self.ok(self.client('faculty-a').get(
+      guide+f'?projectId={pid}&page={n}&anchor='+quote(first['anchor'],safe='')))
+    seen.extend(q['id'] for q in row['requests'])
+   self.assertEqual(set(seen),set(ids))
+   self.assertEqual(self.client('student-a').get(guide+f'?projectId={pid}').status_code,403)
+   # All links must point to the current Guide, not simply any faculty member.
+   late=None
+   for n in range(126):
+    team=self.db.execute("""INSERT INTO public.teams
+     (department_id,cycle_id,curriculum_offering_id,name)
+     SELECT t.department_id,t.cycle_id,t.curriculum_offering_id,%s
+     FROM public.teams t JOIN public.projects p ON p.team_id=t.id
+     WHERE p.id=%s RETURNING id""",(f'Synthetic correction team {n}',pid)).fetchone()['id']
+    late=self.db.execute("""INSERT INTO public.projects
+     (department_id,cycle_id,team_id,project_type,policy_version_id,project_code,title)
+     SELECT department_id,cycle_id,%s,project_type,policy_version_id,%s,%s
+     FROM public.projects WHERE id=%s RETURNING id""",
+     (team,'COR-PAGE-'+uuid4().hex[:16],f'ZZZ correction project {n:03d}',pid)).fetchone()['id']
+    self.db.execute("INSERT INTO public.faculty_assignments(project_id,faculty_user_id,assignment_type) VALUES(%s,%s,'GUIDE')",(late,FACULTY))
+    self.db.execute("""INSERT INTO public.course_final_results(project_id,plan_id,version,sources,results,actor_id)
+     SELECT %s,plan_id,version,sources,results,actor_id FROM public.course_final_results
+     WHERE project_id=%s ORDER BY version DESC LIMIT 1""",(late,pid))
+   legacy=self.ok(self.client('faculty-a').get(guide))
+   self.assertNotIn(str(late),[p['projectId'] for p in legacy['projects']])
+   scoped=self.ok(self.client('faculty-a').get(guide+f'?projectId={late}'))
+   self.assertEqual(scoped['project']['projectId'],str(late))
+   self.assertIsNone(self.ok(self.client('faculty-a').get(guide+f'?projectId={uuid4()}'))['project'])
+   self.assertEqual(self.db.execute("SELECT count(*) AS n FROM course_final_results WHERE project_id=%s",(pid,)).fetchone()['n'],1)
+   self.ok(self.command(oid,'AUTHORIZE_FINAL_REVISION',dict(requestId=ids[0],approved=True),who='coordinator'))
+   rows=self.db.execute("SELECT id,supersedes_id FROM course_final_results WHERE project_id=%s ORDER BY version",(pid,)).fetchall()
+   self.assertEqual(len(rows),2)
+   self.assertEqual(str(rows[0]['id']),original)
+   self.assertEqual(rows[1]['supersedes_id'],rows[0]['id'])
 
   def test_guide_coordinator_same_person_can_propose_and_approve(self):
    oid=self.offering();self.ok(self.appoint(oid,uid='00000000-0000-4000-8000-000000000008'))
