@@ -1,3 +1,11 @@
+> **Forward-only 062 release warning (10 Nov 2026):** candidate 062 adds
+> scoped 25-row published-correction reads; it requires candidate **061**.
+> Connected Neon staging main and validation already have **059/060**, but
+> neither 061 nor 062. Never reinstall 059/060. First rehearse 061 **then 062**
+> on the existing validation branch only with authorization and a recorded
+> paired database/PDF recovery plan; hosted rollout/acceptance is separately
+> gated in [issue #4](https://github.com/10Stardust01/Smart-Pro/issues/4).
+
 # SMART-PRO deployment and recovery
 
 Use a reviewed local commit and an explicitly provisioned PostgreSQL database.
