@@ -28,7 +28,7 @@ def main(test_name=None):
   @classmethod
   def setUpClass(cls):
    cls.db=psycopg.connect(**dict(owner,dbname=name),autocommit=True,row_factory=dict_row);install_documents(cls.db)
-   for candidate in ['037_course_coordination.sql','038_course_assessment_lifecycle.sql','039_course_deadlines_notifications.sql','040_course_integration.sql','041_course_scope_guards.sql','042_course_authorized_operations.sql','043_runtime_function_grants.sql','044_coordinator_own_corrections.sql','045_admin_course_appointments.sql','046_department_leadership.sql','047_department_intake.sql','048_course_evaluation_queue.sql','049_paginated_evaluation_queue.sql','050_document_project_pages.sql','051_department_intake_pages.sql','052_department_directory.sql','053_department_import_outcomes.sql','054_department_offering_pages.sql','055_leadership_history_pages.sql','056_coordinator_catalog_scope_prefilter.sql','057_department_identity_navigation.sql','058_course_command_lock_order.sql','059_published_correction_authority.sql','060_published_stage_evidence_rerelease.sql','061_published_correction_read_visibility.sql','062_paged_published_correction_reads.sql']:execute_file(cls.db,ROOT/'proposals/curriculum'/candidate)
+   for candidate in ['037_course_coordination.sql','038_course_assessment_lifecycle.sql','039_course_deadlines_notifications.sql','040_course_integration.sql','041_course_scope_guards.sql','042_course_authorized_operations.sql','043_runtime_function_grants.sql','044_coordinator_own_corrections.sql','045_admin_course_appointments.sql','046_department_leadership.sql','047_department_intake.sql','048_course_evaluation_queue.sql','049_paginated_evaluation_queue.sql','050_document_project_pages.sql','051_department_intake_pages.sql','052_department_directory.sql','053_department_import_outcomes.sql','054_department_offering_pages.sql','055_leadership_history_pages.sql','056_coordinator_catalog_scope_prefilter.sql','057_department_identity_navigation.sql','058_course_command_lock_order.sql','059_published_correction_authority.sql','060_published_stage_evidence_rerelease.sql','061_published_correction_read_visibility.sql','062_paged_published_correction_reads.sql','063_department_faculty_management.sql']:execute_file(cls.db,ROOT/'proposals/curriculum'/candidate)
   @classmethod
   def tearDownClass(cls):cls.db.close();connection.close()
   def client(self,who='staff-policy',role=None):
@@ -648,6 +648,89 @@ def main(test_name=None):
     self.assertTrue(selected['appointments'][0]['actor_name'])
    self.assertEqual(self.client('student-a').get(catalog,dict(page=1)).status_code,403)
    self.assertEqual(admin.get(catalog.replace(str(CSE),str(uuid4())),dict(page=1)).status_code,403)
+  def test_non_hod_faculty_details_and_access_term_history(self):
+   """Isolated API check for Admin detail changes and Faculty term lifecycle."""
+   department=f'/api/v1/staff/departments/{CSE}'
+   person=str(self.db.execute(
+      "INSERT INTO users(display_name) VALUES('Original managed faculty') RETURNING id"
+   ).fetchone()['id'])
+   first_term=str(self.db.execute("""
+      INSERT INTO department_role_assignments(user_id,department_id,role_code)
+      VALUES(%s,%s,'FACULTY') RETURNING id""",(person,CSE)).fetchone()['id'])
+   url=department+'/records/'+person
+   admin=self.client('department-admin')
+   record=lambda:self.ok(admin.get(url))
+   current=record()
+   self.assertTrue(current['faculty'])
+   self.assertEqual(current['facultyAdmin']['details']['revision'],0)
+   self.assertTrue(current['facultyAdmin']['canManage'])
+   self.assertEqual(self.client('faculty-a').get(url).status_code,403)
+   self.assertEqual(admin.get(f'/api/v1/staff/departments/{uuid4()}/records/{person}').status_code,403)
+   def apply(action,**values):
+    return self.post(url,dict(action=action,**values),who='department-admin')
+   body=dict(displayName='Departmental faculty name',designation='Assistant Professor',
+       contactEmail='managed@example.edu',expectedRevision=0,reason='Correct faculty details')
+   key=uuid4().hex
+   changed=self.ok(self.post(url,dict(action='EDIT_DETAILS',**body),who='department-admin',key=key))
+   self.assertEqual(changed['record']['details']['revision'],1)
+   self.assertEqual(changed['record']['details']['displayName'],body['displayName'])
+   self.assertEqual(self.ok(self.post(url,dict(action='EDIT_DETAILS',**body),
+       who='department-admin',key=key)),changed)
+   self.assertEqual(apply('EDIT_DETAILS',**body).status_code,409)
+   self.assertEqual(self.db.execute(
+       'SELECT display_name FROM users WHERE id=%s',(person,)).fetchone()['display_name'],
+       'Original managed faculty')
+   term=next(x for x in record()['facultyAdmin']['terms'] if x['active'])
+   amended=self.ok(apply('AMEND_TERM',termId=first_term,
+     expectedAuthorityRevision=term['staff_authority_revision'],
+     validUntil='2027-05-01T12:00:00+00:00',
+     reason='Plan term validity'))
+   self.assertEqual(amended['record']['terms'][0]['id'],first_term)
+   self.assertEqual(apply('AMEND_TERM',termId=first_term,
+     expectedAuthorityRevision=term['staff_authority_revision'],
+     validUntil='2027-06-01T12:00:00+00:00',
+     reason='Outdated term revision').status_code,409)
+   fresh=next(x for x in record()['facultyAdmin']['terms'] if x['active'])
+   self.ok(apply('TERMINATE',termId=first_term,
+      expectedAuthorityRevision=fresh['staff_authority_revision'],
+      reason='End a term with no ongoing academic responsibilities'))
+   self.assertFalse(any(t['active'] for t in record()['facultyAdmin']['terms']))
+   self.assertEqual(self.db.execute(
+       'SELECT count(*) AS n FROM department_role_assignments WHERE id=%s',
+       (first_term,)).fetchone()['n'],1)
+   reinstated=self.ok(apply('REINSTATE',reason='Approved fresh Faculty appointment'))
+   active=next(t for t in reinstated['record']['terms'] if t['active'])
+   self.assertNotEqual(active['id'],first_term)
+   self.assertEqual(apply('REINSTATE',reason='Duplicate appointment').status_code,409)
+   self.assertEqual(self.db.execute(
+      'SELECT count(*) AS n FROM faculty_assignments WHERE faculty_user_id=%s',
+      (person,)).fetchone()['n'],0)
+   self.assertEqual(self.db.execute(
+      "SELECT count(*) AS n FROM audit_events WHERE target_type='FACULTY_RECORD' AND target_id=%s",
+      (person,)).fetchone()['n'],4)
+   self.assertEqual(self.client('student-a').post(url,
+      dict(action='REINSTATE',reason='Not authorized'),format='json').status_code,403)
+   # The Admin cannot modify the HOD's active Faculty record.
+   hod=str(self.db.execute("""SELECT user_id FROM department_role_assignments
+      WHERE department_id=%s AND role_code='HOD'
+        AND valid_from<=clock_timestamp() AND
+          (valid_until IS NULL OR clock_timestamp()<valid_until)
+      LIMIT 1""",(CSE,)).fetchone()['user_id'])
+   self.assertEqual(self.post(department+'/records/'+hod,
+      dict(action='EDIT_DETAILS',**body),who='department-admin').status_code,403)
+   # An active project Guide assignment may not be silently discarded, or
+   # reactivated after a future Faculty term is granted.
+   offering=self.offering()
+   self.ok(self.appoint(offering,uid='00000000-0000-4000-8000-000000000008'))
+   assigned_project=self.project(offering,guide_id=person)
+   current_term=next(t for t in record()['facultyAdmin']['terms'] if t['active'])
+   self.assertEqual(apply('TERMINATE',termId=current_term['id'],
+     expectedAuthorityRevision=current_term['staff_authority_revision'],
+     reason='Try to end active Guide without reassignment').status_code,409)
+   self.assertTrue(any(t['active'] for t in record()['facultyAdmin']['terms']))
+   self.assertTrue(self.db.execute("""SELECT 1 FROM faculty_assignments
+      WHERE project_id=%s AND faculty_user_id=%s AND valid_until IS NULL""",
+      (assigned_project,person)).fetchone())
   def test_faculty_identity_crosswalk_and_candidate_discovery(self):
    from threading import Barrier
    from unittest.mock import patch

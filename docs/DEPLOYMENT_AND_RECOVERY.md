@@ -1,10 +1,12 @@
-> **Forward-only 062 release warning (10 Nov 2026):** candidate 062 adds
-> scoped 25-row published-correction reads; it requires candidate **061**.
-> Connected Neon staging main and validation already have **059/060**, but
-> neither 061 nor 062. Never reinstall 059/060. First rehearse 061 **then 062**
-> on the existing validation branch only with authorization and a recorded
-> paired database/PDF recovery plan; hosted rollout/acceptance is separately
-> gated in [issue #4](https://github.com/10Stardust01/Smart-Pro/issues/4).
+> **Forward-only 061–063 release warning (10 Nov 2026):** Neon main and the
+> existing validation branch already have **059/060**; do not reinstall them.
+> Source candidates **061, then 062, then 063** must be installed strictly in
+> order on an authorized validation branch after recorded paired database/PDF
+> recovery evidence. 061 repairs request visibility; 062 adds correction paging;
+> 063 adds departmental Faculty metadata and audited term management. None is
+> automatically installed by merging source. Hosted rollout and actual signed
+> reviewer acceptance remain separately gated by
+> [issue #4](https://github.com/10Stardust01/Smart-Pro/issues/4).
 
 # SMART-PRO deployment and recovery
 

@@ -959,6 +959,14 @@ document.addEventListener('submit', async event => {
       await api(staffBase()+'/records/'+state.departmentRecordId,'POST',{...values,action:form.dataset.operation});
       return;
     }
+    if(type==='faculty-account'){
+      const operation=form.dataset.operation,body={...values,action:operation};
+      if(operation==='TERMINATE'&&values.confirmed!=='on')throw new Error('Confirm the Faculty access change');
+      if(operation==='AMEND_TERM')body.validUntil=new Date(values.validUntil).toISOString();
+      delete body.confirmed;
+      await api(staffBase()+'/records/'+state.departmentRecordId,'POST',body);
+      return;
+    }
     if(type.startsWith('intake-')){
       const send=(body,key)=>api(staffBase()+'/intake','POST',body,{alias:state.alias,role:state.role,signal:controller.signal,key});
       const sendFile=(file,fields,key)=>{
