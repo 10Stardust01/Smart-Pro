@@ -841,6 +841,9 @@ def main(test_name=None):
    import socket,subprocess,time,urllib.request
    from playwright.sync_api import sync_playwright
    oid=self.offering()
+   # Preserve the planning Coordinator and appoint the Guide separately so both
+   # actual application responsibilities are exercised in the browser.
+   self.ok(self.appoint(oid,uid='00000000-0000-4000-8000-000000000008'))
    self.ok(self.appoint(oid,uid=FACULTY,permissions=['OVERVIEW','CORRECTIONS','RESULTS']))
    pid=self.project(oid)
    self.framework(oid)
@@ -870,7 +873,8 @@ def main(test_name=None):
      page.on('pageerror',lambda error:errors.append(str(error)))
      page.goto(url,wait_until='domcontentloaded')
      page.locator('button[data-action="login"][data-alias="faculty-a"]').click()
-     page.locator('button[data-action="choose-role"][data-role="Faculty"]').click() if page.locator('button[data-action="choose-role"][data-role="Faculty"]').count() else None
+     page.locator('button[data-action="choose-role"][data-role="Faculty"]').wait_for(state='visible',timeout=15000)
+     page.locator('button[data-action="choose-role"][data-role="Faculty"]').click()
      page.locator('button[data-go="documents"]').click()
      panel=page.locator('form[data-form="guide-final-correction"]')
      panel.wait_for(state='attached',timeout=15000)
