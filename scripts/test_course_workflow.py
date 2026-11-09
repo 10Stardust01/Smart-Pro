@@ -875,7 +875,7 @@ def main(test_name=None):
      page.locator('button[data-action="login"][data-alias="faculty-a"]').click()
      page.locator('button[data-action="choose-role"][data-role="Faculty"]').wait_for(state='visible',timeout=15000)
      page.locator('button[data-action="choose-role"][data-role="Faculty"]').click()
-     page.locator('button[data-go="documents"]').click()
+     page.locator('aside.sidebar nav button[data-go="documents"]').click()
      panel=page.locator('form[data-form="guide-final-correction"]')
      panel.wait_for(state='attached',timeout=15000)
      panel.locator('xpath=..').evaluate('(el)=>{if(el.tagName==="DETAILS")el.open=true}')
