@@ -102,8 +102,8 @@ BEGIN
      SELECT coalesce(jsonb_agg(jsonb_build_object('studentId',x.student,
        'from',released.results->>x.student,'to',proposed->>x.student)
        ORDER BY x.student),'[]'::jsonb) INTO changes
-     FROM (SELECT key AS student FROM jsonb_object_keys(released.results) AS r(key)
-           UNION SELECT key AS student FROM jsonb_object_keys(proposed) AS n(key)) x
+     FROM (SELECT r.student FROM jsonb_object_keys(released.results) AS r(student)
+           UNION SELECT n.student FROM jsonb_object_keys(proposed) AS n(student)) x
      WHERE released.results->>x.student IS DISTINCT FROM proposed->>x.student;
    ELSE
      uid:=(input->>'studentId')::uuid;
