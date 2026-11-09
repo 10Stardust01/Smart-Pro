@@ -22,7 +22,7 @@ CREATE TABLE public.department_faculty_details(
 REVOKE ALL ON TABLE public.department_faculty_details FROM PUBLIC,smartpro_runtime;
 
 CREATE FUNCTION public.smartpro_faculty_manage_read(actor uuid,dept uuid,person uuid)
-RETURNS jsonb LANGUAGE plpgsql STABLE SECURITY DEFINER
+RETURNS jsonb LANGUAGE plpgsql VOLATILE SECURITY DEFINER
 SET search_path=pg_catalog,public,pg_temp AS $$
 DECLARE result jsonb;
 BEGIN
@@ -40,12 +40,12 @@ BEGIN
    'canManage',person<>actor AND NOT EXISTS(
       SELECT 1 FROM public.department_role_assignments h
       WHERE h.user_id=person AND h.department_id=dept AND h.role_code='HOD'
-        AND h.valid_from<=statement_timestamp()
-        AND (h.valid_until IS NULL OR statement_timestamp()<h.valid_until)),
+        AND h.valid_from<=clock_timestamp()
+        AND (h.valid_until IS NULL OR clock_timestamp()<h.valid_until)),
    'terms',(SELECT coalesce(jsonb_agg(to_jsonb(z) ORDER BY z.valid_from DESC,z.id),'[]'::jsonb)
     FROM (SELECT r.id,r.valid_from,r.valid_until,r.staff_authority_revision,
-      r.valid_from<=statement_timestamp() AND
-        (r.valid_until IS NULL OR statement_timestamp()<r.valid_until) AND
+      r.valid_from<=clock_timestamp() AND
+        (r.valid_until IS NULL OR clock_timestamp()<r.valid_until) AND
         u.account_status='ACTIVE' AS active
       FROM public.department_role_assignments r
       WHERE r.user_id=person AND r.department_id=dept AND r.role_code='FACULTY'
@@ -135,10 +135,14 @@ BEGIN
    SELECT EXISTS(SELECT 1 FROM public.faculty_assignments a
        JOIN public.projects p ON p.id=a.project_id
        WHERE p.department_id=dept AND a.faculty_user_id=person
-         AND a.valid_from<=stamp AND (a.valid_until IS NULL OR stamp<a.valid_until))
-      OR EXISTS(SELECT 1 FROM public.curriculum_offerings o
-        CROSS JOIN LATERAL public.smartpro_course_coordinators(o.id) c
-        WHERE o.department_id=dept AND c.user_id=person)
+         AND (a.valid_until IS NULL OR stamp<a.valid_until))
+      OR EXISTS(SELECT 1 FROM public.course_coordinator_versions v
+        JOIN public.curriculum_offerings o ON o.id=v.offering_id
+        WHERE o.department_id=dept AND v.user_id=person AND v.active
+          AND v.valid_until>stamp
+          AND v.id=(SELECT z.id FROM public.course_coordinator_versions z
+          WHERE z.offering_id=v.offering_id AND z.user_id=person
+          ORDER BY z.version DESC LIMIT 1))
    INTO busy;
    IF busy AND (operation='TERMINATE' OR current_term.valid_until IS NULL
                 OR new_expiry<current_term.valid_until)
@@ -156,7 +160,8 @@ BEGIN
        AND (valid_until IS NULL OR valid_from>stamp))
    THEN RAISE EXCEPTION 'Unresolved future faculty term' USING ERRCODE='23514'; END IF;
    IF EXISTS(SELECT 1 FROM public.faculty_assignments a JOIN public.projects p ON p.id=a.project_id
-        WHERE p.department_id=dept AND a.faculty_user_id=person AND a.valid_until IS NULL)
+        WHERE p.department_id=dept AND a.faculty_user_id=person
+          AND (a.valid_until IS NULL OR stamp<a.valid_until))
        OR EXISTS(SELECT 1 FROM public.course_coordinator_versions v
          JOIN public.curriculum_offerings o ON o.id=v.offering_id
          WHERE o.department_id=dept AND v.user_id=person AND v.active AND v.valid_until>stamp
