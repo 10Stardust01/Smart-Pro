@@ -82,6 +82,7 @@ def main():
     # intentionally mutate role/leadership records and require PDF binaries.
     checks=(
         'test_direct_correction_does_not_reopen_stage_evidence',
+        'test_release_previously_corrected_stage_evidence_on_guide_request',
         'test_guide_coordinator_same_person_can_propose_and_approve',
         'test_decline_and_stale_direct_correction_do_not_change_previous_release',
         'test_finalized_correction_requires_specific_independent_authorization',
