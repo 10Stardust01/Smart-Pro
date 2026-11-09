@@ -1,3 +1,32 @@
+## 10 November 2026 — non-destructive correction CI audit
+
+The preserved review branch `review/live-staging-audit-20261109` at
+`de623bc2` completed both real Django/PostgreSQL browser corrections:
+the direct-overall-mark flow and the signed HTTPS reviewer
+Guide → Coordinator → Student stage-evidence re-release flow. The
+PostgreSQL, Django compatibility, curriculum and student API workflows
+also passed. The direct-correction GitHub Actions job nevertheless finished
+red because its **last, separately scoped read-only hosted smoke** failed
+while comparing an HTTP 302 redirect: converting Python's case-insensitive
+`HTTPMessage` to a regular dictionary made `headers.get('Location')`
+return `None` when the header used different capitalization.
+
+The isolated fix is on `fix/hosted-smoke-register-20261110`: keep the
+original `HTTPMessage` for case-insensitive header access and add a
+no-network regression in `scripts/test_hosted_public_smoke.py`.
+The regression test has been added but has not yet been independently
+executed in GitHub CI. Do not infer that the rest of the live hosted smoke
+passed: its later CSRF, anonymous-authority and frontend-asset checks
+were not reached in the failed run.
+
+**No academic SQL/migration code, correction policies, actor assignments,
+staging database rows, hosted deployment or PDF artifacts were changed by
+this audit.** The review branch remains ahead of the deployment branch.
+Candidates 060 then 061 must be preflighted in the existing Neon validation
+environment, and explicitly authorized separately before live migration
+or deployment. Preserve 059, original releases, recovery branches and the
+current Render staging service.
+
 ## 9 November 2026 — safe live schema alignment
 
 The current Neon staging branch has the already-applied direct correction
