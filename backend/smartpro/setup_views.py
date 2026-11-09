@@ -304,6 +304,9 @@ def department_record(request, department_id, person_id):
     record=_execute('SELECT public.smartpro_department_record(%s,%s,%s)',(request.user.id,department_id,person_id))
     if request.method=='GET':
         if record['faculty']:
+            if _execute("SELECT to_regprocedure('public.smartpro_faculty_manage_read(uuid,uuid,uuid)') IS NOT NULL",()):
+                record['facultyAdmin']=_execute('SELECT public.smartpro_faculty_manage_read(%s,%s,%s)',
+                                                 (request.user.id,department_id,person_id))
             from .demo_views import FACULTY_REFERENCE_DEPARTMENT, faculty_reference_enabled
             if department_id==FACULTY_REFERENCE_DEPARTMENT and faculty_reference_enabled(request):
                 record['roster']=faculty_crosswalk_roster()
@@ -311,6 +314,35 @@ def department_record(request, department_id, person_id):
     if not isinstance(request.data,dict):
         raise ValidationError('Identity command required')
     operation=request.data.get('action')
+    management={'EDIT_DETAILS','AMEND_TERM','TERMINATE','REINSTATE'}
+    if operation in management:
+        if not _execute("SELECT to_regprocedure('public.smartpro_faculty_manage(uuid,uuid,uuid,text,jsonb,text)') IS NOT NULL",()):
+            from .staff import StaffUnavailable
+            raise StaffUnavailable('Faculty management requires reviewed candidate 063')
+        shapes={
+            'EDIT_DETAILS':{'displayName','designation','contactEmail','expectedRevision','reason'},
+            'AMEND_TERM':{'termId','expectedAuthorityRevision','validUntil','reason'},
+            'TERMINATE':{'termId','expectedAuthorityRevision','reason'},
+            'REINSTATE':{'reason'}}
+        body=command_body({key:value for key,value in request.data.items() if key!='action'},shapes[operation])
+        body['reason']=serializers.CharField(max_length=500,trim_whitespace=True).run_validation(body['reason'])
+        if not body['reason']:
+            raise ValidationError('A reason is required')
+        if operation=='EDIT_DETAILS':
+            body['displayName']=serializers.CharField(min_length=2,max_length=120).run_validation(body['displayName'])
+            body['designation']=serializers.CharField(max_length=120,allow_blank=True).run_validation(body['designation'])
+            body['contactEmail']=serializers.EmailField(max_length=254,allow_blank=True).run_validation(body['contactEmail'])
+            body['expectedRevision']=serializers.IntegerField(min_value=0).run_validation(body['expectedRevision'])
+        if operation in ('AMEND_TERM','TERMINATE'):
+            body['termId']=str(serializers.UUIDField().run_validation(body['termId']))
+            body['expectedAuthorityRevision']=str(serializers.UUIDField().run_validation(body['expectedAuthorityRevision']))
+        if operation=='AMEND_TERM':
+            from .staff_views import AwareDateTime
+            body['validUntil']=AwareDateTime().run_validation(body['validUntil']).isoformat()
+        return private_response(staff_sql_command(
+            'SELECT public.smartpro_faculty_manage(%s,%s,%s,%s,%s,%s)',
+            request.user.id,department_id,operation,body,
+            request.headers.get('Idempotency-Key'),target_id=person_id))
     if operation not in ('PROPOSE','VERIFY','REJECT','REVOKE'):
         raise ValidationError('Supported identity command required')
     fields={'evidence'} | ({'directoryRef','source','identifier'} if operation=='PROPOSE' else {'linkId'})
