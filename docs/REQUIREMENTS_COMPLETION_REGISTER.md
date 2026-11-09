@@ -48,3 +48,9 @@ Change a row when its behavior, verification evidence or assigned milestone chan
 
 See [repository status](REPOSITORY_STATUS.md), [institutional readiness](INSTITUTIONAL_READINESS.md)
 and [deployment and recovery](DEPLOYMENT_AND_RECOVERY.md) for evidence and boundaries.
+
+
+> Deployment note (9 November 2026): Neon staging already has the original 059
+> direct-correction functions installed. The new stage-evidence mode requires
+> forward-only candidate **060**, never a re-run of 059. Live-service acceptance
+> and approval of actual institutional usage remain separately tracked.

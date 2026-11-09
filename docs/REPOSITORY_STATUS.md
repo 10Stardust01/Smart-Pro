@@ -1,3 +1,14 @@
+## 9 November 2026 — safe live schema alignment
+
+The current Neon staging branch has the already-applied direct correction
+candidate 059; the reviewed stage-evidence expansion needs forward migration
+060. Existing before-059 recovery and 059 validation branches are retained.
+Candidate 060 replaces only `smartpro_course_final_revision` with the
+reviewed dual-mode function. Do not reapply 059 or overwrite published data.
+Render Free is configured for `deployment/reviewer-staging`, auto deploy off.
+Any live promotion must use a fast-forward branch update and explicit Render
+deploy; database checks and live smoke tests must be recorded separately.
+
 # SMART-PRO implementation status
 
 ## 9 November 2026 — correction workflow branch verified, not deployed

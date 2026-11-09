@@ -53,3 +53,22 @@ approval role has been added.
 A Guide may also request a revised overall release based on **already corrected** complete published stage evidence. The request pins the new stage sources and calculated totals. The same responsible Coordinator decides it, including when also the Guide/evaluator. Approval appends an overall version only if the pinned stage evidence still matches. This path never edits stage marks or invents an evaluator authorization. No-change requests are rejected.
 
 **Verified in isolated PostgreSQL/API regression:** [CI run 42561282815](https://github.com/10Stardust01/Smart-Pro/actions/runs/42561282815) at `c0564cc` passed the correction contracts and real Django/Chromium direct-correction acceptance. The stage-evidence contract asserts a previously corrected stage release is pinned, the Coordinator publishes its matching source IDs and results, the prior overall release is immutable, no-change attempts are rejected, and direct overall mark overrides are not misidentified as changed stage evidence. This mode's separate frontend form has not yet had an independent browser click-through test. All checks used a disposable synthetic database; there has been no hosted migration or live data change.
+
+## Existing Neon staging upgrade safety — 9 November 2026
+
+The `smartpro_staging` Neon main branch already contains the **original 059**
+direct correction functions; `smartpro_guide_final_corrections` and the
+`course_final_revision_requests.reason` column are present. The main branch
+**does not** yet contain the later `STAGE_EVIDENCE_OVERALL_CORRECTION` function
+body. Therefore a new `060_published_stage_evidence_rerelease.sql` forward
+upgrade is required. Do NOT re-run 059 in place. The existing same-project
+recovery branches include `smartpro-pre-059-rollback-20261109` and
+`smartpro-059-validation-20261109`; preserve both. Treat the main branch
+as live and do not replace existing data or copy an older backup over it.
+
+Candidate 059 in repository is restored to its original already-installed form.
+Candidate 060 replaces only the reviewed `smartpro_course_final_revision`
+function body (same signature and privileges). Run it first on the existing
+validation branch; verify original result versions, audit history, the mode
+marker and deployed code compatibility. Recheck free-tier and service identity
+before updating the live main branch. A failed preflight must stop release.

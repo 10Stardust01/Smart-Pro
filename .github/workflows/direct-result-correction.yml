@@ -4,6 +4,7 @@ on:
     branches: ['review/live-staging-audit-20261109']
     paths:
       - 'proposals/curriculum/059_published_correction_authority.sql'
+      - 'proposals/curriculum/060_published_stage_evidence_rerelease.sql'
       - 'scripts/test_course_workflow.py'
       - 'scripts/ci_course_direct_correction.py'
       - 'backend/smartpro/course_views.py'
@@ -14,6 +15,7 @@ on:
   pull_request:
     paths:
       - 'proposals/curriculum/059_published_correction_authority.sql'
+      - 'proposals/curriculum/060_published_stage_evidence_rerelease.sql'
       - 'scripts/test_course_workflow.py'
       - 'scripts/ci_course_direct_correction.py'
       - 'backend/smartpro/course_views.py'
