@@ -44,5 +44,7 @@ Change a row when its behavior, verification evidence or assigned milestone chan
 | Hosted backups and private PDF restore have been rehearsed for the live free-tier stack. | Pending | Earlier local snapshot restoration passed; current Neon staging is populated. | Hosted paired DB + object storage recovery drill not yet evidenced. | Critical | Hosting recovery |
 | Accessibility verification includes screen-reader behavior and accessible document alternatives. | Partial | Keyboard-focused browser checks exist; screen-reader speech/table traversal and PDF accessibility remain unverified. | Institutional testing/criteria needed. | High | Institutional acceptance |
 
+| Guide requests new overall publication from already-corrected stage evidence. | Prepared; pending isolation regression | Candidate 059 stage-evidence request, frontend form, Coordinator approval and isolated PostgreSQL fixture contract. | Verify updated CI on review branch; stage-evidence correction authority remains governed separately. | High | Correction alignment |
+
 See [repository status](REPOSITORY_STATUS.md), [institutional readiness](INSTITUTIONAL_READINESS.md)
 and [deployment and recovery](DEPLOYMENT_AND_RECOVERY.md) for evidence and boundaries.

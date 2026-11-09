@@ -55,6 +55,11 @@ export function documentsUI({state,esc,displayDate,localDate,embedded=false}) {
     <label>Proposed corrected overall mark<input type="number" name="marks" min="0" max="${esc(direct.maxMarks||"")}" step="${direct.decimalPlaces===0?"1":"0."+"0".repeat(Math.max(0,direct.decimalPlaces-1))+"1"}" required></label>
     <label>Reason for correction<textarea name="reason" maxlength="500" required></textarea></label>
     <button class="primary">Submit correction to Coordinator</button></form></details>
+    <details><summary>Request publication of already-corrected stage evidence</summary>
+    <p>This does not change stage scores. A request without revised, complete stage evidence is rejected.</p>
+    <form data-form="guide-stage-evidence-correction" data-offering="${esc(direct.offeringId)}" data-project="${esc(direct.projectId)}" data-version="${esc(direct.version)}">
+    <label>Reason for revised release<textarea name="reason" maxlength="500" required></textarea></label>
+    <button class="secondary">Request updated overall result</button></form></details>
     ${direct.requests.map(q=>`<p>${esc(q.changes?.[0]?.from||"—")} → ${esc(q.changes?.[0]?.to||"—")} · ${q.applied?"Approved and published":q.approved===false?"Declined":"Awaiting Coordinator decision"} · ${esc(q.reason)}</p>`).join("")}
     </section>`:""}
     ${guideForm(p,state,esc)}${p.overallResults?.length?`<section><h3>Overall final result history</h3>${p.overallResults.map(r=>`<p>Version ${r.version} · ${displayDate(r.createdAt)} · ${Object.values(r.results).filter(v=>v!==null).map(esc).join(', ')||'No mark in this historical roster'}</p>`).join('')}</section>`:''}

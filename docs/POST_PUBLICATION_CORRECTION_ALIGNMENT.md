@@ -47,3 +47,9 @@ Other project decisions stand: configurable/pinned review stages and rubrics,
 scoped Guide/evaluator responsibilities, prior version history and minimal
 Admin account/access controls. No student marks-flagging feature or invented
 approval role has been added.
+
+## Guide requests from already-corrected stage evidence
+
+A Guide may also request a revised overall release based on **already corrected** complete published stage evidence. The request pins the new stage sources and calculated totals. The same responsible Coordinator decides it, including when also the Guide/evaluator. Approval appends an overall version only if the pinned stage evidence still matches. This path never edits stage marks or invents an evaluator authorization. No-change requests are rejected.
+
+The new frontend form and isolated regression are prepared on the review branch. Actual CI execution must pass before calling this additional path verified.

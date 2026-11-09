@@ -30,7 +30,7 @@ DECLARE o public.curriculum_offerings%ROWTYPE;
  released public.course_final_results%ROWTYPE;
  cfg jsonb; proposed jsonb; changes jsonb; reply jsonb;
  pid uuid; uid uuid; target uuid; appointment uuid; published uuid;
- old_marks text; new_marks text; reason text; role text;
+ old_marks text; new_marks text; reason text; role text; correction_type text; candidate jsonb; proposed_sources jsonb;
  value numeric; maximum numeric; decimals integer;
 BEGIN
  IF action NOT IN ('REQUEST_FINAL_REVISION','AUTHORIZE_FINAL_REVISION')
@@ -65,7 +65,7 @@ BEGIN
  ELSE
    SELECT * INTO request FROM public.course_final_revision_requests
      WHERE id=(input->>'requestId')::uuid FOR UPDATE;
-   IF NOT FOUND OR request.snapshot->>'type' IS DISTINCT FROM 'DIRECT_AUTHORIZED_OVERALL_CORRECTION' THEN
+   IF NOT FOUND OR request.snapshot->>'type' NOT IN ('DIRECT_AUTHORIZED_OVERALL_CORRECTION','STAGE_EVIDENCE_OVERALL_CORRECTION') THEN
      RAISE EXCEPTION 'Current direct correction request required' USING ERRCODE='42501';
    END IF;
    pid:=request.project_id;
@@ -84,34 +84,55 @@ BEGIN
    IF released.version IS DISTINCT FROM (input->>'expectedVersion')::integer THEN
      RAISE EXCEPTION 'Published result changed; refresh and propose again' USING ERRCODE='23514';
    END IF;
-   uid:=(input->>'studentId')::uuid;
-   IF NOT released.results ? uid::text
-      OR jsonb_typeof(input->'marks') IS DISTINCT FROM 'string'
-      OR (input->>'marks') !~ '^[0-9]{1,8}(\.[0-9]{1,4})?$' THEN
-     RAISE EXCEPTION 'Current student and numeric overall mark required' USING ERRCODE='22023';
-   END IF;
    reason:=nullif(btrim(input->>'reason'),'');
    IF reason IS NULL OR length(reason)>500 THEN
      RAISE EXCEPTION 'Specific correction reason required' USING ERRCODE='22023';
    END IF;
-   decimals:=(cfg->>'decimalPlaces')::integer;
-   maximum:=CASE WHEN cfg->>'method'='SINGLE_RAW'
-     THEN (released.sources->0->>'rubricMaximum')::numeric
-     ELSE (cfg->>'scale')::numeric END;
-   value:=(input->>'marks')::numeric;
-   IF decimals NOT BETWEEN 0 AND 4 OR maximum IS NULL OR maximum<=0
-      OR value<0 OR value>maximum OR round(value,decimals)<>value THEN
-     RAISE EXCEPTION 'Mark outside approved total or precision' USING ERRCODE='22023';
+   IF input->>'mode'='STAGE_EVIDENCE' THEN
+     -- Only reuses completed, previously corrected stage publications;
+     -- does not change evaluator marks, create an approval or bypass a rubric.
+     candidate:=public.smartpro_course_calculate(pid);
+     proposed:=candidate->'results';
+     proposed_sources:=candidate->'sources';
+     IF proposed IS NULL OR proposed_sources IS NULL OR
+        (proposed=released.results AND proposed_sources=released.sources) THEN
+       RAISE EXCEPTION 'No updated, complete stage evidence to release' USING ERRCODE='23514';
+     END IF;
+     correction_type:='STAGE_EVIDENCE_OVERALL_CORRECTION';
+     SELECT coalesce(jsonb_agg(jsonb_build_object('studentId',x.student,
+       'from',released.results->>x.student,'to',proposed->>x.student)
+       ORDER BY x.student),'[]'::jsonb) INTO changes
+     FROM (SELECT key AS student FROM jsonb_object_keys(released.results) AS r(key)
+           UNION SELECT key AS student FROM jsonb_object_keys(proposed) AS n(key)) x
+     WHERE released.results->>x.student IS DISTINCT FROM proposed->>x.student;
+   ELSE
+     uid:=(input->>'studentId')::uuid;
+     IF NOT released.results ? uid::text
+        OR jsonb_typeof(input->'marks') IS DISTINCT FROM 'string'
+        OR (input->>'marks') !~ '^[0-9]{1,8}(\.[0-9]{1,4})?$' THEN
+       RAISE EXCEPTION 'Current student and numeric overall mark required' USING ERRCODE='22023';
+     END IF;
+     decimals:=(cfg->>'decimalPlaces')::integer;
+     maximum:=CASE WHEN cfg->>'method'='SINGLE_RAW'
+       THEN (released.sources->0->>'rubricMaximum')::numeric
+       ELSE (cfg->>'scale')::numeric END;
+     value:=(input->>'marks')::numeric;
+     IF decimals NOT BETWEEN 0 AND 4 OR maximum IS NULL OR maximum<=0
+        OR value<0 OR value>maximum OR round(value,decimals)<>value THEN
+       RAISE EXCEPTION 'Mark outside approved total or precision' USING ERRCODE='22023';
+     END IF;
+     new_marks:=to_char(value,'FM999999990'||CASE WHEN decimals>0 THEN '.'||repeat('0',decimals) ELSE '' END);
+     old_marks:=released.results->>uid::text;
+     IF old_marks::numeric=value THEN RAISE EXCEPTION 'No change proposed' USING ERRCODE='23514'; END IF;
+     proposed:=jsonb_set(released.results,ARRAY[uid::text],to_jsonb(new_marks));
+     proposed_sources:=released.sources;
+     changes:=jsonb_build_array(jsonb_build_object('studentId',uid,'from',old_marks,'to',new_marks));
+     correction_type:='DIRECT_AUTHORIZED_OVERALL_CORRECTION';
    END IF;
-   new_marks:=to_char(value,'FM999999990'||CASE WHEN decimals>0 THEN '.'||repeat('0',decimals) ELSE '' END);
-   old_marks:=released.results->>uid::text;
-   IF old_marks::numeric=value THEN RAISE EXCEPTION 'No change proposed' USING ERRCODE='23514'; END IF;
-   proposed:=jsonb_set(released.results,ARRAY[uid::text],to_jsonb(new_marks));
-   changes:=jsonb_build_array(jsonb_build_object('studentId',uid,'from',old_marks,'to',new_marks));
    INSERT INTO public.course_final_revision_requests(project_id,expected_version,snapshot,requester_id,reason)
    VALUES(pid,released.version,jsonb_build_object('basedOnResultId',released.id,
-     'sources',released.sources,'results',proposed,'changes',changes,
-     'type','DIRECT_AUTHORIZED_OVERALL_CORRECTION'),actor,reason) RETURNING id INTO target;
+     'sources',proposed_sources,'results',proposed,'changes',changes,
+     'type',correction_type),actor,reason) RETURNING id INTO target;
    reply:=jsonb_build_object('id',target,'projectId',pid,'status','PENDING');
  ELSE
    IF jsonb_typeof(input->'approved') IS DISTINCT FROM 'boolean'
@@ -120,8 +141,16 @@ BEGIN
    END IF;
    IF released.version<>request.expected_version
       OR released.id IS DISTINCT FROM (request.snapshot->>'basedOnResultId')::uuid
-      OR released.sources IS DISTINCT FROM request.snapshot->'sources' THEN
+      OR (request.snapshot->>'type'='DIRECT_AUTHORIZED_OVERALL_CORRECTION'
+       AND released.sources IS DISTINCT FROM request.snapshot->'sources') THEN
      RAISE EXCEPTION 'Original result changed; request fresh exact correction' USING ERRCODE='23514';
+   END IF;
+   IF request.snapshot->>'type'='STAGE_EVIDENCE_OVERALL_CORRECTION' THEN
+     candidate:=public.smartpro_course_calculate(pid);
+     IF candidate->'sources' IS DISTINCT FROM request.snapshot->'sources'
+        OR candidate->'results' IS DISTINCT FROM request.snapshot->'results' THEN
+       RAISE EXCEPTION 'Stage evidence changed since request; refresh correction' USING ERRCODE='23514';
+     END IF;
    END IF;
    SELECT id INTO appointment FROM public.smartpro_course_coordinators(oid)
     WHERE user_id=actor AND 'CORRECTIONS'=ANY(responsibilities) LIMIT 1;

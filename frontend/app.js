@@ -1007,6 +1007,10 @@ document.addEventListener('submit', async event => {
       outcome='Correction request submitted to the responsible Coordinator. The published result is unchanged.';
       await coursePost(form.dataset.offering,'REQUEST_FINAL_REVISION',{projectId:form.dataset.project,expectedVersion:Number(form.dataset.version),studentId:values.studentId,marks:values.marks,reason:values.reason});
     }
+    if(type==='guide-stage-evidence-correction'){
+      outcome='Updated stage evidence submitted to the Coordinator. The published result remains unchanged until approval.';
+      await coursePost(form.dataset.offering,'REQUEST_FINAL_REVISION',{projectId:form.dataset.project,expectedVersion:Number(form.dataset.version),mode:'STAGE_EVIDENCE',reason:values.reason});
+    }
     if(type==='final-revision-authorization'){
       const approved=values.approved==='true';
       await coursePost(form.dataset.offering,'AUTHORIZE_FINAL_REVISION',{requestId:form.dataset.id,approved});

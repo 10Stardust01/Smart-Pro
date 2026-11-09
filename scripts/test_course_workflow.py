@@ -805,6 +805,36 @@ def main(test_name=None):
    self.assertEqual(self.command(oid,'AUTHORIZE_FINAL_REVISION',decision,who='coordinator').status_code,409)
    self.assertEqual(self.command(oid,'REQUEST_EXCEPTIONAL_STAGE_CORRECTION',dict(reviewId=rid,assessmentId=aid,expectedReviewRevision=0,scores=scores),who='faculty-a').status_code,400)
 
+  def test_release_previously_corrected_stage_evidence_on_guide_request(self):
+   """An isolated stage result-version fixture represents evidence already
+   corrected by the approved evaluation workflow; no stage-edit API is added."""
+   oid=self.offering()
+   self.ok(self.appoint(oid,uid='00000000-0000-4000-8000-000000000008'))
+   pid=self.project(oid);self.framework(oid)
+   rid,_,_=self.stage(oid,pid,'stage-1',20)
+   initial=self.ok(self.command(oid,'PUBLISH_FINAL',dict(projectId=pid,expectedVersion=0)))['id']
+   request=dict(projectId=pid,expectedVersion=1,mode='STAGE_EVIDENCE',reason='Release corrected stage scores')
+   self.assertEqual(self.command(oid,'REQUEST_FINAL_REVISION',request,who='faculty-a').status_code,409)
+   self.assertEqual(self.command(oid,'REQUEST_FINAL_REVISION',request).status_code,403)
+   self.db.execute("""INSERT INTO academic_result_versions
+       (review_id,version_no,supersedes_id,legacy_release_id,roster_version_id,
+        policy_id,actor_id,reason,sources,results,calculation_version)
+       SELECT review_id,version_no+1,id,legacy_release_id,roster_version_id,
+          policy_id,actor_id,'Synthetic corrected stage release',
+          jsonb_set(sources,'{0,scores,0,marks}',to_jsonb('22'::text),false),
+          jsonb_set(results,ARRAY['00000000-0000-4000-8000-000000000001'],to_jsonb('42.00'::text)),
+          calculation_version
+       FROM academic_result_versions WHERE review_id=%s
+       ORDER BY version_no DESC LIMIT 1""",(rid,))
+   issued=self.ok(self.command(oid,'REQUEST_FINAL_REVISION',request,who='faculty-a'))['id']
+   self.assertEqual(self.command(oid,'AUTHORIZE_FINAL_REVISION',dict(requestId=issued,approved=True),who='student-a').status_code,403)
+   self.ok(self.command(oid,'AUTHORIZE_FINAL_REVISION',dict(requestId=issued,approved=True),who='coordinator'))
+   rows=self.db.execute('SELECT id,version,supersedes_id,sources,results FROM course_final_results WHERE project_id=%s ORDER BY version',(pid,)).fetchall()
+   self.assertEqual([x['version'] for x in rows],[1,2])
+   self.assertEqual(str(rows[1]['supersedes_id']),initial)
+   self.assertEqual([x['results']['00000000-0000-4000-8000-000000000001'] for x in rows],['40.00','42.00'])
+   self.assertNotEqual(rows[0]['sources'],rows[1]['sources'])
+
   def test_guide_coordinator_same_person_can_propose_and_approve(self):
    oid=self.offering();self.ok(self.appoint(oid,uid='00000000-0000-4000-8000-000000000008'))
    pid=self.project(oid);self.framework(oid);self.stage(oid,pid,'stage-1',20)

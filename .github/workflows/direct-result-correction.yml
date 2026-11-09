@@ -1,5 +1,12 @@
 name: SMART-PRO direct result correction PostgreSQL contracts
 on:
+  push:
+    branches: ['review/live-staging-audit-20261109']
+    paths:
+      - 'proposals/curriculum/059_published_correction_authority.sql'
+      - 'scripts/test_course_workflow.py'
+      - 'scripts/ci_course_direct_correction.py'
+      - '.github/workflows/direct-result-correction.yml'
   pull_request:
     paths:
       - 'proposals/curriculum/059_published_correction_authority.sql'
