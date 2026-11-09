@@ -4,7 +4,7 @@ BEGIN;
 DO $$ BEGIN
  IF to_regprocedure('public.smartpro_department_record(uuid,uuid,uuid)') IS NULL
  THEN RAISE EXCEPTION 'Candidate 057 required'; END IF;
- IF to_regprocedure('public.smartpro_faculty_manage(uuid,uuid,uuid,text,jsonb,text)') IS NOT NULL
+ IF to_regprocedure('public.smartpro_faculty_manage(uuid,uuid,text,uuid,jsonb,text)') IS NOT NULL
  THEN RAISE EXCEPTION 'Candidate 063 already installed'; END IF;
 END $$;
 CREATE TABLE public.department_faculty_details(
@@ -56,7 +56,7 @@ BEGIN
 END $$;
 
 CREATE FUNCTION public.smartpro_faculty_manage(
- actor uuid,dept uuid,person uuid,operation text,input jsonb,request_key text)
+ actor uuid,dept uuid,operation text,person uuid,input jsonb,request_key text)
 RETURNS jsonb LANGUAGE plpgsql VOLATILE SECURITY DEFINER
 SET search_path=pg_catalog,public,pg_temp AS $$
 DECLARE current_term public.department_role_assignments%ROWTYPE;
@@ -178,7 +178,7 @@ BEGIN
  RETURN outcome;
 END $$;
 REVOKE ALL ON FUNCTION public.smartpro_faculty_manage_read(uuid,uuid,uuid),
- public.smartpro_faculty_manage(uuid,uuid,uuid,text,jsonb,text) FROM PUBLIC;
+ public.smartpro_faculty_manage(uuid,uuid,text,uuid,jsonb,text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.smartpro_faculty_manage_read(uuid,uuid,uuid),
- public.smartpro_faculty_manage(uuid,uuid,uuid,text,jsonb,text) TO smartpro_runtime;
+ public.smartpro_faculty_manage(uuid,uuid,text,uuid,jsonb,text) TO smartpro_runtime;
 COMMIT;
