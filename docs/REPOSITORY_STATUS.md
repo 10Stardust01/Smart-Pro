@@ -1,3 +1,17 @@
+## Candidate 063: non-HOD Faculty role and departmental details (10 Nov 2026)
+
+Candidate 063 (PR #7) introduces only Department Admin authority over other
+non-HOD Faculty records, with departmental display name/designation/contact
+email metadata independent of global account identity, an audited Faculty term
+amend/end/reinstate action, stale-revision conflicts and retry-safe receipts.
+This does **not** alter historic project evaluations, published result versions,
+student records, global logins or HOD/independent authority. An appointment with
+active project/Coordinator responsibilities is not ended until existing
+assignment workflows resolve those responsibilities; reinstatement does not
+silently restore them. Isolated SQL/API validation is not hosted acceptance.
+Neon main/validation currently have 059/060, not 061–063. PR #7 must pass full
+CI and be merged independently; no deployment or migration is authorized.
+
 ## Correction pagination candidate 062 (10 November 2026)
 
 The new 062 source adds two role-scoped read functions: one selected Guide

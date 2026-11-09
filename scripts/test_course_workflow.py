@@ -718,6 +718,19 @@ def main(test_name=None):
       LIMIT 1""",(CSE,)).fetchone()['user_id'])
    self.assertEqual(self.post(department+'/records/'+hod,
       dict(action='EDIT_DETAILS',**body),who='department-admin').status_code,403)
+   # An active project Guide assignment may not be silently discarded, or
+   # reactivated after a future Faculty term is granted.
+   offering=self.offering()
+   self.ok(self.appoint(offering,uid='00000000-0000-4000-8000-000000000008'))
+   assigned_project=self.project(offering,guide_id=person)
+   current_term=next(t for t in record()['facultyAdmin']['terms'] if t['active'])
+   self.assertEqual(apply('TERMINATE',termId=current_term['id'],
+     expectedAuthorityRevision=current_term['staff_authority_revision'],
+     reason='Try to end active Guide without reassignment').status_code,409)
+   self.assertTrue(any(t['active'] for t in record()['facultyAdmin']['terms']))
+   self.assertTrue(self.db.execute("""SELECT 1 FROM faculty_assignments
+      WHERE project_id=%s AND faculty_user_id=%s AND valid_until IS NULL""",
+      (assigned_project,person)).fetchone())
   def test_faculty_identity_crosswalk_and_candidate_discovery(self):
    from threading import Barrier
    from unittest.mock import patch
