@@ -61,10 +61,12 @@ function readCourseLocation(){
   state.queueQuery=query.get('q')?.slice(0,120)||'';
   state.queueStatus=['all','unassigned','in-progress','published'].includes(query.get('status'))?query.get('status'):'all';
   state.queuePage=/^[1-9][0-9]{0,8}$/.test(query.get('page')||'')?Number(query.get('page')):1;
+   state.finalRevisionPageNumber=/^[1-9][0-9]{0,7}$/.test(query.get('correctionPage')||'')?Number(query.get('correctionPage')):1;
+   state.finalRevisionAnchor=query.get('correctionAnchor')||null;
 }
 function writeCourseLocation(replace=false){
   const url=new URL(location.href);
-  for(const key of ['offering','section','assessment','project','q','status','page'])url.searchParams.delete(key);
+  for(const key of ['offering','section','assessment','project','q','status','page','correctionPage','correctionAnchor'])url.searchParams.delete(key);
   for(const key of ['departmentView','recordsKind','recordsSearch','recordsPage','batchPage','recordsScope','departmentOfferingSearch','departmentAvailability','departmentOfferingPage','appointmentPage','leadershipPage','record'])url.searchParams.delete(key);
   if(departmentRole()){
     if(state.view!=='overview')url.searchParams.set('departmentView',state.view);
@@ -88,6 +90,8 @@ function writeCourseLocation(replace=false){
     if(state.queueQuery)url.searchParams.set('q',state.queueQuery);
     if(state.queueStatus&&state.queueStatus!=='all')url.searchParams.set('status',state.queueStatus);
     if(state.queuePage>1)url.searchParams.set('page',state.queuePage);
+    if(state.courseSection==='results'&&state.finalRevisionPageNumber>1)url.searchParams.set('correctionPage',state.finalRevisionPageNumber);
+    if(state.courseSection==='results'&&state.finalRevisionAnchor)url.searchParams.set('correctionAnchor',state.finalRevisionAnchor);
   }
   const intakeSearch=departmentRole()?state.intakeQuery||'':'';
   const leadershipSearch=departmentRole()?state.leadershipSearch||'':'';
@@ -105,16 +109,20 @@ function readWorkLocation(){
   state.workQuery=query.get('workSearch')?.slice(0,120)||'';
   state.workPage=/^[1-9][0-9]{0,8}$/.test(query.get('workPage')||'')?Number(query.get('workPage')):1;
   state.workOffering=query.get('workOffering')||'';
+   state.guideCorrectionPage=/^[1-9][0-9]{0,7}$/.test(query.get('guideCorrectionPage')||'')?Number(query.get('guideCorrectionPage')):1;
+   state.guideCorrectionAnchor=query.get('guideCorrectionAnchor')||null;
 }
 function writeWorkLocation(replace=false){
   const url=new URL(location.href);
-  for(const key of ['work','workProject','workReview','workSearch','workPage','workOffering'])url.searchParams.delete(key);
+  for(const key of ['work','workProject','workReview','workSearch','workPage','workOffering','guideCorrectionPage','guideCorrectionAnchor'])url.searchParams.delete(key);
   if(personalRole()&&['documents','evaluations','results'].includes(state.view)){
     url.searchParams.set('work',state.view);
     if(state.projectId)url.searchParams.set('workProject',state.projectId);
     if(state.reviewId&&state.view!=='documents')url.searchParams.set('workReview',state.reviewId);
     if(state.workQuery)url.searchParams.set('workSearch',state.workQuery);
     if(state.workPage>1)url.searchParams.set('workPage',state.workPage);
+     if(state.view==='documents'&&state.projectId&&state.guideCorrectionPage>1)url.searchParams.set('guideCorrectionPage',state.guideCorrectionPage);
+     if(state.view==='documents'&&state.projectId&&state.guideCorrectionAnchor)url.searchParams.set('guideCorrectionAnchor',state.guideCorrectionAnchor);
     if(state.role==='Student'&&state.workOffering)url.searchParams.set('workOffering',state.workOffering);
   }
   if(url.href!==location.href)history[replace?'replaceState':'pushState'](null,'',url);
@@ -194,7 +202,7 @@ async function load({reuseWorkspace=false}={}) {
   context.role=state.role;
   if(!previousRole&&personalRole()&&new URLSearchParams(location.search).has('work'))readWorkLocation();
   if(!previousRole&&(departmentRole()||state.role==='Coordinator'))readCourseLocation();
-  const next = {departmentRecord:null,appointmentCandidates:null,directoryListing:null,intakeListing:null,intakeTargets:null,courses:null,courseDetail:null,courseEvaluationQueue:null,courseEvaluationError:'',workListing:null,courseDocumentListing:null,courseNotifications:null,guideFinalCorrections:null,reviewManagement:null,requirementManagement:null,assignmentManagement:null,configurationManagement:null,management:null,proposalConfig:null,proposalError:'',documentError:'',setup:null,workspace:w,profile:null,offerings:[],memberships:[],projects:[],staff:null,academic:null,result:null,error:''};
+  const next = {departmentRecord:null,appointmentCandidates:null,directoryListing:null,intakeListing:null,intakeTargets:null,courses:null,courseDetail:null,courseEvaluationQueue:null,courseEvaluationError:'',finalRevisionListing:null,guideCorrectionError:'',workListing:null,courseDocumentListing:null,courseNotifications:null,guideFinalCorrections:null,reviewManagement:null,requirementManagement:null,assignmentManagement:null,configurationManagement:null,management:null,proposalConfig:null,proposalError:'',documentError:'',setup:null,workspace:w,profile:null,offerings:[],memberships:[],projects:[],staff:null,academic:null,result:null,error:''};
   // Resolve the role first, then load independent panels together.
   const staffCourse=['Coordinator','HOD'].includes(state.role)&&state.view==='courses';
   const workBrowser=personalRole()||state.role==='HOD'&&state.view==='documents';
@@ -296,6 +304,7 @@ async function load({reuseWorkspace=false}={}) {
         if(!offeringId||!next.courses.offerings.some(o=>o.id===offeringId))return;
         const base=`/api/v1/courses/offerings/${offeringId}`;
         const detail=get(base+'/details').then(value=>{next.courseDetail=value;});
+         const revisions=state.courseSection==='results'?get(base+'/final-revisions?'+new URLSearchParams({page:state.finalRevisionPageNumber||1,...(state.finalRevisionAnchor?{anchor:state.finalRevisionAnchor}:{})})).then(value=>{next.finalRevisionListing=value;next.finalRevisionAnchor=value.anchor;}):Promise.resolve();
         const queue=async()=>{
           if(state.role!=='Coordinator'||!(state.courseSection==='evaluation'||state.courseReviewId))return;
           const focus=state.courseReviewId&&w.reviews.find(r=>r.id===state.courseReviewId)?.projectId;
@@ -306,7 +315,7 @@ async function load({reuseWorkspace=false}={}) {
           }
           catch(error){if(error.name==='AbortError')throw error;next.courseEvaluationError=error.message;}
         };
-        await Promise.all([detail,queue()]);
+        await Promise.all([detail,queue(),revisions]);
       }
     }
     if(w.access.operations&&!next.management)next.management=await get(`/api/v1/staff/departments/${w.department.id}/offering-management`);
@@ -325,7 +334,7 @@ async function load({reuseWorkspace=false}={}) {
   await Promise.all([
     projects,loadDocuments(),loadSetup(),loadCandidates(),loadCourses(),loadConfiguration(),
     uiContext.courseManagement&&['overview','notifications'].includes(state.view)&&get('/api/v1/me/course-notifications').then(value=>{next.courseNotifications=value;}),
-    uiContext.courseManagement&&state.role==='Faculty'&&state.view==='documents'&&get('/api/v1/me/published-corrections').then(value=>{next.guideFinalCorrections=value;}).catch(error=>{if(error.status!==503)throw error;})
+    uiContext.courseManagement&&state.role==='Faculty'&&state.view==='documents'&&state.projectId&&get('/api/v1/me/published-corrections?'+new URLSearchParams({projectId:state.projectId,page:state.guideCorrectionPage||1,...(state.guideCorrectionAnchor?{anchor:state.guideCorrectionAnchor}:{})})).then(value=>{next.guideFinalCorrections=value;next.guideCorrectionAnchor=value.anchor;}).catch(error=>{if(error.name==='AbortError')throw error;next.guideCorrectionError=error.message;})
   ]);
   if(generation!==state.generation)return;
   if((w.access.faculty||w.access.admin)&&next.documents) next.projects=[...new Map([...next.projects,...next.documents.projects].map(p=>[p.id,p])).values()];
@@ -804,23 +813,25 @@ document.addEventListener('click', async event => {
   }
   if(state.busy)return;
   if(action==='return-to-course')state.courseReviewId=null;
-  if(action==='open-course'){state.queueQuery='';state.queueStatus='all';state.queuePage=1;state.courseProjectId=null;state.courseReviewId=null;state.courseId=target.dataset.id;state.appointmentPage=1;state.editCourseAppointment=null;state.courseSection=target.dataset.section||'overview';state.view='courses';}
+  if(action==='open-course'){state.finalRevisionPageNumber=1;state.finalRevisionAnchor=null;state.queueQuery='';state.queueStatus='all';state.queuePage=1;state.courseProjectId=null;state.courseReviewId=null;state.courseId=target.dataset.id;state.appointmentPage=1;state.editCourseAppointment=null;state.courseSection=target.dataset.section||'overview';state.view='courses';}
   if(action==='close-course'){state.courseProjectId=null;state.courseReviewId=null;state.courseId=null;state.editCourseAppointment=null;}
   if(action==='queue-page')state.queuePage=Number(target.dataset.page);
+   if(action==='final-revision-page')state.finalRevisionPageNumber=Number(target.dataset.page);
+   if(action==='guide-correction-page')state.guideCorrectionPage=Number(target.dataset.page);
   if(action==='course-section'){state.courseReviewId=null;state.courseProjectId=null;state.courseSection=target.dataset.section;}
   if(action==='assessment-evidence'){state.courseReviewId=null;state.courseSection='evaluation';state.courseProjectId=target.dataset.project;}
   if(action==='course-project-evidence')state.courseProjectId=state.courseProjectId===target.dataset.project?null:target.dataset.project;
   if(action==='edit-course-appointment'){state.editCourseAppointment=target.dataset.id;show();return;}
   if(action==='cancel-course-appointment'){state.editCourseAppointment=null;show();return;}
-  if (action === 'open-project') {state.openFromHistory=['history','notifications'].includes(state.view);state.projectId=target.dataset.project;state.view='documents';}
+  if (action === 'open-project') {state.openFromHistory=['history','notifications'].includes(state.view);if(state.projectId!==target.dataset.project){state.guideCorrectionPage=1;state.guideCorrectionAnchor=null;}state.projectId=target.dataset.project;state.view='documents';}
   if (action === 'open-review') {
     state.reviewId = target.dataset.review;
     if(state.role==='Coordinator'&&state.view==='courses'&&state.courseId){state.courseReviewId=state.reviewId;state.courseProjectId=target.dataset.project||currentReview()?.projectId||null;}
     else state.view = state.workspace.access.student ? 'results' : 'evaluations';
   }
-  if(personalRole()&&['open-project','open-review','all-documents','work-page'].includes(action))writeWorkLocation();
-  if((state.role==='Coordinator'||departmentRole())&&['open-review','open-course','close-course','course-section','return-to-course','course-project-evidence','assessment-evidence','queue-page'].includes(action))writeCourseLocation();
-  const readOnlyActions=new Set(['refresh','open-review','open-course','close-course','course-section','return-to-course','course-project-evidence','assessment-evidence','queue-page','work-page','all-documents','open-project']);
+  if(personalRole()&&['open-project','open-review','all-documents','work-page','guide-correction-page'].includes(action))writeWorkLocation();
+  if((state.role==='Coordinator'||departmentRole())&&['open-review','open-course','close-course','course-section','return-to-course','course-project-evidence','assessment-evidence','queue-page','final-revision-page'].includes(action))writeCourseLocation();
+  const readOnlyActions=new Set(['refresh','open-review','open-course','close-course','course-section','return-to-course','course-project-evidence','assessment-evidence','queue-page','work-page','all-documents','open-project','guide-correction-page','final-revision-page']);
   if(readOnlyActions.has(action)){state.navigationPending=true;state.forceFullRefresh=action==='refresh';}
   await work(async () => {
     if(['end-assignment','revoke-operation'].includes(action))await api(staffBase()+'/assignment-management','POST',action==='end-assignment'?{action:'END_ASSIGNMENT',assignmentId:target.dataset.id}:{action:'REVOKE_OPERATION',grantId:target.dataset.id});
@@ -844,8 +855,8 @@ document.addEventListener('click', async event => {
       if(state.role==='Coordinator'&&!canMarkHere(state.reviewId,target.dataset.id))throw new Error('This assessment is not assigned to you.');
       await api(deptBase()+`/assessments/${target.dataset.id}/finalize`,'POST',{expectedAssessmentVersion:Number(target.dataset.version),reason:''},evaluatorContext());
     }
-  }, ['refresh','open-review','open-course','close-course','course-section','return-to-course','course-project-evidence','assessment-evidence','queue-page','work-page','all-documents','open-project'].includes(action) ? '' : 'Change saved with audit history');
-  if (['open-review','open-course','close-course','course-section','return-to-course','course-project-evidence','assessment-evidence','queue-page','work-page','all-documents','open-project'].includes(action)) focusHeading(action==='course-section'?'#main .course-header + .panel h2, #main .course-header + .heading h1':'#main h1, #main .panel h2');
+  }, ['refresh','open-review','open-course','close-course','course-section','return-to-course','course-project-evidence','assessment-evidence','queue-page','work-page','all-documents','open-project','guide-correction-page','final-revision-page'].includes(action) ? '' : 'Change saved with audit history');
+  if (['open-review','open-course','close-course','course-section','return-to-course','course-project-evidence','assessment-evidence','queue-page','work-page','all-documents','open-project','guide-correction-page','final-revision-page'].includes(action)) focusHeading(action==='course-section'?'#main .course-header + .panel h2, #main .course-header + .heading h1':'#main h1, #main .panel h2');
 });
 
 document.addEventListener('change', async event => {
@@ -1004,14 +1015,17 @@ document.addEventListener('submit', async event => {
     if(type==='course-stage')await coursePost(form.dataset.offering,'CREATE_STAGE',{projectId:values.projectId,stageKey:values.stageKey,facultyIds:new FormData(form).getAll('facultyIds')});
     if(type==='course-final'){outcome='Overall result published. Its release is in project history.';await coursePost(form.dataset.offering,'PUBLISH_FINAL',{projectId:form.dataset.project,expectedVersion:0});}
     if(type==='guide-final-correction'){
+      state.guideCorrectionPage=1;state.guideCorrectionAnchor=null;
       outcome='Correction request submitted to the responsible Coordinator. The published result is unchanged.';
       await coursePost(form.dataset.offering,'REQUEST_FINAL_REVISION',{projectId:form.dataset.project,expectedVersion:Number(form.dataset.version),studentId:values.studentId,marks:values.marks,reason:values.reason});
     }
     if(type==='guide-stage-evidence-correction'){
+      state.guideCorrectionPage=1;state.guideCorrectionAnchor=null;
       outcome='Updated stage evidence submitted to the Coordinator. The published result remains unchanged until approval.';
       await coursePost(form.dataset.offering,'REQUEST_FINAL_REVISION',{projectId:form.dataset.project,expectedVersion:Number(form.dataset.version),mode:'STAGE_EVIDENCE',reason:values.reason});
     }
     if(type==='final-revision-authorization'){
+      state.finalRevisionAnchor=null;
       const approved=values.approved==='true';
       await coursePost(form.dataset.offering,'AUTHORIZE_FINAL_REVISION',{requestId:form.dataset.id,approved});
       outcome=approved?'Correction approved. The revised overall result is published; its predecessor is retained.':'Correction declined. Published marks are unchanged.';
