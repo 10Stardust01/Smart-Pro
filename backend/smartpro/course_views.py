@@ -152,7 +152,35 @@ def evaluation_queue(request, offering_id):
 @api_view(['GET'])
 def guide_final_corrections(request):
     enabled()
+    target = request.query_params.get('projectId')
+    if target is not None:
+        project_id = serializers.UUIDField().run_validation(target)
+        page = serializers.IntegerField(min_value=1,max_value=100000000).run_validation(
+            request.query_params.get('page','1'))
+        supplied_anchor = request.query_params.get('anchor')
+        anchor = AwareDateTime().run_validation(supplied_anchor) if supplied_anchor else None
+        if not _execute("SELECT to_regprocedure('public.smartpro_guide_final_correction_project(uuid,text,uuid,integer,timestamptz)') IS NOT NULL",()):
+            raise StaffUnavailable('Published correction pages require candidate 062')
+        return private_response(_execute(
+            'SELECT public.smartpro_guide_final_correction_project(%s,%s,%s,%s,%s)',
+            (request.user.id,request.user.role,project_id,page,anchor)))
+    # Legacy callers retain the old bounded response; current UI selects a
+    # project from its independent paginated project-work endpoint.
     if not _execute("SELECT to_regprocedure('public.smartpro_guide_final_corrections(uuid,text)') IS NOT NULL", ()):
         raise StaffUnavailable('Direct published-result corrections require reviewed candidate 059')
     return private_response(_execute('SELECT public.smartpro_guide_final_corrections(%s,%s)',
                                      (request.user.id,request.user.role)))
+
+
+@api_view(['GET'])
+def final_revisions_page(request, offering_id):
+    enabled()
+    page = serializers.IntegerField(min_value=1,max_value=100000000).run_validation(
+        request.query_params.get('page','1'))
+    supplied_anchor = request.query_params.get('anchor')
+    anchor = AwareDateTime().run_validation(supplied_anchor) if supplied_anchor else None
+    if not _execute("SELECT to_regprocedure('public.smartpro_course_final_revisions_page(uuid,uuid,text,integer,timestamptz)') IS NOT NULL",()):
+        raise StaffUnavailable('Published correction pages require candidate 062')
+    return private_response(_execute(
+        'SELECT public.smartpro_course_final_revisions_page(%s,%s,%s,%s,%s)',
+        (request.user.id,offering_id,request.user.role,page,anchor)))
