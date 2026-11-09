@@ -849,6 +849,8 @@ def main(test_name=None):
    self.framework(oid)
    rid,_,_=self.stage(oid,pid,'stage-1',20)
    self.ok(self.command(oid,'PUBLISH_FINAL',dict(projectId=pid,expectedVersion=0)))
+   guide_listing=self.ok(self.client('faculty-a').get('/api/v1/me/published-corrections'))
+   self.assertIn(pid,[p['projectId'] for p in guide_listing['projects']])
    original=self.db.execute('SELECT id,results,sources FROM course_final_results WHERE project_id=%s ORDER BY version',(pid,)).fetchone()
    stage=self.db.execute('SELECT to_jsonb(v) AS evidence FROM academic_result_versions v WHERE review_id=%s ORDER BY version_no',(rid,)).fetchall()
    with socket.socket(socket.AF_INET,socket.SOCK_STREAM) as sock:
@@ -876,6 +878,9 @@ def main(test_name=None):
      page.locator('button[data-action="choose-role"][data-role="Faculty"]').wait_for(state='visible',timeout=15000)
      page.locator('button[data-action="choose-role"][data-role="Faculty"]').click()
      page.locator('aside.sidebar nav button[data-go="documents"]').click()
+     # The listing is intentionally paginated; open the actual project detail
+     # before asserting that its Guide-only correction form is rendered.
+     page.locator(f'button[data-action="open-project"][data-project="{pid}"]').click()
      panel=page.locator('form[data-form="guide-final-correction"]')
      panel.wait_for(state='attached',timeout=15000)
      panel.locator('xpath=..').evaluate('(el)=>{if(el.tagName==="DETAILS")el.open=true}')
