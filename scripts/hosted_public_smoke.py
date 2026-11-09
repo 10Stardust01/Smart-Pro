@@ -18,8 +18,10 @@ def get(path):
         try:
             try:resp=OPENER.open(Request(BASE+path,headers={'User-Agent':'SMARTPRO-ReadOnly-Smoke/1.0'}),timeout=25)
             except HTTPError as exc:resp=exc
+            # Keep HTTPMessage: its header lookup is case-insensitive.
+            # Converting to dict loses this property and misreads 'location'.
             with resp:
-                status=resp.status;body=resp.read(250000).decode('utf-8','replace');headers=dict(resp.headers)
+                status=resp.status;body=resp.read(250000).decode('utf-8','replace');headers=resp.headers
             if status>=500 and attempt<4:time.sleep(5);continue
             return status,body,headers
         except (URLError,TimeoutError):
