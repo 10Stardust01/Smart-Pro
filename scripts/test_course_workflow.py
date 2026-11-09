@@ -28,7 +28,7 @@ def main(test_name=None):
   @classmethod
   def setUpClass(cls):
    cls.db=psycopg.connect(**dict(owner,dbname=name),autocommit=True,row_factory=dict_row);install_documents(cls.db)
-   for candidate in ['037_course_coordination.sql','038_course_assessment_lifecycle.sql','039_course_deadlines_notifications.sql','040_course_integration.sql','041_course_scope_guards.sql','042_course_authorized_operations.sql','043_runtime_function_grants.sql','044_coordinator_own_corrections.sql','045_admin_course_appointments.sql','046_department_leadership.sql','047_department_intake.sql','048_course_evaluation_queue.sql','049_paginated_evaluation_queue.sql','050_document_project_pages.sql','051_department_intake_pages.sql','052_department_directory.sql','053_department_import_outcomes.sql','054_department_offering_pages.sql','055_leadership_history_pages.sql','056_coordinator_catalog_scope_prefilter.sql','057_department_identity_navigation.sql','058_course_command_lock_order.sql','059_published_correction_authority.sql','060_published_stage_evidence_rerelease.sql']:execute_file(cls.db,ROOT/'proposals/curriculum'/candidate)
+   for candidate in ['037_course_coordination.sql','038_course_assessment_lifecycle.sql','039_course_deadlines_notifications.sql','040_course_integration.sql','041_course_scope_guards.sql','042_course_authorized_operations.sql','043_runtime_function_grants.sql','044_coordinator_own_corrections.sql','045_admin_course_appointments.sql','046_department_leadership.sql','047_department_intake.sql','048_course_evaluation_queue.sql','049_paginated_evaluation_queue.sql','050_document_project_pages.sql','051_department_intake_pages.sql','052_department_directory.sql','053_department_import_outcomes.sql','054_department_offering_pages.sql','055_leadership_history_pages.sql','056_coordinator_catalog_scope_prefilter.sql','057_department_identity_navigation.sql','058_course_command_lock_order.sql','059_published_correction_authority.sql','060_published_stage_evidence_rerelease.sql','061_published_correction_read_visibility.sql']:execute_file(cls.db,ROOT/'proposals/curriculum'/candidate)
   @classmethod
   def tearDownClass(cls):cls.db.close();connection.close()
   def client(self,who='staff-policy',role=None):
@@ -831,6 +831,11 @@ def main(test_name=None):
        FROM academic_result_versions WHERE review_id=%s
        ORDER BY version_no DESC LIMIT 1""",(rid,))
    issued=self.ok(self.command(oid,'REQUEST_FINAL_REVISION',request,who='faculty-a'))['id']
+   guide=self.ok(self.client('faculty-a').get('/api/v1/me/published-corrections'))
+   visible=next(p for p in guide['projects'] if p['projectId']==pid)
+   self.assertTrue(any(q['id']==issued and q['type']=='STAGE_EVIDENCE_OVERALL_CORRECTION' for q in visible['requests']))
+   details=self.ok(self.client('coordinator').get(f'/api/v1/courses/offerings/{oid}/details'))
+   self.assertTrue(any(q['id']==issued and q['snapshot']['type']=='STAGE_EVIDENCE_OVERALL_CORRECTION' for q in details['finalRevisions']))
    self.assertEqual(self.command(oid,'AUTHORIZE_FINAL_REVISION',dict(requestId=issued,approved=True),who='student-a').status_code,403)
    self.ok(self.command(oid,'AUTHORIZE_FINAL_REVISION',dict(requestId=issued,approved=True),who='coordinator'))
    rows=self.db.execute('SELECT id,version,supersedes_id,sources,results FROM course_final_results WHERE project_id=%s ORDER BY version',(pid,)).fetchall()

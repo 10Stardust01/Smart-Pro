@@ -72,3 +72,16 @@ function body (same signature and privileges). Run it first on the existing
 validation branch; verify original result versions, audit history, the mode
 marker and deployed code compatibility. Recheck free-tier and service identity
 before updating the live main branch. A failed preflight must stop release.
+
+## 061 read-model alignment for stage-evidence requests
+
+The real HTTPS staging-auth browser regression uncovered that 060 successfully
+created an authorized stage-evidence request but the old 059 read projections
+only included DIRECT_AUTHORIZED_OVERALL_CORRECTION, leaving the Guide unaware
+of the pending request and the Coordinator without the decision row. Forward-
+only candidate 061 changes **only** the two scoped read functions to include
+both exceptional types and the exact request mode; it does not change academic
+policy, decision authority, released marks, or original stage evidence. This
+is covered by a PostgreSQL API visibility regression and an actual HTTPS,
+signed-session, Chromium Guide → Coordinator → Student acceptance test against
+a disposable synthetic database.

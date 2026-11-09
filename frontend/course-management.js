@@ -190,10 +190,10 @@ function finalRevisionPanel(course,projects,state,esc){
    const pending=item.approved==null;
    return `<article class="project-card"><h3>${esc(title)} · overall result correction</h3>
     <p>${esc(item.display_name)} · ${item.applied?"Approved and published":pending?"Awaiting Coordinator decision":item.approved?"Approved":"Declined"}</p>
-    <p>${fromStages?"Already-corrected stage evidence":"Direct overall mark"} · ${(item.snapshot?.changes||[]).length?item.snapshot.changes.map(x=>`${esc(x.studentId||"—")}: ${esc(x.from??"—")} → ${esc(x.to??"—")}`).join("; "):"Stage evidence changed; overall marks unchanged"}</p>
+    <p>${fromStages?"Already-corrected stage evidence":"Direct overall mark"} · ${(item.snapshot?.changes||[]).length?item.snapshot.changes.map(x=>`${esc(x.studentId||"—")}: ${esc(x.from??"—")} → ${esc(x.to??"—")}`).join("; "):"Updated stage evidence; see the retained exact source snapshot"}</p>
     <p>Reason: ${esc(item.reason||"Not recorded in older request")}</p>
     ${pending&&canAuthorize?`<form data-form="final-revision-authorization" data-offering="${esc(course.id)}" data-id="${esc(item.id)}"><label>Decision<select name="approved"><option value="true">Approve and publish revised overall result</option><option value="false">Decline correction</option></select></label><button class="primary">Record decision</button></form>`:""}
     </article>`;
  }).join("");
- return `<section class="panel"><h2>Published-result corrections</h2><p>The assigned Guide proposes a corrected overall mark or asks to release already-corrected stage evidence. The responsible Coordinator alone decides the exact change; approval appends a new overall result without rewriting older evidence. No HOD or independent approval is involved.</p>${requests||"<p>No direct corrections have been requested.</p>"}</section>`;
+ return `<section class="panel"><h2>Published-result corrections</h2><p>The assigned Guide proposes a corrected overall mark or asks to release already-corrected stage evidence. The responsible Coordinator alone decides the exact change; approval appends a new overall result without rewriting older evidence. No HOD or independent approval is involved.</p>${requests||"<p>No published-result corrections have been requested.</p>"}</section>`;
 }
