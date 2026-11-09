@@ -161,7 +161,7 @@ BEGIN
    IF (input->>'approved')::boolean THEN
      INSERT INTO public.course_final_results(project_id,plan_id,version,supersedes_id,sources,results,actor_id)
      VALUES(pid,released.plan_id,released.version+1,released.id,
-       released.sources,request.snapshot->'results',actor) RETURNING id INTO published;
+       request.snapshot->'sources',request.snapshot->'results',actor) RETURNING id INTO published;
      INSERT INTO public.course_final_revision_applications(request_id,result_id,actor_id,created_at)
      VALUES(request.id,published,actor,clock_timestamp());
    END IF;
