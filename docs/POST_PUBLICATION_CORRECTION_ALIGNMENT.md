@@ -30,10 +30,18 @@ A Guide sees the correction form from their Project work page; the Coordinator
 sees pending decisions under course Results. UI access is supported by server
 authorization and exact current role/assignment checks.
 
-**Status: code and targeted regression tests prepared only.** These changes
-are not merged, not installed in Neon, not deployed on Render and not yet
-tested against an isolated PostgreSQL database or in a full browser journey.
-Run those checks before any staging rollout. No trial/paid services.
+**Status: isolated acceptance passed, not deployed.** [GitHub CI run 42549200764](https://github.com/10Stardust01/Smart-Pro/actions/runs/42549200764)
+installed candidate 059 on disposable PostgreSQL 16, exercised direct request,
+rejection, same-person approval, idempotency and stale/forbidden operations,
+and launched the **real Django application and frontend in Chromium** with
+its own isolated database. The Guide submitted through Project work, the
+Coordinator approved from Course Management, and the Student saw both the
+original and new overall result versions. Regression checks confirmed the
+original stage/source evidence was unchanged. This is not a mocked-API UI test.
+The existing Render reviewer deployment, live Neon data, and original release
+records have **not** been modified. Hosted reviewer session testing, backup
+restore rehearsal and explicit deployment authorization remain separate gates.
+No new infrastructure, paid plan, or trial was used.
 
 Other project decisions stand: configurable/pinned review stages and rubrics,
 scoped Guide/evaluator responsibilities, prior version history and minimal

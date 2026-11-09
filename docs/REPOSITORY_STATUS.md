@@ -8,9 +8,13 @@ populated staging database. This corrects older local-only/deployment-pending
 statements below; it is **not** production or institutional sign-off.
 Draft PR #1 prepares the finalized **direct Guide-to-Coordinator overall-result
 correction**, without reopening or recalculating any review stage. Candidate
-059, the role-specific forms and regression tests are **not deployed or
-database-acceptance tested**. Approval is modeled as the one atomic decision
-that appends a new result version, preserving the predecessor and audit. See [requirements register](REQUIREMENTS_COMPLETION_REGISTER.md).
+059, the role-specific forms and regression tests are **not deployed**.
+The [isolated PostgreSQL 16 / real-Django Chromium CI](https://github.com/10Stardust01/Smart-Pro/actions/runs/42549200764)
+passed Guide submission, same-person Coordinator approval, Student access to
+both overall result versions, and non-mutation of recorded review-stage marks.
+The browser exercised actual frontend, backend, and a disposable database,
+not the hosted Render instance. Approval is a single atomic decision that
+appends a new result version, preserving its predecessor and audit. See [requirements register](REQUIREMENTS_COMPLETION_REGISTER.md).
 
 Original results and the current live deployment have not been modified.
 
