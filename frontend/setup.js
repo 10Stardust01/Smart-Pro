@@ -78,17 +78,14 @@ function leadershipForms(data,state,esc){
 
 
 export function departmentOverview(state,esc,heading){
- const hod=state.role==='HOD',setup=state.setup;
- const missing=state.courses?.offerings.filter(o=>!o.has_coordinator&&o.availability!=='ARCHIVED');
- return heading('DEPARTMENT WORKSPACE',hod?'Department Governance':'Department Operations',
-   hod?'Review academic progress and manage department leadership.':'Manage offerings, coordinator appointments and departmental records.')
- + `<section class="panel priority-panel"><h2>${hod?'Academic oversight':'Operational tasks'}</h2>
- <div class="actions">${hod?'<button class="primary" data-go="courses">Review offering progress</button><button class="secondary" data-go="setup">Policy and configuration history</button>':
- '<button class="primary" data-go="documents">Manage offerings</button><button class="secondary" data-go="records">Search or import records</button><button class="secondary" data-go="setup">Cycles, curriculum and configuration</button>'}</div>
- </section><section class="panel"><h2>Offering attention</h2>${missing?.length?missing.map(o=>`<article class="project-card"><h4>${esc(o.label)}</h4><p>${esc(o.cycle_label)} · ${esc(o.semester_key)}. Student access is withheld until the department Admin appoints an effective coordinator.</p><button class="secondary" data-action="open-course" data-section="appointments" data-id="${esc(o.id)}">${hod?'Review coordinators':'Manage coordinators'}</button></article>`).join(''):missing?'<p>No offerings on this page are flagged for a missing coordinator.</p>':'<p>Coordinator coverage is unavailable in this workspace.</p>'}</section>`
- +leadershipForms(setup?.leadership,state,esc);
+ const hod=state.role==='HOD',data=state.setup;
+ const missing=state.courses?.offerings.filter(o=>!o.has_coordinator&&o.availability!=='ARCHIVED')||[];
+ return heading('DEPARTMENT',hod?'Department overview':'Department operations',hod?'Academic oversight and approvals.':'Offerings, appointments and department records.')+
+ `<section class="dashboard-hero department-hero"><div class="hero-copy"><span class="eyebrow">${hod?'ACADEMIC LEADERSHIP':'ADMINISTRATION'}</span><h2>${hod?'Academic priorities':'Records and offerings'}</h2><p class="hero-detail">${hod?'Review current offerings and approvals.':'Maintain academic records and offering settings.'}</p><div class="actions">${hod?'<button class="primary" data-go="courses">View offerings →</button><button class="secondary" data-go="setup">Policies</button>':'<button class="primary" data-go="records">Department records →</button><button class="secondary" data-go="documents">Manage offerings</button>'}</div></div><div class="hero-decoration" aria-hidden="true"><span class="hero-circle"></span><span class="hero-orbit"></span><span class="hero-mark">S</span></div></section>
+ <div class="dashboard-metrics"><div class="metric"><span class="metric-label">Offerings on this page</span><strong class="metric-value">${state.courses?.offerings.length??0}</strong></div><div class="metric"><span class="metric-label">Without coordinator</span><strong class="metric-value">${missing.length}</strong></div><div class="metric"><span class="metric-label">Academic reviews</span><strong class="metric-value">${state.workspace?.reviews?.length??0}</strong></div></div>
+ <section class="panel"><div class="panel-title"><div><span class="section-kicker">ATTENTION</span><h2>Coordinator appointments</h2></div><button class="quiet" data-go="courses">All offerings</button></div>${missing.length?missing.map(o=>`<article class="row"><div><strong>${esc(o.label)}</strong><p class="muted">${esc(o.cycle_label)} · ${esc(o.semester_key)}</p></div><button class="secondary" data-action="open-course" data-section="appointments" data-id="${esc(o.id)}">${hod?'Review':'Manage'}</button></article>`).join(''):'<p class="muted">No unassigned active or paused offerings on this page.</p>'}</section>`+
+ leadershipForms(data?.leadership,state,esc);
 }
-
 export function departmentRecords(state,esc){
  if(state.departmentRecordId)return recordDetails(state.departmentRecord,esc);
  const setup=state.setup,listing=state.intakeListing;

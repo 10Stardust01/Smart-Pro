@@ -1,0 +1,21 @@
+# Never include local academic records, backup archives or credentials in builds.
+.git
+.github
+.test-data
+.local-data
+.venv
+venv
+**/__pycache__
+**/*.pyc
+**/*.backup
+**/*.dump
+**/*.zip
+**/*.env
+**/.env
+**/.env.*
+*.pem
+*.key
+*.p12
+coverage
+.pytest_cache
+node_modules

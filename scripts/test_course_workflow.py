@@ -28,7 +28,7 @@ def main(test_name=None):
   @classmethod
   def setUpClass(cls):
    cls.db=psycopg.connect(**dict(owner,dbname=name),autocommit=True,row_factory=dict_row);install_documents(cls.db)
-   for candidate in ['037_course_coordination.sql','038_course_assessment_lifecycle.sql','039_course_deadlines_notifications.sql','040_course_integration.sql','041_course_scope_guards.sql','042_course_authorized_operations.sql','043_runtime_function_grants.sql','044_coordinator_own_corrections.sql','045_admin_course_appointments.sql','046_department_leadership.sql','047_department_intake.sql','048_course_evaluation_queue.sql','049_paginated_evaluation_queue.sql','050_document_project_pages.sql','051_department_intake_pages.sql','052_department_directory.sql','053_department_import_outcomes.sql','054_department_offering_pages.sql','055_leadership_history_pages.sql','056_coordinator_catalog_scope_prefilter.sql','057_department_identity_navigation.sql','058_course_command_lock_order.sql']:execute_file(cls.db,ROOT/'proposals/curriculum'/candidate)
+   for candidate in ['037_course_coordination.sql','038_course_assessment_lifecycle.sql','039_course_deadlines_notifications.sql','040_course_integration.sql','041_course_scope_guards.sql','042_course_authorized_operations.sql','043_runtime_function_grants.sql','044_coordinator_own_corrections.sql','045_admin_course_appointments.sql','046_department_leadership.sql','047_department_intake.sql','048_course_evaluation_queue.sql','049_paginated_evaluation_queue.sql','050_document_project_pages.sql','051_department_intake_pages.sql','052_department_directory.sql','053_department_import_outcomes.sql','054_department_offering_pages.sql','055_leadership_history_pages.sql','056_coordinator_catalog_scope_prefilter.sql','057_department_identity_navigation.sql','058_course_command_lock_order.sql','059_published_correction_authority.sql','060_published_stage_evidence_rerelease.sql','061_published_correction_read_visibility.sql']:execute_file(cls.db,ROOT/'proposals/curriculum'/candidate)
   @classmethod
   def tearDownClass(cls):cls.db.close();connection.close()
   def client(self,who='staff-policy',role=None):
@@ -774,30 +774,335 @@ def main(test_name=None):
    self.assertFalse(any(a['project_id']==pid for a in alerts('coordinator') if a['kind']=='EVALUATION'))
    history=self.db.execute('SELECT count(*) n FROM course_notification_history').fetchone()['n'];self.assertGreater(history,0)
    self.assertEqual(self.command(oid,'DEADLINE',dict(body,dueAt='2027-12-01T00:00:00Z',expectedVersion=d['version']),who='coordinator').status_code,400)
-  def test_exceptional_overall_revision_preserves_the_original(self):
-   oid=self.offering()
-   self.ok(self.appoint(oid,uid='00000000-0000-4000-8000-000000000008'))
-   pid=self.project(oid)
-   self.framework(oid)
+  def test_direct_correction_does_not_reopen_stage_evidence(self):
+   oid=self.offering();self.ok(self.appoint(oid,uid='00000000-0000-4000-8000-000000000008'))
+   pid=self.project(oid);self.framework(oid)
    rid,aid,scores=self.stage(oid,pid,'stage-1',20)
    original=self.ok(self.command(oid,'PUBLISH_FINAL',dict(projectId=pid,expectedVersion=0)))['id']
-   expected=dict(projectId=pid,expectedVersion=1)
-   self.assertEqual(self.command(oid,'REQUEST_FINAL_REVISION',expected).status_code,409)
-   revision=self.db.execute('SELECT revision FROM academic_review_bindings WHERE review_id=%s',(rid,)).fetchone()['revision']
-   request=self.ok(self.command(oid,'REQUEST_EXCEPTIONAL_STAGE_CORRECTION',dict(reviewId=rid,assessmentId=aid,expectedReviewRevision=revision,scores=[dict(row,marks='21') for row in scores]),who='faculty-a'))['id']
-   self.assertEqual(self.command(oid,'AUTHORIZE_CORRECTION',dict(requestId=request,approved=True),who='coordinator').status_code,403)
-   self.ok(self.command(oid,'AUTHORIZE_EXCEPTIONAL_STAGE_CORRECTION',dict(requestId=request,approved=True),who='coordinator'))
-   self.ok(self.command(oid,'APPLY_EXCEPTIONAL_STAGE_CORRECTION',dict(requestId=request),who='faculty-a'))
-   final_request=self.ok(self.command(oid,'REQUEST_FINAL_REVISION',expected))['id']
-   self.assertEqual(self.command(oid,'APPLY_FINAL_REVISION',dict(requestId=final_request)).status_code,403)
-   self.ok(self.command(oid,'AUTHORIZE_FINAL_REVISION',dict(requestId=final_request,approved=True),who='coordinator'))
-   self.assertEqual(self.command(oid,'APPLY_FINAL_REVISION',dict(requestId=final_request),who='coordinator').status_code,403)
-   key=uuid4().hex
-   applied=self.ok(self.command(oid,'APPLY_FINAL_REVISION',dict(requestId=final_request),key=key))
-   self.assertEqual(self.ok(self.command(oid,'APPLY_FINAL_REVISION',dict(requestId=final_request),key=key)),applied)
-   versions=self.db.execute('SELECT * FROM course_final_results WHERE project_id=%s ORDER BY version',(pid,)).fetchall()
-   self.assertEqual([row['results']['00000000-0000-4000-8000-000000000001'] for row in versions],['40.00','42.00'])
-   self.assertEqual(str(versions[1]['supersedes_id']),original)
+   frozen=self.db.execute('SELECT to_jsonb(v) AS evidence FROM academic_result_versions v WHERE review_id=%s ORDER BY version_no',(rid,)).fetchall()
+   assigned=self.db.execute("""SELECT public.smartpro_current_project_guide(%s,%s) AS allowed,
+      (SELECT jsonb_agg(to_jsonb(g)) FROM faculty_assignments g WHERE g.project_id=%s) AS guide_assignments,
+      public.smartpro_role_choices(%s) AS roles,
+      (SELECT jsonb_agg(to_jsonb(r)) FROM department_role_assignments r WHERE r.user_id=%s) AS faculty_roles""",
+      (FACULTY,pid,pid,FACULTY,FACULTY)).fetchone()
+   self.assertTrue(assigned['allowed'],f"Assigned Guide scope in synthetic fixture: {assigned}")
+   proposal=dict(projectId=pid,expectedVersion=1,studentId='00000000-0000-4000-8000-000000000001',marks='42.00',reason='Correct an incorrect published overall mark')
+   self.assertEqual(self.command(oid,'REQUEST_FINAL_REVISION',proposal).status_code,403)
+   k=uuid4().hex
+   req=self.ok(self.command(oid,'REQUEST_FINAL_REVISION',proposal,who='faculty-a',key=k))
+   self.assertEqual(req,self.ok(self.command(oid,'REQUEST_FINAL_REVISION',proposal,who='faculty-a',key=k)))
+   self.assertEqual(self.command(oid,'REQUEST_FINAL_REVISION',dict(proposal,marks='43.00'),who='faculty-a',key=k).status_code,409)
+   self.assertEqual(self.command(oid,'AUTHORIZE_FINAL_REVISION',dict(requestId=req['id'],approved=True),who='student-a').status_code,403)
+   decision=dict(requestId=req['id'],approved=True)
+   dk=uuid4().hex
+   ok=self.ok(self.command(oid,'AUTHORIZE_FINAL_REVISION',decision,who='coordinator',key=dk))
+   self.assertEqual(ok,self.ok(self.command(oid,'AUTHORIZE_FINAL_REVISION',decision,who='coordinator',key=dk)))
+   v=self.db.execute('SELECT * FROM course_final_results WHERE project_id=%s ORDER BY version',(pid,)).fetchall()
+   self.assertEqual([row['results']['00000000-0000-4000-8000-000000000001'] for row in v],['40.00','42.00'])
+   self.assertEqual(str(v[-1]['supersedes_id']),original)
+   self.assertEqual(v[0]['sources'],v[-1]['sources'])
+   self.assertEqual(self.command(oid,'REQUEST_FINAL_REVISION',
+      dict(projectId=pid,expectedVersion=2,mode='STAGE_EVIDENCE',
+           reason='Attempt to republish unchanged stage evidence'),
+      who='faculty-a').status_code,409)
+   self.assertEqual(self.db.execute('SELECT to_jsonb(v) AS evidence FROM academic_result_versions v WHERE review_id=%s ORDER BY version_no',(rid,)).fetchall(),frozen)
+   self.assertEqual(self.command(oid,'AUTHORIZE_FINAL_REVISION',decision,who='coordinator').status_code,409)
+   self.assertEqual(self.command(oid,'REQUEST_EXCEPTIONAL_STAGE_CORRECTION',dict(reviewId=rid,assessmentId=aid,expectedReviewRevision=0,scores=scores),who='faculty-a').status_code,400)
+
+  def test_release_previously_corrected_stage_evidence_on_guide_request(self):
+   """An isolated stage result-version fixture represents evidence already
+   corrected by the approved evaluation workflow; no stage-edit API is added."""
+   oid=self.offering()
+   self.ok(self.appoint(oid,uid='00000000-0000-4000-8000-000000000008'))
+   pid=self.project(oid);self.framework(oid)
+   rid,_,_=self.stage(oid,pid,'stage-1',20)
+   initial=self.ok(self.command(oid,'PUBLISH_FINAL',dict(projectId=pid,expectedVersion=0)))['id']
+   request=dict(projectId=pid,expectedVersion=1,mode='STAGE_EVIDENCE',reason='Release corrected stage scores')
+   self.assertEqual(self.command(oid,'REQUEST_FINAL_REVISION',request,who='faculty-a').status_code,409)
+   self.assertEqual(self.command(oid,'REQUEST_FINAL_REVISION',request).status_code,403)
+   self.db.execute("""INSERT INTO academic_result_versions
+       (review_id,version_no,supersedes_id,legacy_release_id,roster_version_id,
+        policy_id,actor_id,reason,sources,results,calculation_version)
+       SELECT review_id,version_no+1,id,legacy_release_id,roster_version_id,
+          policy_id,actor_id,'Synthetic corrected stage release',
+          jsonb_set(sources,'{0,scores,0,marks}',to_jsonb('22'::text),false),
+          jsonb_set(results,ARRAY['00000000-0000-4000-8000-000000000001'],to_jsonb('42.00'::text)),
+          calculation_version
+       FROM academic_result_versions WHERE review_id=%s
+       ORDER BY version_no DESC LIMIT 1""",(rid,))
+   issued=self.ok(self.command(oid,'REQUEST_FINAL_REVISION',request,who='faculty-a'))['id']
+   guide=self.ok(self.client('faculty-a').get('/api/v1/me/published-corrections'))
+   visible=next(p for p in guide['projects'] if p['projectId']==pid)
+   self.assertTrue(any(q['id']==issued and q['type']=='STAGE_EVIDENCE_OVERALL_CORRECTION' for q in visible['requests']))
+   details=self.ok(self.client('coordinator').get(f'/api/v1/courses/offerings/{oid}/details'))
+   self.assertTrue(any(q['id']==issued and q['snapshot']['type']=='STAGE_EVIDENCE_OVERALL_CORRECTION' for q in details['finalRevisions']))
+   self.assertEqual(self.command(oid,'AUTHORIZE_FINAL_REVISION',dict(requestId=issued,approved=True),who='student-a').status_code,403)
+   self.ok(self.command(oid,'AUTHORIZE_FINAL_REVISION',dict(requestId=issued,approved=True),who='coordinator'))
+   rows=self.db.execute('SELECT id,version,supersedes_id,sources,results FROM course_final_results WHERE project_id=%s ORDER BY version',(pid,)).fetchall()
+   self.assertEqual([x['version'] for x in rows],[1,2])
+   self.assertEqual(str(rows[1]['supersedes_id']),initial)
+   self.assertEqual([x['results']['00000000-0000-4000-8000-000000000001'] for x in rows],['40.00','42.00'])
+   self.assertNotEqual(rows[0]['sources'],rows[1]['sources'])
+
+  def test_guide_coordinator_same_person_can_propose_and_approve(self):
+   oid=self.offering();self.ok(self.appoint(oid,uid='00000000-0000-4000-8000-000000000008'))
+   pid=self.project(oid);self.framework(oid);self.stage(oid,pid,'stage-1',20)
+   self.ok(self.appoint(oid,uid=FACULTY,permissions=['CORRECTIONS']))
+   self.ok(self.command(oid,'PUBLISH_FINAL',dict(projectId=pid,expectedVersion=0)))
+   req=self.ok(self.command(oid,'REQUEST_FINAL_REVISION',dict(projectId=pid,expectedVersion=1,
+     studentId='00000000-0000-4000-8000-000000000001',marks='42.00',reason='Correct published total'),
+     who='faculty-a',role='Faculty'))['id']
+   self.ok(self.command(oid,'AUTHORIZE_FINAL_REVISION',dict(requestId=req,approved=True),who='faculty-a',role='Coordinator'))
+   self.assertEqual([r['version'] for r in self.db.execute('SELECT version FROM course_final_results WHERE project_id=%s ORDER BY version',(pid,)).fetchall()],[1,2])
+   self.assertEqual(self.db.execute('SELECT count(*) n FROM course_final_revision_authorizations WHERE request_id=%s',(req,)).fetchone()['n'],1)
+
+  def test_decline_and_stale_direct_correction_do_not_change_previous_release(self):
+   oid=self.offering();self.ok(self.appoint(oid,uid='00000000-0000-4000-8000-000000000008'))
+   pid=self.project(oid);self.framework(oid);self.stage(oid,pid,'stage-1',20)
+   self.ok(self.command(oid,'PUBLISH_FINAL',dict(projectId=pid,expectedVersion=0)))
+   proposal=dict(projectId=pid,expectedVersion=1,
+     studentId='00000000-0000-4000-8000-000000000001',marks='42.00',reason='Correct published total')
+   self.assertEqual(self.command(oid,'REQUEST_FINAL_REVISION',proposal,who='coordinator',role='Faculty').status_code,403)
+   self.assertEqual(self.command(oid,'REQUEST_FINAL_REVISION',dict(proposal,marks='9999'),who='faculty-a').status_code,400)
+   self.assertEqual(self.command(oid,'REQUEST_FINAL_REVISION',dict(proposal,reason=''),who='faculty-a').status_code,400)
+   denied=self.ok(self.command(oid,'REQUEST_FINAL_REVISION',proposal,who='faculty-a'))['id']
+   self.ok(self.command(oid,'AUTHORIZE_FINAL_REVISION',dict(requestId=denied,approved=False),who='coordinator'))
+   self.assertEqual(self.db.execute('SELECT count(*) n FROM course_final_results WHERE project_id=%s',(pid,)).fetchone()['n'],1)
+   stale=self.ok(self.command(oid,'REQUEST_FINAL_REVISION',dict(proposal,marks='43.00'),who='faculty-a'))['id']
+   good=self.ok(self.command(oid,'REQUEST_FINAL_REVISION',dict(proposal,marks='44.00'),who='faculty-a'))['id']
+   self.ok(self.command(oid,'AUTHORIZE_FINAL_REVISION',dict(requestId=good,approved=True),who='coordinator'))
+   self.assertEqual(self.command(oid,'AUTHORIZE_FINAL_REVISION',dict(requestId=stale,approved=True),who='coordinator').status_code,409)
+   self.assertEqual(self.db.execute('SELECT count(*) n FROM course_final_results WHERE project_id=%s',(pid,)).fetchone()['n'],2)
+
+  def test_browser_direct_result_correction_actual_django_postgres(self):
+   """Browser uses actual SMART-PRO frontend, Django routes and PostgreSQL;
+   the runner creates and destroys an isolated synthetic DB per test."""
+   import socket,subprocess,time,urllib.request
+   from playwright.sync_api import sync_playwright
+   oid=self.offering()
+   # Preserve the planning Coordinator and appoint the Guide separately so both
+   # actual application responsibilities are exercised in the browser.
+   self.ok(self.appoint(oid,uid='00000000-0000-4000-8000-000000000008'))
+   self.ok(self.appoint(oid,uid=FACULTY,permissions=['OVERVIEW','CORRECTIONS','RESULTS']))
+   pid=self.project(oid)
+   self.framework(oid)
+   rid,_,_=self.stage(oid,pid,'stage-1',20)
+   self.ok(self.command(oid,'PUBLISH_FINAL',dict(projectId=pid,expectedVersion=0)))
+   guide_listing=self.ok(self.client('faculty-a').get('/api/v1/me/published-corrections'))
+   self.assertIn(pid,[p['projectId'] for p in guide_listing['projects']])
+   original=self.db.execute('SELECT id,results,sources FROM course_final_results WHERE project_id=%s ORDER BY version',(pid,)).fetchone()
+   stage=self.db.execute('SELECT to_jsonb(v) AS evidence FROM academic_result_versions v WHERE review_id=%s ORDER BY version_no',(rid,)).fetchall()
+   with socket.socket(socket.AF_INET,socket.SOCK_STREAM) as sock:
+    sock.bind(('127.0.0.1',0))
+    port=sock.getsockname()[1]
+   env=dict(os.environ,PYTHONPATH=str(ROOT/'backend'),SMARTPRO_UI='YES',SMARTPRO_ALLOWED_HOSTS='127.0.0.1,localhost,testserver')
+   url=f'http://127.0.0.1:{port}'
+   proc=subprocess.Popen([sys.executable,'-m','django','runserver','--noreload',f'127.0.0.1:{port}'],
+                          cwd=str(ROOT),env=env,stdout=subprocess.DEVNULL,stderr=subprocess.STDOUT)
+   try:
+    for _ in range(70):
+     if proc.poll() is not None:raise RuntimeError('SMART-PRO Django browser server exited')
+     try:
+      with urllib.request.urlopen(url+'/api/v1/ui/context',timeout=2) as resp:
+       if resp.status==200:break
+     except Exception:time.sleep(.2)
+    else:raise RuntimeError('SMART-PRO browser server did not start')
+    with sync_playwright() as pw:
+     browser=pw.chromium.launch(headless=True)
+     page=browser.new_page(viewport={'width':1280,'height':900})
+     errors=[]
+     page.on('pageerror',lambda error:errors.append(str(error)))
+     page.goto(url,wait_until='domcontentloaded')
+     page.locator('button[data-action="login"][data-alias="faculty-a"]').click()
+     page.locator('button[data-action="choose-role"][data-role="Faculty"]').wait_for(state='visible',timeout=15000)
+     page.locator('button[data-action="choose-role"][data-role="Faculty"]').click()
+     page.locator('aside.sidebar nav button[data-go="documents"]').click()
+     # The listing is intentionally paginated; open the actual project detail
+     # before asserting that its Guide-only correction form is rendered.
+     page.locator(f'button[data-action="open-project"][data-project="{pid}"]').click()
+     panel=page.locator('form[data-form="guide-final-correction"]')
+     panel.wait_for(state='attached',timeout=15000)
+     panel.locator('xpath=..').evaluate('(el)=>{if(el.tagName==="DETAILS")el.open=true}')
+     # A form can be rendered before its containing disclosure is expanded.
+     page.locator('form[data-form="guide-final-correction"]').locator('input[name="marks"]').fill('42.00')
+     panel.locator('textarea[name="reason"]').fill('Correct a verified published total')
+     panel.locator('button[type="submit"],button.primary').click()
+     page.get_by_text('Awaiting Coordinator decision',exact=False).first.wait_for(timeout=15000)
+     role=page.locator('#activeRole')
+     role.wait_for(timeout=15000)
+     role.select_option('Coordinator')
+     page.locator(f'button[data-action="open-course"][data-id="{oid}"]').click()
+     page.locator('button[data-action="course-section"][data-section="results"]').first.click()
+     decision=page.locator('form[data-form="final-revision-authorization"]')
+     decision.wait_for(state='visible',timeout=15000)
+     decision.locator('select[name="approved"]').select_option('true')
+     decision.locator('button').click()
+     page.get_by_text('Approved and published',exact=False).first.wait_for(timeout=15000)
+     # Verify the same real application displays the preserved original and
+     # corrected overall publications to the affected Student.
+     page.locator('button[data-action="logout"]').click()
+     page.locator('button[data-action="login"][data-alias="student-a"]').click()
+     page.locator('aside.sidebar nav button[data-go="documents"]').click()
+     page.locator(f'button[data-action="open-project"][data-project="{pid}"]').click()
+     history=page.locator('section:has(h3:text("Overall final result history"))').last
+     history.wait_for(state='visible',timeout=15000)
+     self.assertIn('Version 1',history.inner_text())
+     self.assertIn('Version 2',history.inner_text())
+     self.assertIn('42.00',history.inner_text())
+     self.assertFalse(errors,'Browser JavaScript errors: '+repr(errors))
+     browser.close()
+   finally:
+    proc.terminate()
+    try:proc.wait(timeout=7)
+    except subprocess.TimeoutExpired:proc.kill();proc.wait()
+   versions=self.db.execute('SELECT id,version,supersedes_id,results,sources FROM course_final_results WHERE project_id=%s ORDER BY version',(pid,)).fetchall()
+   self.assertEqual([r['version'] for r in versions],[1,2])
+   self.assertEqual(versions[0]['id'],original['id'])
+   self.assertEqual(versions[1]['supersedes_id'],original['id'])
+   self.assertEqual(versions[1]['results']['00000000-0000-4000-8000-000000000001'],'42.00')
+   self.assertEqual(versions[1]['sources'],original['sources'])
+   self.assertEqual(self.db.execute('SELECT to_jsonb(v) AS evidence FROM academic_result_versions v WHERE review_id=%s ORDER BY version_no',(rid,)).fetchall(),stage)
+
+  def test_browser_https_reviewer_stage_evidence_actual_django_postgres(self):
+      """Real staging HTTPS sign-in and Guide-to-Coordinator-to-Student flow.
+      Only the disposable PostgreSQL fixture is modified; never hosted data.
+      """
+      import json, secrets, socket, ssl, subprocess, tempfile, time, urllib.request
+      from django.contrib.auth.hashers import make_password
+      from playwright.sync_api import sync_playwright
+      oid=self.offering()
+      self.ok(self.appoint(oid,uid='00000000-0000-4000-8000-000000000008'))
+      self.ok(self.appoint(oid,uid=FACULTY,permissions=['OVERVIEW','CORRECTIONS','RESULTS']))
+      pid=self.project(oid);self.framework(oid)
+      rid,_,_=self.stage(oid,pid,'stage-1',20)
+      original=self.ok(self.command(oid,'PUBLISH_FINAL',dict(projectId=pid,expectedVersion=0)))['id']
+      # This test's isolated policy explicitly enables exceptional corrections.
+      # Model stage evidence already corrected by its separate authorized process.
+      self.db.execute("""INSERT INTO academic_result_versions
+         (review_id,version_no,supersedes_id,legacy_release_id,roster_version_id,
+          policy_id,actor_id,reason,sources,results,calculation_version)
+         SELECT review_id,version_no+1,id,legacy_release_id,roster_version_id,
+           policy_id,actor_id,'Synthetic corrected stage release',
+           jsonb_set(sources,'{0,scores,0,marks}',to_jsonb('22'::text),false),
+           jsonb_set(results,ARRAY['00000000-0000-4000-8000-000000000001'],
+                     to_jsonb('42.00'::text)),calculation_version
+         FROM academic_result_versions WHERE review_id=%s
+         ORDER BY version_no DESC LIMIT 1""",(rid,))
+      before_stages=self.db.execute('SELECT to_jsonb(v) evidence FROM academic_result_versions v WHERE review_id=%s ORDER BY version_no',(rid,)).fetchall()
+      self.assertEqual(len(before_stages),2)
+      password={'test-guide':secrets.token_urlsafe(20),'test-student':secrets.token_urlsafe(20)}
+      accounts={alias:dict(actor=actor,label=alias,passwordHash=make_password(password[alias]))
+                for alias,actor in [('test-guide',FACULTY),('test-student','00000000-0000-4000-8000-000000000001')]}
+      server_code="""
+  import os, ssl
+  from socketserver import ThreadingMixIn
+  from wsgiref.simple_server import WSGIServer, WSGIRequestHandler, make_server
+  from django.core.wsgi import get_wsgi_application
+  class Threaded(ThreadingMixIn,WSGIServer): daemon_threads=True
+  class SecureHandler(WSGIRequestHandler):
+      def get_environ(self):
+          e=super().get_environ();e['wsgi.url_scheme']='https';e['HTTPS']='on';return e
+  srv=make_server('127.0.0.1',int(os.environ['TEST_HTTPS_PORT']),
+                  get_wsgi_application(),server_class=Threaded,handler_class=SecureHandler)
+  ctx=ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+  ctx.load_cert_chain(os.environ['TEST_CERT'],os.environ['TEST_KEY'])
+  srv.socket=ctx.wrap_socket(srv.socket,server_side=True)
+  srv.serve_forever()
+  """
+      with socket.socket() as sk:
+          sk.bind(('127.0.0.1',0));port=sk.getsockname()[1]
+      url=f'https://127.0.0.1:{port}'
+      with tempfile.TemporaryDirectory(prefix='smartpro-https-') as tmp:
+          cert,key=str(Path(tmp)/'cert.pem'),str(Path(tmp)/'key.pem')
+          subprocess.run(['openssl','req','-x509','-newkey','rsa:2048','-nodes',
+                          '-keyout',key,'-out',cert,'-days','1','-subj','/CN=127.0.0.1',
+                          '-addext','subjectAltName=IP:127.0.0.1'],check=True,
+                         stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+          env=dict(os.environ,PYTHONPATH=str(ROOT/'backend'),
+            DJANGO_SETTINGS_MODULE='smartpro.settings',DJANGO_SECRET_KEY=secrets.token_hex(48),
+            SMARTPRO_DEPLOYMENT='staging',SMARTPRO_ENV='staging',SMARTPRO_DEMO_AUTH='NO',
+            SMARTPRO_DEPARTMENT_DEMO='NO',SMARTPRO_UI='YES',
+            SMARTPRO_STAGING_REVIEWER_AUTH='YES',SMARTPRO_ALLOWED_HOSTS='127.0.0.1,localhost',
+            SMARTPRO_CSRF_TRUSTED_ORIGINS=url,SMARTPRO_TRUST_TLS_PROXY='NO',
+            SMARTPRO_REVIEWER_ACCOUNTS=json.dumps(accounts),SMARTPRO_REVIEWER_TEST_ACCOUNTS='',
+            SMARTPRO_IDENTITY_RESOLVER='',TEST_HTTPS_PORT=str(port),TEST_CERT=cert,TEST_KEY=key)
+          with (Path(tmp)/'server.log').open('w') as log:
+              proc=subprocess.Popen([sys.executable,'-c',__import__('textwrap').dedent(server_code)],cwd=str(ROOT),env=env,
+                                    stdout=log,stderr=subprocess.STDOUT)
+              try:
+                  for _ in range(70):
+                      if proc.poll() is not None:
+                          raise RuntimeError('HTTPS staging server exited: '+(Path(tmp)/'server.log').read_text()[-1800:])
+                      try:
+                          with urllib.request.urlopen(url+'/health/live',timeout=2,
+                               context=ssl._create_unverified_context()) as response:
+                              if response.status==200:break
+                      except Exception:time.sleep(.2)
+                  else:raise RuntimeError('HTTPS staging server unavailable: '+(Path(tmp)/'server.log').read_text()[-1800:])
+                  with sync_playwright() as pw:
+                      browser=pw.chromium.launch(headless=True)
+                      page=browser.new_page(ignore_https_errors=True,viewport={'width':1280,'height':900})
+                      errors=[]
+                      page.on('pageerror',lambda error:errors.append(str(error)))
+                      page.goto(url,wait_until='domcontentloaded')
+                      self.assertIn('/reviewer/login',page.url)
+                      def login(alias):
+                          page.locator('input[name="username"]').fill(alias)
+                          page.locator('input[name="password"]').fill(password[alias])
+                          page.locator('button[type="submit"]').click()
+                          page.wait_for_url(url+'/',timeout=20000)
+                          page.locator(f'button[data-action="login"][data-alias="{alias}"]').click()
+                      login('test-guide')
+                      page.locator('button[data-action="choose-role"][data-role="Faculty"]').click(timeout=20000)
+                      page.locator('aside.sidebar nav button[data-go="documents"]').click()
+                      page.locator(f'button[data-action="open-project"][data-project="{pid}"]').click()
+                      form=page.locator('form[data-form="guide-stage-evidence-correction"]')
+                      form.wait_for(state='attached',timeout=20000)
+                      form.locator('xpath=..').evaluate('(e)=>{if(e.tagName==="DETAILS")e.open=true}')
+                      form.locator('textarea[name="reason"]').fill('Publish already-corrected synthetic stage evidence')
+                      with page.expect_response(lambda response: response.url.endswith('/commands') and response.request.method=='POST',timeout=20000) as sent:
+                          form.locator('button').click()
+                      response=sent.value
+                      self.assertEqual(response.status,200,'Stage-evidence UI POST: '+response.text()[:600])
+                      try:
+                          page.get_by_text('Awaiting Coordinator decision',exact=False).first.wait_for(timeout=5000)
+                      except Exception:
+                          print('Synthetic stage request UI diagnostic:',page.locator('#toast').inner_text()[:500],page.locator('#main').inner_text()[-1500:],flush=True)
+                          print('Synthetic stage DB request count:',self.db.execute('SELECT count(*) n FROM course_final_revision_requests WHERE project_id=%s',(pid,)).fetchone()['n'],flush=True)
+                          raise
+                      self.assertEqual(self.db.execute('SELECT count(*) n FROM course_final_results WHERE project_id=%s',(pid,)).fetchone()['n'],1)
+                      page.locator('#activeRole').select_option('Coordinator')
+                      page.locator(f'button[data-action="open-course"][data-id="{oid}"]').click()
+                      page.locator('button[data-action="course-section"][data-section="results"]').first.click()
+                      decision=page.locator('form[data-form="final-revision-authorization"]')
+                      decision.wait_for(state='visible',timeout=20000)
+                      decision.locator('select[name="approved"]').select_option('true')
+                      decision.locator('button').click()
+                      page.get_by_text('Approved and published',exact=False).first.wait_for(timeout=20000)
+                      page.locator('button[data-action="logout"]').click()
+                      page.wait_for_url(url+'/reviewer/login',timeout=20000)
+                      login('test-student')
+                      page.locator('aside.sidebar nav button[data-go="documents"]').click()
+                      page.locator(f'button[data-action="open-project"][data-project="{pid}"]').click()
+                      history=page.locator('section:has(h3:text("Overall final result history"))').last
+                      history.wait_for(state='visible',timeout=20000)
+                      self.assertIn('Version 1',history.inner_text())
+                      self.assertIn('Version 2',history.inner_text())
+                      self.assertIn('42.00',history.inner_text())
+                      self.assertFalse(errors,repr(errors))
+                      browser.close()
+              finally:
+                  proc.terminate()
+                  try:proc.wait(timeout=7)
+                  except subprocess.TimeoutExpired:proc.kill();proc.wait()
+      versions=self.db.execute('SELECT id,version,supersedes_id,results,sources FROM course_final_results WHERE project_id=%s ORDER BY version',(pid,)).fetchall()
+      self.assertEqual([v['version'] for v in versions],[1,2])
+      self.assertEqual(str(versions[0]['id']),original)
+      self.assertEqual(versions[1]['supersedes_id'],versions[0]['id'])
+      self.assertEqual([v['results']['00000000-0000-4000-8000-000000000001'] for v in versions],['40.00','42.00'])
+      self.assertNotEqual(versions[0]['sources'],versions[1]['sources'])
+      self.assertEqual(self.db.execute('SELECT to_jsonb(v) evidence FROM academic_result_versions v WHERE review_id=%s ORDER BY version_no',(rid,)).fetchall(),before_stages)
+      self.assertEqual(self.db.execute('SELECT count(*) n FROM course_final_revision_authorizations WHERE request_id IN (SELECT id FROM course_final_revision_requests WHERE project_id=%s)',(pid,)).fetchone()['n'],1)
 
   def test_milestone_completion_and_exact_requirement_permission(self):
    oid=self.offering()
@@ -898,4 +1203,7 @@ def main(test_name=None):
   connection.close();storage.cleanup()
   with psycopg.connect(**dict(owner,dbname='postgres'),autocommit=True) as manager:
    assert name.startswith('smartpro_test_demo_acceptance_courses_');manager.execute(sql.SQL('DROP DATABASE {} WITH (FORCE)').format(sql.Identifier(name)))
-if __name__=='__main__':raise SystemExit(main())
+if __name__=='__main__':
+ if len(sys.argv)>2 or (len(sys.argv)==2 and not sys.argv[1].startswith('test_')):
+  raise SystemExit('Explicit single course test name required')
+ raise SystemExit(main(sys.argv[1] if len(sys.argv)==2 else None))

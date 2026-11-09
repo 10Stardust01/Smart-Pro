@@ -1,4 +1,95 @@
+# Source consolidation and hosted state (10 November 2026)
+
+[Consolidated development checkpoint](CONSOLIDATED_DEVELOPMENT_CHECKPOINT.md)
+is the current summary of the reviewed 059–061 source, accepted product decisions,
+Milestones A–E and remaining gaps. Render Free reviewer staging is live at
+`319e3ebc`. Connected Neon main and validation have **059 and 060**, but **not 061**.
+Historical deployment SHAs and old 'not deployed' claims below remain dated
+provenance, **not current hosted-state assertions**. No hosted migration or academic
+record mutation is implied by source consolidation.
+
+## 10 November 2026 — non-destructive correction CI audit
+
+The preserved review branch `review/live-staging-audit-20261109` at
+`de623bc2` completed both real Django/PostgreSQL browser corrections:
+the direct-overall-mark flow and the signed HTTPS reviewer
+Guide → Coordinator → Student stage-evidence re-release flow. The
+PostgreSQL, Django compatibility, curriculum and student API workflows
+also passed. The direct-correction GitHub Actions job nevertheless finished
+red because its **last, separately scoped read-only hosted smoke** failed
+while comparing an HTTP 302 redirect: converting Python's case-insensitive
+`HTTPMessage` to a regular dictionary made `headers.get('Location')`
+return `None` when the header used different capitalization.
+
+The isolated fix is on `fix/hosted-smoke-register-20261110`: keep the
+original `HTTPMessage` for case-insensitive header access and add a
+no-network regression in `scripts/test_hosted_public_smoke.py`.
+The regression test has been added but has not yet been independently
+executed in GitHub CI. Do not infer that the rest of the live hosted smoke
+passed: its later CSRF, anonymous-authority and frontend-asset checks
+were not reached in the failed run.
+
+**No academic SQL/migration code, correction policies, actor assignments,
+staging database rows, hosted deployment or PDF artifacts were changed by
+this audit.** The review branch remains ahead of the deployment branch.
+Candidates 060 then 061 must be preflighted in the existing Neon validation
+environment, and explicitly authorized separately before live migration
+or deployment. Preserve 059, original releases, recovery branches and the
+current Render staging service.
+
+## 9 November 2026 — safe live schema alignment
+
+The current Neon staging branch has the already-applied direct correction
+candidate 059; the reviewed stage-evidence expansion needs forward migration
+060. Existing before-059 recovery and 059 validation branches are retained.
+Candidate 060 replaces only `smartpro_course_final_revision` with the
+reviewed dual-mode function. Do not reapply 059 or overwrite published data.
+Render Free is configured for `deployment/reviewer-staging`, auto deploy off.
+Any live promotion must use a fast-forward branch update and explicit Render
+deploy; database checks and live smoke tests must be recorded separately.
+
 # SMART-PRO implementation status
+
+## 9 November 2026 — correction workflow branch verified, not deployed
+
+The reviewer staging deployment currently **live on Render Free** is `c20e15b`
+(verified by Render's deploy list), matching GitHub
+`deployment/reviewer-staging`. Auto-deploy remains off.
+No change from this review work was deployed.
+
+On the isolated review branch at `c0564cc`, the assigned Guide can either
+propose a corrected published overall mark or request an overall re-release
+from **already corrected, complete stage evidence**. A current offering
+Coordinator approves/rejects even when Guide, requester, or evaluator;
+no extra HOD/independent authorization is introduced. The initial release
+and all original review evidence remain available. [Correction CI](https://github.com/10Stardust01/Smart-Pro/actions/runs/42561282815)
+passed disposable PostgreSQL 16, direct and stage-evidence contracts,
+backend syntax and the real Django/Chromium Guide→Coordinator→Student
+journey. The stage-evidence form itself has not had a separate browser click
+test. This does not constitute hosted or institutional acceptance.
+
+The requirements register separates code-verified results from remaining
+institutional decisions, hosting recovery, account-access work and accessibility.
+
+
+## 9 November 2026 — hosted snapshot and product-policy reconciliation
+
+Render Free already hosts the reviewer service from `deployment/reviewer-staging`
+(commit `0d5281e`); Neon reports a `free_v3` PostgreSQL 16 project with a
+populated staging database. This corrects older local-only/deployment-pending
+statements below; it is **not** production or institutional sign-off.
+Draft PR #1 prepares the finalized **direct Guide-to-Coordinator overall-result
+correction**, without reopening or recalculating any review stage. Candidate
+059, the role-specific forms and regression tests are **not deployed**.
+The [isolated PostgreSQL 16 / real-Django Chromium CI](https://github.com/10Stardust01/Smart-Pro/actions/runs/42549200764)
+passed Guide submission, same-person Coordinator approval, Student access to
+both overall result versions, and non-mutation of recorded review-stage marks.
+The browser exercised actual frontend, backend, and a disposable database,
+not the hosted Render instance. Approval is a single atomic decision that
+appends a new result version, preserving its predecessor and audit. See [requirements register](REQUIREMENTS_COMPLETION_REGISTER.md).
+
+Original results and the current live deployment have not been modified.
+
 
 Updated 8 November 2026 (Asia/Kolkata). Authoritative current status; historical
 reports/evidence retain their original meaning. No main merge or deployment.

@@ -6,6 +6,8 @@ from uuid import UUID
 
 from django.conf import settings
 from django.http import FileResponse, Http404, JsonResponse
+from django.shortcuts import redirect
+from . import reviewer_auth
 from rest_framework.decorators import api_view
 from rest_framework.exceptions import PermissionDenied, ValidationError
 
@@ -27,6 +29,8 @@ def enabled():
 def asset(request,name='index.html'):
     if not (enabled() or os.getenv('SMARTPRO_UI')=='YES') or name not in {'index.html','app.js','styles.css','documents.js','workflow.js','setup.js','proposal.js','setup-policy.js','coordination.js','offering-management.js','document-requirements.js','course-management.js','faculty-reference.js'}:
         raise Http404
+    if name == 'index.html' and reviewer_auth.active() and not reviewer_auth.reviewer_session(request):
+        return redirect('/reviewer/login')
     path=Path(settings.BASE_DIR)/'frontend'/name
     if not path.is_file():
         raise Http404
@@ -39,19 +43,28 @@ def asset(request,name='index.html'):
 def context(request):
     # Explicit demo identities only; normal startup never seeds or offers fake logins.
     is_demo=enabled();people={};responsibilities={}
+    reviewer = reviewer_auth.reviewer_session(request) if reviewer_auth.active() else None
+    if reviewer:
+        alias, entry = reviewer
+        people = {alias: entry['label']}
+        roles = _execute('SELECT public.smartpro_role_choices(%s)', (entry['actor'],))
+        responsibilities = {alias: json.loads(roles) if isinstance(roles, str) else roles}
     if is_demo:
         labels=_execute('SELECT public.smartpro_demo_persona_labels(%s::uuid[])',(list(DEMO_USERS.values()),))
         people={alias:labels[uid] for alias,uid in DEMO_USERS.items() if uid in labels}
         choices=_execute('SELECT jsonb_object_agg(id::text,public.smartpro_role_choices(id)) FROM unnest(%s::uuid[]) AS ids(id)',([DEMO_USERS[alias] for alias in people],))
         responsibilities={alias:choices.get(uid,[]) for alias,uid in DEMO_USERS.items() if alias in people}
-    return JsonResponse({'courseManagement':os.getenv('SMARTPRO_COURSE_API')=='YES','demo':is_demo,'identities':list(people) if is_demo else [],'people':people,'responsibilities':responsibilities,
+    return JsonResponse({'courseManagement':os.getenv('SMARTPRO_COURSE_API')=='YES','demo':is_demo,'reviewerAuth':reviewer_auth.active(),'identities':list(people) if is_demo or reviewer else [],'people':people,'responsibilities':responsibilities,
                          'facultyReferenceDepartmentId':str(FACULTY_REFERENCE_DEPARTMENT) if faculty_reference_enabled(request) else None})
 
 
 def faculty_reference_enabled(request):
     database=settings.DATABASES['default']
-    return (os.getenv('SMARTPRO_FACULTY_REFERENCE')=='YES' and os.getenv('SMARTPRO_COURSE_API')=='YES'
-            and enabled() and (database['NAME'].startswith('smartpro_test_demo_acceptance_') or local_development_enabled())
+    if os.getenv('SMARTPRO_FACULTY_REFERENCE')!='YES' or os.getenv('SMARTPRO_COURSE_API')!='YES':
+        return False
+    if reviewer_auth.active():
+        return bool(reviewer_auth.reviewer_session(request))
+    return (enabled() and (database['NAME'].startswith('smartpro_test_demo_acceptance_') or local_development_enabled())
             and database['HOST'] in ('127.0.0.1','localhost')
             and request.META.get('REMOTE_ADDR') in ('127.0.0.1','::1'))
 

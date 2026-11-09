@@ -12,10 +12,21 @@ const selectedOffering = () => state.offeringId || state.workspace?.department?.
 const documentsBase = () => `/api/v1/documents/departments/${state.workspace.department.id}`;
 const documentCommand = (action,body) => api(documentsBase(),'POST',{action,...body});
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const state = {alias:sessionStorage.getItem('smartpro.identity'),view:'overview',workspace:null,profile:null,offerings:[],memberships:[],projects:[],staff:null,academic:null,reviewId:null,result:null,error:'',busy:false,generation:0};
+const state = {alias:sessionStorage.getItem('smartpro.identity'),view:'overview',workspace:null,profile:null,offerings:[],memberships:[],projects:[],staff:null,academic:null,reviewId:null,result:null,error:'',busy:false,generation:0,navigationPending:false,forceFullRefresh:false,studentMetadataValidUntil:0};
 state.role=sessionStorage.getItem('smartpro.role.'+state.alias);
 let controller = new AbortController();
 const uiContext=await (await fetch('/api/v1/ui/context')).json();
+if(uiContext.reviewerAuth && !uiContext.identities.includes(state.alias)){
+  state.alias=null;
+  state.role=null;
+  sessionStorage.removeItem('smartpro.identity');
+}
+function csrfToken(){
+  return decodeURIComponent((document.cookie.match(/(?:^|;\s*)csrftoken=([^;]*)/)||[])[1]||'');
+}
+function reviewerHeaders(alias){
+  return uiContext.reviewerAuth ? {'X-CSRFToken':csrfToken()} : {'X-Demo-User':alias};
+}
 const identities=uiContext.identities.map(alias=>[alias,uiContext.people?.[alias]||alias.replaceAll('-',' '),(uiContext.responsibilities?.[alias]?.join(' · ')||'Restricted access'),(uiContext.people?.[alias]||alias).split(' ').map(p=>p[0]).slice(0,2).join('')]);
 const courseSections = new Set(['overview','appointments','requirements','plan','evaluation','assignments','submissions','deadlines','results','history']);
 const departmentRole=()=>['Admin','HOD'].includes(state.role);
@@ -128,7 +139,7 @@ const displayDate = value => value ? new Date(value).toLocaleString(undefined, {
 const localDate = value => { const d = new Date(value); return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0,16); };
 
 async function api(path, method = 'GET', body, context = {alias:state.alias,role:state.role,signal:controller.signal}) {
-  const headers = {'X-Demo-User':context.alias, Accept:'application/json'};
+  const headers = {Accept:'application/json',...reviewerHeaders(context.alias)};
   if(context.role)headers['X-Smartpro-Role']=context.role;
   const privateCommand=path.endsWith('/intake')||path.includes('/records/')||path.endsWith('/appointment-candidates')||path.endsWith('/leadership')&&body?.action==='HISTORY';
   const fingerprint = privateCommand?'':`${context.alias}:${path}:${JSON.stringify(body)}`;
@@ -169,12 +180,13 @@ async function api(path, method = 'GET', body, context = {alias:state.alias,role
   return value;
 }
 
-async function load() {
+async function load({reuseWorkspace=false}={}) {
   if(!state.alias)return;
   const generation = state.generation;
   const context = {alias:state.alias,role:state.role,signal:controller.signal};
   const get = path => api(path,'GET',undefined,context);
-  const w = await get('/api/v1/workspace');
+  const w = reuseWorkspace && state.workspace && !state.workspace.chooseRole && state.workspace.activeRole===state.role
+    ? state.workspace : await get('/api/v1/workspace');
   if (generation !== state.generation) return;
   if(w.chooseRole){state.workspace=w;return;}
   const previousRole=state.role;
@@ -182,7 +194,7 @@ async function load() {
   context.role=state.role;
   if(!previousRole&&personalRole()&&new URLSearchParams(location.search).has('work'))readWorkLocation();
   if(!previousRole&&(departmentRole()||state.role==='Coordinator'))readCourseLocation();
-  const next = {departmentRecord:null,appointmentCandidates:null,directoryListing:null,intakeListing:null,intakeTargets:null,courses:null,courseDetail:null,courseEvaluationQueue:null,courseEvaluationError:'',workListing:null,courseDocumentListing:null,courseNotifications:null,reviewManagement:null,requirementManagement:null,assignmentManagement:null,configurationManagement:null,management:null,proposalConfig:null,proposalError:'',documentError:'',setup:null,workspace:w,profile:null,offerings:[],memberships:[],projects:[],staff:null,academic:null,result:null,error:''};
+  const next = {departmentRecord:null,appointmentCandidates:null,directoryListing:null,intakeListing:null,intakeTargets:null,courses:null,courseDetail:null,courseEvaluationQueue:null,courseEvaluationError:'',workListing:null,courseDocumentListing:null,courseNotifications:null,guideFinalCorrections:null,reviewManagement:null,requirementManagement:null,assignmentManagement:null,configurationManagement:null,management:null,proposalConfig:null,proposalError:'',documentError:'',setup:null,workspace:w,profile:null,offerings:[],memberships:[],projects:[],staff:null,academic:null,result:null,error:''};
   // Resolve the role first, then load independent panels together.
   const staffCourse=['Coordinator','HOD'].includes(state.role)&&state.view==='courses';
   const workBrowser=personalRole()||state.role==='HOD'&&state.view==='documents';
@@ -194,7 +206,16 @@ async function load() {
     (state.view==='documents'?state.projectId:['evaluations','results'].includes(state.view)?assessmentEvidence:null):null;
   const loadProjects=async()=>{
     if (w.access.student && w.enrolled && !w.access.admin) {
-      const [profile,offerings,memberships] = await Promise.all(['/api/v1/me/profile','/api/v1/me/curriculum-offerings','/api/v1/me/memberships'].map(get));
+      // Reuse only short-lived, in-memory details for navigation, never after a write.
+      // Memberships and projects always come from authorized server requests.
+      const reused = reuseWorkspace && Date.now() < state.studentMetadataValidUntil
+        && state.profile && state.offerings?.length;
+      const [profile,offerings,memberships] = await Promise.all([
+        reused ? Promise.resolve(state.profile) : get('/api/v1/me/profile'),
+        reused ? Promise.resolve({results:state.offerings}) : get('/api/v1/me/curriculum-offerings'),
+        get('/api/v1/me/memberships')
+      ]);
+      if(!reused)next.studentMetadataValidUntil=Date.now()+8000;
       next.profile = profile;
       next.offerings = offerings.results;
       next.offeringId = offerings.results.some(o=>o.id===state.offeringId)?state.offeringId:(offerings.results.find(o=>o.id===w.department?.offeringId)?.id||offerings.results[0]?.id);
@@ -303,7 +324,8 @@ async function load() {
   const projects=loadProjects();
   await Promise.all([
     projects,loadDocuments(),loadSetup(),loadCandidates(),loadCourses(),loadConfiguration(),
-    uiContext.courseManagement&&get('/api/v1/me/course-notifications').then(value=>{next.courseNotifications=value;})
+    uiContext.courseManagement&&['overview','notifications'].includes(state.view)&&get('/api/v1/me/course-notifications').then(value=>{next.courseNotifications=value;}),
+    uiContext.courseManagement&&state.role==='Faculty'&&state.view==='documents'&&get('/api/v1/me/published-corrections').then(value=>{next.guideFinalCorrections=value;}).catch(error=>{if(error.status!==503)throw error;})
   ]);
   if(generation!==state.generation)return;
   if((w.access.faculty||w.access.admin)&&next.documents) next.projects=[...new Map([...next.projects,...next.documents.projects].map(p=>[p.id,p])).values()];
@@ -340,7 +362,7 @@ function toast(text) {
 }
 
 function login() {
-  $('#app').innerHTML = `<div class="login"><section class="login-story">${brand}<div class="eyebrow">ONE DEPARTMENT. EVERY MILESTONE.</div><h1>Good projects start<br>with a connected<br>department.</h1><p>A shared place for students, faculty and department leaders to move from an idea to a confident evaluation.</p><div class="story-bottom">ENROLL &nbsp; / &nbsp; COLLABORATE &nbsp; / &nbsp; BUILD &nbsp; / &nbsp; EVALUATE</div></section><main class="login-form" id="main" tabindex="-1"><div class="login-box"><div class="eyebrow">${uiContext.demo?'LOCAL DEVELOPMENT':'SMART-PRO'}</div><h1>${uiContext.demo?'Choose your workspace':'Sign-in configuration pending'}</h1><p>${uiContext.demo?'Use an explicit test identity to exercise real departmental workflows.':'Verified institutional sign-in must be configured before access is enabled.'}</p>${state.error ? `<div class="error" role="alert">${esc(state.error)}</div>` : ''}${identities.map(([alias,name,description,initials]) => `<button class="person-option" data-action="login" data-alias="${alias}"><span class="avatar">${initials}</span><span><strong>${name}</strong><small>${description}</small></span><span>→</span></button>`).join('')}<p class="login-foot">${uiContext.demo?'Synthetic test identities only. Real-user access remains disabled.':'Verified institutional sign-in is required. Contact your application administrator.'}</p></div></main></div>`;
+  $('#app').innerHTML = `<div class="login"><section class="login-story">${brand}<div class="eyebrow">ONE DEPARTMENT. EVERY MILESTONE.</div><h1>Good projects start<br>with a connected<br>department.</h1><p>A shared place for students, faculty and department leaders to move from an idea to a confident evaluation.</p><div class="story-bottom">ENROLL &nbsp; / &nbsp; COLLABORATE &nbsp; / &nbsp; BUILD &nbsp; / &nbsp; EVALUATE</div></section><main class="login-form" id="main" tabindex="-1"><div class="login-box"><div class="eyebrow">${uiContext.demo?'LOCAL DEVELOPMENT':uiContext.reviewerAuth?'AUTHORIZED REVIEWER':'SMART-PRO'}</div><h1>${uiContext.demo?'Choose your workspace':uiContext.reviewerAuth?'Continue to your workspace':'Sign-in configuration pending'}</h1><p>${uiContext.demo?'Use an explicit test identity to exercise real departmental workflows.':uiContext.reviewerAuth?'This reviewer session has been verified. Continue with your assigned academic responsibilities.':'Verified institutional sign-in must be configured before access is enabled.'}</p>${state.error ? `<div class="error" role="alert">${esc(state.error)}</div>` : ''}${identities.map(([alias,name,description,initials]) => `<button class="person-option" data-action="login" data-alias="${alias}"><span class="avatar">${initials}</span><span><strong>${name}</strong><small>${description}</small></span><span>→</span></button>`).join('')}<p class="login-foot">${uiContext.demo?'Synthetic test identities only. Real-user access remains disabled.':uiContext.reviewerAuth?'Permissions are checked on every request.':'Verified institutional sign-in is required. Contact your application administrator.'}</p></div></main></div>`;
 }
 
 function navigation() {
@@ -364,12 +386,19 @@ function render() {
   if((w.access.operations||w.access.admin)&&state.role!=='Coordinator'&&!nav.some(n=>n[0]==='setup')) nav.push(['setup','⚙','Academic setup']);
   if ((personalRole()||state.role==='HOD'||state.documents||state.documentError) && !(state.role==='Coordinator'&&uiContext.courseManagement) && !nav.some(n=>n[0]==='documents')) nav.push(['documents','▣',personalRole()?'Project work':'Submissions & reviews']);
   if (!nav.some(n => n[0] === state.view)) state.view = 'overview';
-  const role = w.access.admin ? (state.role==='HOD' ? 'Head of department' : 'Appointed coordinator') : w.access.operations ? 'Operational Admin' : w.access.student ? 'Student workspace' : w.access.faculty ? 'Faculty workspace' : 'Restricted identity';
-  $('#app').innerHTML = `<div class="shell"><aside class="sidebar">${brand}<div class="nav-label">${esc(state.role||'Academic')} workspace</div><nav class="nav" aria-label="Main navigation">${nav.map(([id,icon,label]) => `<button class="${state.view === id ? 'active' : ''}" data-go="${id}" ${state.view === id ? 'aria-current="page"' : ''}><span class="symbol" aria-hidden="true">${icon}</span>${label}</button>`).join('')}</nav><div class="sidebar-bottom"><strong>${esc(academicText(w.department?.name || 'SMART-PRO'))}</strong>Academic project management</div></aside><div class="main-wrap"><header class="topbar"><div class="breadcrumbs">${esc(academicText(w.department?.name || 'Department workspace'))}<strong>${esc(nav.find(n => n[0] === state.view)[2])}</strong></div><div class="account"><span class="avatar">${esc(w.actor.name.split(' ').map(v => v[0]).slice(0,2).join(''))}</span><span><strong>${esc(w.actor.name)}</strong><small>${role}</small></span>${w.roleChoices?.length>1?`<label class="role-switch">Working as<select id="activeRole">${w.roleChoices.map(r=>option(r,r,state.role)).join('')}</select></label>`:''}<button class="quiet" data-action="logout">${uiContext.demo?'Switch test account':'Sign out'}</button></div></header><main id="main" tabindex="-1" class="main ${state.busy ? 'loading' : ''}" aria-busy="${state.busy}">${state.error ? `<div class="error" role="alert">${esc(state.error)}</div>` : ''}${content()}${state.view==='overview'&&uiContext.courseManagement&&(state.courseNotifications?.tasks?.length||state.courseNotifications?.alerts?.length)?notificationPanel(state,esc,displayDate):''}<div class="footer">SMART-PRO · Academic project management</div></main></div></div>`;
+  const role=({Student:'Student',Faculty:'Faculty member',Coordinator:'Course coordinator',HOD:'Head of department',Admin:'Department administrator'})[state.role]||'Department member';
+  const sectionBody = state.navigationPending
+    ? '<section class="panel navigation-loading" role="status" aria-live="polite"><span class="loading-indicator" aria-hidden="true"></span><strong>Loading your selected workspace…</strong><p class="muted">Checking the latest authorized records.</p></section>'
+    : content();
+  $('#app').innerHTML = `<div class="shell"><aside class="sidebar">${brand}<div class="nav-label">${esc(state.role||'Academic')} workspace</div><nav class="nav" aria-label="Main navigation">${nav.map(([id,icon,label]) => `<button class="${state.view === id ? 'active' : ''}" data-go="${id}" ${state.view === id ? 'aria-current="page"' : ''}><span class="symbol" aria-hidden="true">${icon}</span>${label}</button>`).join('')}</nav><div class="sidebar-bottom"><strong>${esc(academicText(w.department?.name || 'SMART-PRO'))}</strong>Academic project management</div></aside><div class="main-wrap"><header class="topbar"><div class="breadcrumbs">${esc(academicText(w.department?.name || 'Department workspace'))}<strong>${esc(nav.find(n => n[0] === state.view)[2])}</strong></div><div class="account"><span class="avatar">${esc(w.actor.name.split(' ').map(v => v[0]).slice(0,2).join(''))}</span><span><strong>${esc(w.actor.name)}</strong><small>${role}</small></span>${w.roleChoices?.length>1?`<label class="role-switch">Working as<select id="activeRole">${w.roleChoices.map(r=>option(r,r,state.role)).join('')}</select></label>`:''}<button class="quiet" data-action="logout">${uiContext.demo?'Switch test account':'Sign out'}</button></div></header><main id="main" tabindex="-1" class="main ${state.busy ? 'loading' : ''}" aria-busy="${state.busy}">${state.error ? `<div class="error" role="alert">${esc(state.error)}</div>` : ''}${sectionBody}${!state.navigationPending&&state.view==='overview'&&uiContext.courseManagement&&(state.courseNotifications?.tasks?.length||state.courseNotifications?.alerts?.length)?notificationPanel(state,esc,displayDate):''}<div class="footer"><span>SMART-PRO</span><span>Academic project records</span></div></main></div></div>`;
 }
 
-function heading(eyebrow,title,subtitle) { return `<div class="heading"><div><div class="eyebrow">${esc(eyebrow)}</div><h1>${esc(title)}</h1><p class="muted">${esc(subtitle)}</p></div><div class="heading-tools">${badge(academicText(state.workspace.department?.code || 'Restricted'),'green')} ${button('Refresh','refresh','','secondary')}</div></div>`; }
-function stats(items) { return `<div class="stats">${items.map(([label,value,detail,icon]) => `<div class="stat"><div><div class="stat-label">${esc(label)}</div><div class="stat-value">${esc(value)}</div><small>${esc(detail)}</small></div><span class="stat-icon">${icon}</span></div>`).join('')}</div>`; }
+function heading(eyebrow,title,subtitle) {
+ return `<header class="heading"><div class="heading-copy"><span class="eyebrow">${esc(eyebrow)}</span><h1>${esc(title)}</h1>${subtitle?`<p>${esc(subtitle)}</p>`:''}</div><div class="heading-tools">${badge(academicText(state.workspace.department?.code||'Department'))} ${button('Refresh','refresh','','secondary')}</div></header>`;
+}
+function stats(items) {
+ return `<div class="dashboard-metrics">${items.map(([label,value,detail])=>`<div class="metric"><span class="metric-label">${esc(label)}</span><strong class="metric-value">${esc(value)}</strong>${detail?`<small>${esc(detail)}</small>`:''}</div>`).join('')}</div>`;
+}
 function projectCards(projects=state.projects) {
   return projects.length ? projects.map(p => {
     const reviews = state.workspace.reviews.filter(r => r.projectId === p.id);
@@ -384,36 +413,23 @@ function activity(limit = 5) {
 }
 
 function academicPriority(w) {
-  if(w.access.student){
-    const offering=state.offerings.find(o=>o.id===selectedOffering());
-    const [title,action,destination]=!w.enrolled?['Confirm your enrollment','Open enrollment','enrollment']:
-      state.projects.length?['Continue your project','Open project work','documents']:
-      !state.memberships.length?['Find or create your team','Open teams','teams']:
-      ['Register your project','Open my projects','projects'];
-    return `<section class="panel priority-panel"><div class="eyebrow">Student workspace</div><h2>${title}</h2>
-      ${offering?`<p>Current offering · ${esc(displayOffering(offering))}</p>`:''}
-      <div class="actions"><button class="primary" data-go="${destination}">${action}</button>
-      ${state.projects.length?'<button class="secondary" data-go="results">View published results</button>':''}</div></section>`;
-  }
-  if(w.access.faculty && !w.access.admin){
-    return `<section class="panel priority-panel"><div class="eyebrow">Faculty workspace</div><h2>Review your assigned work</h2>
-      <p>Open a project for guide feedback or go directly to an assigned assessment.</p>
-      <div class="actions"><button class="primary" data-go="documents">Open assigned projects</button>
-      <button class="secondary" data-go="evaluations">Open assigned evaluations</button></div></section>`;
-  }
-  return '';
+ if(w.access.student){
+   const current=state.projects[0],offering=state.offerings.find(o=>o.id===selectedOffering());
+   const [title,action,destination]=!w.enrolled?['Complete enrollment','View enrollment','enrollment']:current?['Continue your project','Open project work','documents']:!state.memberships.length?['Join or create a team','Browse teams','teams']:['Register your project','Open proposals','projects'];
+   return `<section class="dashboard-hero"><div class="hero-copy"><span class="eyebrow">NEXT STEP</span><h2>${esc(title)}</h2>${current?`<p class="hero-detail">${esc(current.title)}</p>`:offering?`<p class="hero-detail">${esc(displayOffering(offering))}</p>`:''}<div class="actions"><button class="primary" data-go="${destination}">${esc(action)} <span aria-hidden="true">→</span></button>${current?'<button class="secondary" data-go="history">Project history</button>':''}</div></div><div class="hero-decoration" aria-hidden="true"><span class="hero-circle"></span><span class="hero-orbit"></span><span class="hero-mark">S</span></div></section>`;
+ }
+ if(w.access.faculty&&!w.access.admin)return `<section class="dashboard-hero"><div class="hero-copy"><span class="eyebrow">FACULTY DESK</span><h2>Assigned work</h2><p class="hero-detail">${state.projects.length} project${state.projects.length===1?'':'s'} in your workspace</p><div class="actions"><button class="primary" data-go="documents">View assigned projects →</button><button class="secondary" data-go="evaluations">Evaluations</button></div></div><div class="hero-decoration" aria-hidden="true"><span class="hero-circle"></span><span class="hero-orbit"></span><span class="hero-mark">S</span></div></section>`;
+ return '';
 }
-
-function overview() {
-  const w = state.workspace;
-  if(departmentRole())return departmentOverview(state,esc,heading);
-  if (!w.access.admin && !w.access.student && !w.access.faculty) return heading('ACCESS STATUS','Academic access is restricted','Technical administration alone does not grant academic authority.')+`<section class="panel">${empty('No academic permissions assigned','Contact your department administrator if you need access.')}${button('Choose another identity','logout')}</section>`;
-  const title = w.access.admin ? 'Department overview' : w.access.student ? 'Student overview' : 'Faculty overview';
-  return heading('YOUR DEPARTMENT AT A GLANCE',title,w.access.admin ? 'Monitor project progress, review work and published results.' : w.access.student ? 'Your enrollment, team and project journey — connected.' : 'Use the assigned rubric, finalize your assessment, and preserve each correction.')+
-    academicPriority(w)+stats([['Projects loaded',state.projects.length,'For this workspace','◇'],['Assigned reviews',w.reviews.length,'Current & historical reviews','▤'],['Published results',w.reviews.filter(r => r.state === 'PUBLISHED').length,'Versioned and preserved','✓'],[w.access.student ? 'Current team' : 'Workspace',w.access.student ? state.memberships.length : 'Active',w.access.student ? 'For this curriculum offering' : 'Scoped department access','♧']])+
-    `<div class="grid"><section class="panel"><div class="panel-title"><div><h2>${w.access.student ? 'My projects' : 'Project workspace'}</h2><p class="muted">Current submissions and academic progress</p></div></div>${projectCards(state.projects.slice(0,3))}${state.projects.length>3?`<div class="actions"><button class="secondary" data-go="${w.access.admin?'projects':'documents'}">Browse all project work</button></div>`: ''}${w.access.student ? `<div class="actions"><button class="secondary" data-go="teams">Find or create a team →</button><button class="quiet" data-go="projects">Submit a proposal</button></div>` : ''}</section><aside><section class="panel"><div class="panel-title"><div><h2>${w.access.student ? 'Enrollment snapshot' : 'Your workspace'}</h2><p class="muted">${esc(academicText(w.department?.name))}</p></div><span class="pill-icon">▣</span></div>${w.access.student ? enrollmentSummary() : `<p>${w.access.admin?'Open an offering to review progress and manage coordinator appointments.':'Open an assigned evaluation to review the rubric or continue entering marks.'}</p><div class="actions"><button class="secondary" data-go="${w.access.admin ? (uiContext.courseManagement?'courses':'department') : 'evaluations'}">${w.access.admin ? (uiContext.courseManagement?'Open Course Management':'Department settings') : 'Open evaluations'} →</button></div>`}</section><section class="panel"><div class="panel-title"><h2>Recent activity</h2><button class="quiet" data-go="audit">View all →</button></div>${activity()}</section></aside></div>`;
+function overview(){
+ const w=state.workspace;
+ if(departmentRole())return departmentOverview(state,esc,heading);
+ if(!w.access.student&&!w.access.faculty)return heading('ACCESS','Workspace unavailable','Contact your department administrator.')+`<section class="panel">${empty('No academic access','Your account has no current academic assignment.')}</section>`;
+ const student=w.access.student;
+ return heading(student?'STUDENT WORKSPACE':'FACULTY WORKSPACE',student?'Overview':'Faculty overview',student?'Current project and academic records.':'Assigned projects, assessments and feedback.')+
+  academicPriority(w)+stats([['Projects',state.projects.length,'Authorized records'],['Reviews',w.reviews.length,'Assigned or historical'],['Published results',w.reviews.filter(r=>r.state==='PUBLISHED').length,'Available releases']])+
+  `<div class="dashboard-grid"><section class="panel dashboard-primary"><div class="panel-title"><div><span class="section-kicker">PROJECTS</span><h2>${student?'My projects':'Assigned projects'}</h2></div><button class="quiet" data-go="${student?'projects':'documents'}">View all →</button></div>${projectCards(state.projects.slice(0,3))}${state.projects.length>3?`<div class="actions"><button class="secondary" data-go="${student?'projects':'documents'}">More projects</button></div>`:''}</section><aside class="dashboard-aside"><section class="panel"><h2>${student?'Enrollment':'Evaluation desk'}</h2>${student?enrollmentSummary():`<p class="muted">${w.reviews.length} assigned or historical reviews.</p><button class="secondary" data-go="evaluations">Open evaluations</button>`}</section><section class="panel"><div class="panel-title"><h2>Recent activity</h2><button class="quiet" data-go="audit">View all</button></div>${activity(4)}</section></aside></div>`;
 }
-
 document.addEventListener('toggle',event=>{
   const panel=event.target;
   if(panel instanceof HTMLDetailsElement && panel.open && panel.hasAttribute('data-faculty-reference')){
@@ -484,7 +500,7 @@ function evaluationView(student = false, scoped = false) {
   const reviewProject=state.documents?.projects.find(p=>p.id===r.projectId);
   const courseFinal=uiContext.courseManagement&&reviewProject?.overallFinalPublished;
   const stage=scoped?queueStage(r.id):null;
-  const exceptional=courseFinal&&reviewProject?.exceptionalStageCorrectionsAllowed===true;
+  const exceptional=false; // Published overall results do not reopen recorded stage marks.
   const markHere=assessment&&canMarkHere(r.id,assessment.id);
   let editor = '';
   if (assessment && (state.role==='Faculty'||markHere) && !student) {
@@ -497,7 +513,7 @@ function evaluationView(student = false, scoped = false) {
       const score = assessment.scores.find(s => s.criterionId === c.id && s.studentId === (member?.id || null));
       return `<div class="row"><span>${esc(c.label)} · ${esc(member?.name || 'Team')}</span><strong>${esc(score?.marks ?? '—')} / ${esc(c.maximum)}</strong></div>`;
     })).join('') : '';
-    editor = `<section class="panel"><div class="panel-title"><div><h2>${finalized ? 'Your finalized evaluation' : 'Your draft evaluation'}</h2><p class="muted">${esc(r.projectTitle)} · ${esc(assessment.facultyName)}</p></div>${badge(assessment.state,finalized ? 'green' : 'amber')}</div>${savedMarks}${finalized&&courseFinal&&!exceptional?'<p class="notice">Overall results are published. Changes must follow the exceptional published-result revision process.</p>':`${finalized?`<details class="secondary-task"><summary>${exceptional?'Propose exceptional stage evidence':'Request correction'}</summary>${exceptional?'<p class="notice">The published overall result stays in force. The proposed stage evidence needs separate authorization before it can support an exceptional overall revision.</p>':''}`:''}<form data-form="marks">${inputs}<div class="section-spacer">${reason()}</div><div class="actions"><button class="primary" type="submit">${finalized ? (uiContext.courseManagement?(exceptional?'Submit exceptional proposal':'Submit revised scores'):r.state === 'PUBLISHED' ? 'Publish correction' : 'Save finalized revision') : 'Save draft marks'}</button>${!finalized ? button('Finalize assessment','finalize',`type="button" data-id="${assessment.id}" data-version="${assessment.version}" ${assessment.scores.length < r.criteria.reduce((n,c) => n+(c.scope === 'TEAM' ? 1 : r.roster.length),0) ? 'disabled' : ''}`,'secondary') : ''}</div><p class="hint">${finalized ? (exceptional?'The pinned policy requires independent authorization of this exceptional stage proposal.':uiContext.courseManagement?'Submit revised scores for these criteria. Your course coordinator must authorize an ordinary correction. If you are the effective coordinator for this offering with correction responsibility, the service can apply your own correction immediately before overall publication. Previous marks stay in history.':'Only the original evaluator may revise this historical contribution. Earlier versions remain preserved.') : 'Save all marks before finalizing. Finalization locks the assessment; later corrections require specific authorization.'}</p></form>${finalized?'</details>':''}`}</section>`;
+    editor = `<section class="panel"><div class="panel-title"><div><h2>${finalized ? 'Your finalized evaluation' : 'Your draft evaluation'}</h2><p class="muted">${esc(r.projectTitle)} · ${esc(assessment.facultyName)}</p></div>${badge(assessment.state,finalized ? 'green' : 'amber')}</div>${savedMarks}${finalized&&courseFinal&&!exceptional?'<p class="notice">Overall results are published. Recorded stage marks are unchanged; the assigned Project Guide can request a direct overall correction in Project work.</p>':`${finalized?`<details class="secondary-task"><summary>${exceptional?'Propose exceptional stage evidence':'Request correction'}</summary>${exceptional?'<p class="notice">The published overall result stays in force. The proposed stage evidence needs separate authorization before it can support an exceptional overall revision.</p>':''}`:''}<form data-form="marks">${inputs}<div class="section-spacer">${reason()}</div><div class="actions"><button class="primary" type="submit">${finalized ? (uiContext.courseManagement?(exceptional?'Submit exceptional proposal':'Submit revised scores'):r.state === 'PUBLISHED' ? 'Publish correction' : 'Save finalized revision') : 'Save draft marks'}</button>${!finalized ? button('Finalize assessment','finalize',`type="button" data-id="${assessment.id}" data-version="${assessment.version}" ${assessment.scores.length < r.criteria.reduce((n,c) => n+(c.scope === 'TEAM' ? 1 : r.roster.length),0) ? 'disabled' : ''}`,'secondary') : ''}</div><p class="hint">${finalized ? (exceptional?'The responsible offering Coordinator reviews this exact exceptional change; no separate independent authorizer is required.':uiContext.courseManagement?'Submit revised scores for these criteria. Your course coordinator must authorize an ordinary correction. If you are the effective coordinator for this offering with correction responsibility, the service can apply your own correction immediately before overall publication. Previous marks stay in history.':'Only the original evaluator may revise this historical contribution. Earlier versions remain preserved.') : 'Save all marks before finalizing. Finalization locks the assessment; later corrections require specific authorization.'}</p></form>${finalized?'</details>':''}`}</section>`;
   } else if (state.workspace.access.admin && !student) {
     editor = `<section class="panel"><div class="panel-title"><h2>Evaluation oversight</h2>${badge(r.state,r.state === 'PUBLISHED' ? 'green' : 'amber')}</div>${r.assessments.map(a => `<div class="row"><div><h3>${esc(a.facultyName)}</h3><p class="muted">Assigned faculty evaluator</p></div>${badge(a.state,a.state === 'FINALIZED' ? 'green' : 'amber')}</div>`).join('')}<div class="notice">Publication requires the pinned policy’s quorum and complete finalized source marks. A roster correction does not award marks automatically.</div>${scoped?'':`<form data-form="publish">${reason()}<div class="actions"><button class="primary" type="submit">Publish stage results</button></div></form>`}</section>`;
   }
@@ -523,14 +539,12 @@ function evaluationView(student = false, scoped = false) {
 function auditView(){return heading('ACTIVITY','Your academic activity','Changes retain their actor, date and history.')+`<section class="panel"><h2>Recent activity</h2>${state.workspace.audit.map(a=>`<article class="project-card"><h3>${esc(natural(a.action))}</h3><p>${displayDate(a.occurred_at)}</p><p>${esc(a.metadata?.reason||a.metadata?.input?.reason||a.metadata?.request?.reason||'Recorded in the academic audit history.')}</p></article>`).join('')||empty('No activity in this workspace yet','Completed actions will appear here.')}</section>`;}
 
 function referencePanel(){
-  if(state.view==='overview'||state.view==='records'&&state.role==='Admin')return facultyReferencePanel(state,uiContext,esc);
-  if(state.view==='courses' && state.role==='Coordinator' && (!state.courseSection || state.courseSection==='overview')
-    && state.courses?.offerings.some(offering=>offering.id===state.courseId)){
-    return facultyReferencePanel(state,uiContext,esc,state.courseId);
-  }
-  return '';
+ // Keep research reference available in specific administrative and assignment contexts.
+ if(state.role==='Admin'&&state.view==='records')return facultyReferencePanel(state,uiContext,esc);
+ if(state.role==='HOD'&&state.view==='department')return facultyReferencePanel(state,uiContext,esc);
+ if(state.view==='courses'&&state.role==='Coordinator'&&['appointments','assignments'].includes(state.courseSection)&&state.courses?.offerings.some(o=>o.id===state.courseId))return facultyReferencePanel(state,uiContext,esc,state.courseId);
+ return '';
 }
-
 function courseAssessment(){
   const course=state.courses?.offerings.find(o=>o.id===state.courseId);
   if(!course)return courseManagement(state,esc,displayDate,localDate);
@@ -584,7 +598,7 @@ window.addEventListener('resize',keepActiveNavigationVisible);
 function afterRender() {
   keepActiveNavigationVisible();
   document.querySelectorAll('[data-progress]').forEach(el=>{el.style.width=el.dataset.progress+'%';});
-  if(state.view==='teams'&&state.workspace?.enrolled)loadTeams();
+  if(!state.navigationPending&&state.view==='teams'&&state.workspace?.enrolled)loadTeams();
 }
 function fillReviewSchemes() {
  const form=document.querySelector('form[data-form="assign"]');if(!form)return;
@@ -632,14 +646,27 @@ function show() {
 async function work(fn, message, refresh=load) {
   if (state.busy) return;
   const generation = state.generation;
-  state.busy = true; state.error = ''; clearToast(); $('#main')?.classList.add('loading'); $('#main')?.setAttribute('aria-busy','true');
-  try { await fn(); if (generation !== state.generation) return; await refresh(); if (message && generation === state.generation) toast(typeof message==='function'?message():message); }
+  state.busy = true; state.error = ''; clearToast();
+  if(state.navigationPending) show();
+  else {
+    const main=$('#main');
+    main?.classList.add('loading');
+    main?.setAttribute('aria-busy','true');
+    main?.insertAdjacentHTML('afterbegin','<p class="request-status" role="status">Working on your request…</p>');
+  }
+  try {
+    await fn();
+    if(generation !== state.generation)return;
+    if(!state.navigationPending)state.studentMetadataValidUntil=0;
+    await refresh({reuseWorkspace:state.navigationPending&&!state.forceFullRefresh});
+    if(message && generation===state.generation)toast(typeof message==='function'?message():message);
+  }
   catch (error) {
     if (error.name !== 'AbortError' && generation === state.generation) {
       state.error=state.workspace?error.message:workspaceOpenError(error,uiContext.demo);
     }
   }
-  finally { if (generation === state.generation) { state.busy = false; show(); } }
+  finally { if (generation === state.generation) { state.busy = false; state.navigationPending=false; state.forceFullRefresh=false; show(); } }
 }
 
 function confirmChange(message, label) {
@@ -664,10 +691,17 @@ function focusHeading(selector) {
 
 document.addEventListener('click', async event => {
   const nav = event.target.closest('[data-go]');
-  if (nav && !state.busy) {
-    state.view = nav.dataset.go;state.openFromHistory=false;state.projectId=null;state.courseReviewId=null;
+  if (nav) {
+    // Read-only navigation can supersede an in-flight navigation, but not a write.
+    if(nav.dataset.go===state.view)return;
+    if(state.busy&&!state.navigationPending)return;
+    if(state.navigationPending){
+      controller.abort();controller=new AbortController();state.generation++;state.busy=false;
+    }
+    state.view=nav.dataset.go;state.openFromHistory=false;state.projectId=null;state.courseReviewId=null;
     if(state.role==='Coordinator'||departmentRole())writeCourseLocation();
     if(personalRole())writeWorkLocation();
+    state.navigationPending=true;
     await work(async () => {},'');
     focusHeading('#main h1');
     return;
@@ -715,7 +749,7 @@ document.addEventListener('click', async event => {
     try {
       const context={alias:state.alias,role:state.role,generation:state.generation,signal:controller.signal};
       const page=Number(target.dataset.page||1);
-      const response=await fetch(`/api/v1/document-versions/${target.dataset.id}/content${action==='download-document'?'?download=1':'?preview=1&page='+page}`,{headers:{'X-Demo-User':context.alias,...(context.role?{'X-Smartpro-Role':context.role}:{})},signal:context.signal});
+      const response=await fetch(`/api/v1/document-versions/${target.dataset.id}/content${action==='download-document'?'?download=1':'?preview=1&page='+page}`,{headers:{...reviewerHeaders(context.alias),...(context.role?{'X-Smartpro-Role':context.role}:{})},signal:context.signal});
       if(!response.ok) throw new Error((await response.json()).detail?.message||'Document access denied');
       const blob=await response.blob(); if(context.generation!==state.generation) return;
       if(action==='download-document') {
@@ -747,6 +781,13 @@ document.addEventListener('click', async event => {
   if(['end-assignment','revoke-operation','revoke-faculty-delegation'].includes(action)&&!target.dataset.confirmed){target.insertAdjacentHTML('afterend',`<button class="danger" data-action="${action}" data-id="${target.dataset.id}" data-confirmed="yes">Confirm and preserve history</button>`);target.disabled=true;return;}
   if(action==='revoke-coordinator'&&!target.dataset.confirmed){target.insertAdjacentHTML('afterend',`<button class="danger" data-action="revoke-coordinator" data-id="${target.dataset.id}" data-confirmed="yes">Confirm revocation and end delegated access</button>`);target.disabled=true;return;}
   if(action==='approve-setup'&&!target.dataset.confirmed){const article=target.closest('article');article.querySelector('details').open=true;target.insertAdjacentHTML('afterend',`<button class="primary" data-action="approve-setup" data-id="${target.dataset.id}" data-confirmed="yes">Confirm academic authorization</button>`);target.disabled=true;return;}
+  if (action === 'logout' && uiContext.reviewerAuth) {
+    const response=await fetch('/reviewer/logout',{method:'POST',headers:reviewerHeaders(state.alias)});
+    if(!response.ok){state.error='Sign-out failed. Please try again.';show();return;}
+    sessionStorage.removeItem('smartpro.identity');
+    location.assign('/reviewer/login');
+    return;
+  }
   if (action === 'logout' || action === 'login') {
     state.intakeDraft=null;state.intakeOutcome=null;state.departmentRecordId=null;state.candidateQuery='';state.candidatePage=1;state.targetQuery='';state.targetPage=1;state.recordScope='directory';state.departmentOfferingSearch='';state.departmentAvailability='ALL';state.departmentOfferingPage=1;state.appointmentPage=1;state.leadershipPage=1;state.leadershipSearch='';state.intakeQuery='';state.intakeKind='STUDENT';state.intakePage=1;state.batchPage=1;state.workQuery='';state.workPage=1;state.workOffering='';
     if(previewURL) URL.revokeObjectURL(previewURL); state.offeringId=null;state.projectId=null;state.staffOfferingId=null;state.role=null;state.proposalDraft=null;
@@ -779,6 +820,8 @@ document.addEventListener('click', async event => {
   }
   if(personalRole()&&['open-project','open-review','all-documents','work-page'].includes(action))writeWorkLocation();
   if((state.role==='Coordinator'||departmentRole())&&['open-review','open-course','close-course','course-section','return-to-course','course-project-evidence','assessment-evidence','queue-page'].includes(action))writeCourseLocation();
+  const readOnlyActions=new Set(['refresh','open-review','open-course','close-course','course-section','return-to-course','course-project-evidence','assessment-evidence','queue-page','work-page','all-documents','open-project']);
+  if(readOnlyActions.has(action)){state.navigationPending=true;state.forceFullRefresh=action==='refresh';}
   await work(async () => {
     if(['end-assignment','revoke-operation'].includes(action))await api(staffBase()+'/assignment-management','POST',action==='end-assignment'?{action:'END_ASSIGNMENT',assignmentId:target.dataset.id}:{action:'REVOKE_OPERATION',grantId:target.dataset.id});
     if(action==='revoke-faculty-delegation')await api(deptBase()+'/delegations/revoke','POST',{expectedRevision:state.academic.revision,grantId:target.dataset.id});
@@ -793,8 +836,7 @@ document.addEventListener('click', async event => {
     const courseActions={
       'apply-course-requirement':()=>({action:'APPLY_REQUIREMENT',policyId:target.dataset.id,expectedPolicyId:target.dataset.current||null}),
       'complete-course-milestone':()=>({action:'COMPLETE_MILESTONE',deadlineId:target.dataset.id,projectId:target.dataset.project}),
-      'request-final-revision':()=>({action:'REQUEST_FINAL_REVISION',projectId:target.dataset.project,expectedVersion:Number(target.dataset.version)}),
-      'apply-final-revision':()=>({action:'APPLY_FINAL_REVISION',requestId:target.dataset.id})
+
     };
     if(courseActions[action])await api(`/api/v1/courses/offerings/${target.dataset.offering}/commands`,'POST',courseActions[action]());
     if(action==='apply-course-correction')await api(`/api/v1/courses/offerings/${target.dataset.offering}/commands`,'POST',{action:target.dataset.exceptional==='yes'?'APPLY_EXCEPTIONAL_STAGE_CORRECTION':'APPLY_CORRECTION',requestId:target.dataset.id},evaluatorContext());
@@ -812,7 +854,7 @@ document.addEventListener('change', async event => {
   if(event.target.id==='staffOfferingChoice'){state.staffOfferingId=event.target.value;show();return;}
   if(event.target.id==='projectId')fillReviewSchemes();
   if(event.target.id==='offeringChoice') {controller.abort();controller=new AbortController();state.generation++;state.busy=false;state.offeringId=event.target.value;state.workPage=1;state.proposalDraft=null;state.projectId=null;if(personalRole())writeWorkLocation();state.projects=[];state.memberships=[];state.documents=null;show();await work(async()=>{},'');}
-  if (event.target.id === 'reviewSelect') { state.reviewId = event.target.value; if(personalRole())writeWorkLocation(); await work(async () => {},''); }
+  if (event.target.id === 'reviewSelect') { state.reviewId = event.target.value; if(personalRole())writeWorkLocation(); state.navigationPending=true; await work(async () => {},''); }
 });
 function filterProjects(){const term=($('#projectSearch')?.value||'').toLowerCase(),status=$('#reviewFilter')?.value||'';let count=0;document.querySelectorAll('[data-search-record]').forEach(record=>{record.hidden=!record.dataset.searchRecord.toLowerCase().includes(term)||(status&&record.dataset.reviewStatus!==status);if(!record.hidden)count++;});if($('#searchEmpty'))$('#searchEmpty').hidden=count>0;}
 document.addEventListener('change',event=>{if(event.target.id==='courseFramework'){state.selectedCourseFramework=event.target.value;show();}if(event.target.id==='reviewFilter')filterProjects();});
@@ -961,7 +1003,19 @@ document.addEventListener('submit', async event => {
     if(type==='course-plan')await coursePost(form.dataset.offering,'PLAN',{expectedVersion:Number(form.dataset.version),frameworkId:values.frameworkId,schedules:Object.fromEntries([...form.querySelectorAll('[data-stage]')].map(el=>[el.dataset.stage,new Date(el.value).toISOString()]))});
     if(type==='course-stage')await coursePost(form.dataset.offering,'CREATE_STAGE',{projectId:values.projectId,stageKey:values.stageKey,facultyIds:new FormData(form).getAll('facultyIds')});
     if(type==='course-final'){outcome='Overall result published. Its release is in project history.';await coursePost(form.dataset.offering,'PUBLISH_FINAL',{projectId:form.dataset.project,expectedVersion:0});}
-    if(type==='final-revision-authorization')await coursePost(form.dataset.offering,'AUTHORIZE_FINAL_REVISION',{requestId:form.dataset.id,approved:values.approved==='true'});
+    if(type==='guide-final-correction'){
+      outcome='Correction request submitted to the responsible Coordinator. The published result is unchanged.';
+      await coursePost(form.dataset.offering,'REQUEST_FINAL_REVISION',{projectId:form.dataset.project,expectedVersion:Number(form.dataset.version),studentId:values.studentId,marks:values.marks,reason:values.reason});
+    }
+    if(type==='guide-stage-evidence-correction'){
+      outcome='Updated stage evidence submitted to the Coordinator. The published result remains unchanged until approval.';
+      await coursePost(form.dataset.offering,'REQUEST_FINAL_REVISION',{projectId:form.dataset.project,expectedVersion:Number(form.dataset.version),mode:'STAGE_EVIDENCE',reason:values.reason});
+    }
+    if(type==='final-revision-authorization'){
+      const approved=values.approved==='true';
+      await coursePost(form.dataset.offering,'AUTHORIZE_FINAL_REVISION',{requestId:form.dataset.id,approved});
+      outcome=approved?'Correction approved. The revised overall result is published; its predecessor is retained.':'Correction declined. Published marks are unchanged.';
+    }
     if(type==='course-correction-authorization')await coursePost(form.dataset.offering,form.dataset.exceptional==='yes'?'AUTHORIZE_EXCEPTIONAL_STAGE_CORRECTION':'AUTHORIZE_CORRECTION',{requestId:form.dataset.id,approved:values.approved==='true'});
     if(type==='course-deadline'){
       const reminderHours=values.reminderHours.trim()?values.reminderHours.split(',').map(v=>Number(v.trim())):[];
@@ -997,7 +1051,7 @@ document.addEventListener('submit', async event => {
       const pending='smartpro.upload.'+context.alias+':'+form.dataset.project+':'+(form.dataset.requirement||'SYNOPSIS')+':'+file.name+':'+file.size+':'+file.lastModified;
       const key=sessionStorage.getItem(pending)||crypto.randomUUID();sessionStorage.setItem(pending,key);
       const body=new FormData();body.append('file',file);
-      await pdfUploadResult(fetch(documentsBase()+`/projects/${form.dataset.project}/uploads${form.dataset.requirement?'?requirementKey='+encodeURIComponent(form.dataset.requirement):''}`,{method:'POST',headers:{'X-Demo-User':context.alias,...(context.role?{'X-Smartpro-Role':context.role}:{}),'Idempotency-Key':key},body,signal:context.signal}),()=>sessionStorage.removeItem(pending));
+      await pdfUploadResult(fetch(documentsBase()+`/projects/${form.dataset.project}/uploads${form.dataset.requirement?'?requirementKey='+encodeURIComponent(form.dataset.requirement):''}`,{method:'POST',headers:{...reviewerHeaders(context.alias),...(context.role?{'X-Smartpro-Role':context.role}:{}),'Idempotency-Key':key},body,signal:context.signal}),()=>sessionStorage.removeItem(pending));
       outcome='PDF version saved. Submit the saved version for faculty review.';
     }
     if (type === 'create-team') await api('/api/v1/teams','POST',{offeringId:selectedOffering(),name:values.name});
@@ -1008,7 +1062,7 @@ document.addEventListener('submit', async event => {
       const scores = [...form.querySelectorAll('[data-criterion]')].map(input => ({criterionId:input.dataset.criterion,studentId:input.dataset.student || null,marks:input.value}));
       if(state.role==='Coordinator'&&!canMarkHere(r.id,a.id))throw new Error('This assessment is not assigned to you.');
       if (a.state === 'DRAFT') await api(deptBase()+`/assessments/${a.id}/draft`,'POST',{expectedAssessmentVersion:a.version,scores,reason:values.reason},evaluatorContext());
-      else if(uiContext.courseManagement){const project=state.documents.projects.find(p=>p.id===r.projectId),offeringId=project?.offeringId;if(!offeringId)throw new Error('Open the assigned project to check its offering.');const result=await api(`/api/v1/courses/offerings/${offeringId}/commands`,'POST',{action:project.overallFinalPublished?'REQUEST_EXCEPTIONAL_STAGE_CORRECTION':'REQUEST_CORRECTION',reviewId:r.id,expectedReviewRevision:r.revision,assessmentId:a.id,scores,reason:values.reason},evaluatorContext());
+      else if(uiContext.courseManagement){const project=state.documents.projects.find(p=>p.id===r.projectId),offeringId=project?.offeringId;if(!offeringId)throw new Error('Open the assigned project to check its offering.');const result=await api(`/api/v1/courses/offerings/${offeringId}/commands`,'POST',{action:'REQUEST_CORRECTION',reviewId:r.id,expectedReviewRevision:r.revision,assessmentId:a.id,scores,reason:values.reason},evaluatorContext());
         outcome=result.appliedImmediately?'Correction applied. The original scores remain in history.':'Correction submitted for coordinator authorization.';}
       else await api(deptBase()+`/reviews/${r.id}/evaluations`,'POST',{expectedReviewRevision:r.revision,assessmentId:a.id,scores,reason:values.reason});
     }
@@ -1037,6 +1091,7 @@ async function switchRole(role){
   state.courseReviewId=null;
   writeCourseLocation(true);writeWorkLocation(true);
   state.workspace=null;
+  state.studentMetadataValidUntil=0;
   state.proposalDraft=null;
   state.projectId=null;
   state.offeringId=null;
@@ -1058,7 +1113,7 @@ async function submitProposal(draft){
   const project=await api('/api/v1/projects','POST',{offeringId:draft.offeringId,teamId:draft.teamId,title:draft.title,description:draft.description},{...context,key:pending.key});
   if(draft.file){
    const body=new FormData();body.append('file',draft.file);
-   const result=await pdfUploadResult(fetch(`/api/v1/documents/departments/${dept}/projects/${project.id}/uploads`,{method:'POST',headers:{'X-Demo-User':context.alias,'X-Smartpro-Role':context.role,'Idempotency-Key':pending.key+':file'},body,signal:context.signal}));
+   const result=await pdfUploadResult(fetch(`/api/v1/documents/departments/${dept}/projects/${project.id}/uploads`,{method:'POST',headers:{...reviewerHeaders(context.alias),'X-Smartpro-Role':context.role,'Idempotency-Key':pending.key+':file'},body,signal:context.signal}));
    const documents=await api(`/api/v1/documents/departments/${dept}?project=${project.id}`,'GET',undefined,context);
    const current=documents.projects.find(p=>p.id===project.id);
    if(!pending.caseVersion){pending.caseVersion=current.case.version;sessionStorage.setItem(cacheKey,JSON.stringify(pending));}
@@ -1076,6 +1131,7 @@ window.addEventListener('popstate',async()=>{
   state.generation++;
   state.busy=false;
   if(personalRole())readWorkLocation();else readCourseLocation();
+  state.navigationPending=true;
   await work(async()=>{},'');
   focusHeading('#main h1');
 });

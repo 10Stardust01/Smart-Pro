@@ -1,4 +1,17 @@
-# Finalized academic-policy implementation (local development)
+# Finalized academic-policy implementation (historical local baseline)
+
+**Finalized product decision (pending faculty ratification):** After overall
+publication, the assigned Project Guide directly proposes a corrected overall
+student mark and reason. The offering Coordinator approves or rejects it, even
+when acting as Guide/evaluator/requester. Approval atomically appends an
+exceptional corrected overall-result version; stage marks are not reopened or
+recalculated. No HOD escalation, independent authorizer or separate apply step.
+Original release, exact correction and decision audit are retained. The historical
+independent-authorization passages below concern older ordinary workflows.
+Pre-publication corrections follow their separately approved stage authority.
+At the 10 November 2026 checkpoint, **059 and 060 are already installed** in
+Neon staging, while **061 is not**. The reviewed 059–061 code passed isolated
+browser/DB verification, but hosted result-correction acceptance remains gated.
 
 The user's continuation instruction authorizes implementing configurable quorum,
 aggregation, original-evaluator mark corrections, coordinator retrospective roster

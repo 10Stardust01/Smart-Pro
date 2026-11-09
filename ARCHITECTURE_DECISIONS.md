@@ -1,4 +1,14 @@
-# Architecture assumptions used for validation
+# Architecture decisions — historical prototype context
+
+> **Current implementation, verified 10 November 2026:** SMART-PRO uses
+> **Django / Django REST Framework and PostgreSQL 16**. Prototype-era statements
+> below about NestJS-versus-Django, correction authority, and unimplemented
+> historical marks changes are **not active product policy** where superseded
+> by later decisions. See the [consolidated development checkpoint](docs/CONSOLIDATED_DEVELOPMENT_CHECKPOINT.md)
+> and [post-publication correction direction](docs/POST_PUBLICATION_CORRECTION_ALIGNMENT.md).
+> Historical notes are preserved for audit, not treated as current release gates.
+
+## Original validation assumptions (historical)
 
 - Preserve the modular monolith and the unified migration-defined PostgreSQL
   model. The FastAPI package is only a replaceable contract harness; domain

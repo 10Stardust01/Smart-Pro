@@ -18,12 +18,13 @@ class ActiveRolePermission(BasePermission):
         if isinstance(request.data,dict) and 'action' in request.data and not isinstance(request.data['action'],str):return False
         path=request.path;read=request.method in ('GET','HEAD','OPTIONS')
         if path.endswith('/course-notifications'):return read
+        if path=='/api/v1/me/published-corrections':return read and role=='Faculty'
         if '/courses/' in path:
             if path.endswith('/coordinators'):return role in ('HOD','Admin')
             if path.endswith('/commands'):
                 action=request.data.get('action')
                 if action=='FRAMEWORK':return role in ('HOD','Admin')
-                if action in ('REQUEST_CORRECTION','APPLY_CORRECTION','REQUEST_EXCEPTIONAL_STAGE_CORRECTION','APPLY_EXCEPTIONAL_STAGE_CORRECTION','REOPEN_SYNOPSIS'):return role=='Faculty'
+                if action in ('REQUEST_CORRECTION','APPLY_CORRECTION','REQUEST_EXCEPTIONAL_STAGE_CORRECTION','APPLY_EXCEPTIONAL_STAGE_CORRECTION','REOPEN_SYNOPSIS','REQUEST_FINAL_REVISION'):return role=='Faculty'
                 if action in ('AUTHORIZE_CORRECTION','AUTHORIZE_EXCEPTIONAL_STAGE_CORRECTION','AUTHORIZE_FINAL_REVISION'):return role=='Coordinator'
                 if action=='COMPLETE_MILESTONE':return role in ('Student','Faculty','Coordinator','HOD')
                 return role in ('HOD','Coordinator')

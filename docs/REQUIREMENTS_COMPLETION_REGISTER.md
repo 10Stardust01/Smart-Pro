@@ -1,9 +1,14 @@
 # SMART-PRO requirements completion register
 
 This register tracks approved behavior and the evidence available at each checkpoint.
-Verified means an applicable test or browser workflow passed. Historical evidence
-is identified by commit and remains valid for the scope it covered. Change a row
-when its behavior, verification evidence or assigned milestone changes.
+Verified means an applicable test or browser workflow passed **within the stated test
+scope**; it does not imply current hosted end-to-end or institutional acceptance.
+Historical evidence is identified by commit and remains valid only for the scope it
+covered. The reviewer staging service is deployed on Render Free at commit
+`319e3ebc` (connected service verification, 10 Nov 2026), not institutional
+production. Neon main/validation already have 059 and 060; 061 is not installed.
+The latest product decisions can supersede old code despite historical green tests.
+Change a row when its behavior, verification evidence or assigned milestone changes.
 
 | Requirement | Status | Evidence | Remaining gap | Priority | Assigned milestone |
 | --- | --- | --- | --- | --- | --- |
@@ -13,7 +18,7 @@ when its behavior, verification evidence or assigned milestone changes.
 | Guides review authorized submissions, request a revision and approve when policy allows. | Verified | C browser executed submit, request changes, resubmit and approve; document contracts preserve both attempts. | | High | C |
 | Evaluators can enter and finalize assigned TEAM, INDIVIDUAL and COMBINED marks. | Verified | B and C browser evidence at `88ff737` and `52924d7`; individual and combined course regression. | | Critical | C |
 | Coordinators work within offering context, see assessment progress and exercise authorized publication and correction operations. | Verified | A context at `0589f47`; B queue at `88ff737`; candidate 049 and course lifecycle contracts. | | Critical | B |
-| Overall release closes ordinary edits; exceptional revisions retain earlier evidence. | Verified | Candidate 049; course correction, publication race and exceptional overall revision tests; C.1 reliability. | | Critical | C.1 |
+| Overall publication closes ordinary edits; exceptional direct corrections append a retained overall result version without changing stage marks. | **Verified isolated Django/Chromium and PostgreSQL; hosted acceptance pending** | Earlier CI 42549200764 and full [CI 42680008963](https://github.com/10Stardust01/Smart-Pro/actions/runs/42680008963) passed. | Neon has 059/060 but lacks 061, so Guide/Coordinator request visibility and full hosted acceptance remain pending. | Critical | Direct result correction |
 | Document versions, feedback and academic decisions retain their history and use scoped private retrieval. | Verified | C browser and C.1 document, storage and restore tests at `ecb0d6e` and `1a5cb15`. | | Critical | C.1 |
 | Admins appoint Coordinators; HOD can replace an Admin; successor HOD requires vacancy. | Verified | D browser and course authority contracts at `bc6695d`. | Competing Admin replacements and HOD succession are covered by the D.1 course regression. | Critical | D.1 |
 | Admins search and open scoped departmental student and faculty records and inspect history. | Verified | Candidates 052 and 057; Chrome search, Back, Forward, and refresh; scoped profile and import/reconciliation evidence. | | High | D.1 |
@@ -31,6 +36,34 @@ when its behavior, verification evidence or assigned milestone changes.
 | Development database restore and migration preserve academic evidence. | Verified | Owner rehearsed candidates 052–057 on fresh restores and aligned `smartpro_dev`; existing table fingerprints and stored PDF matched. | Production-specific backup, restore and rollout authorization. | Critical | Deployment readiness |
 | Production sign-in, retention, emergency HOD succession and institutional onboarding are authorized and validated. | Blocked | Institutional decision register and deployment runbook. | Requires institutional decisions and verification in the approved environment. | Critical | Deployment readiness |
 | Automatic guide allocation and COE integration remain outside current scope. | Intentionally deferred | Existing academic policy and milestone scope. | | Low | Future approved milestone |
+| Reviewer staging is deployed on an ongoing free plan; the live deploy matches its GitHub branch. | Verified via connected Render (10 Nov 2026) | `smartpro-reviewer-25775915` is Free, live at `319e3ebc`, `deployment/reviewer-staging`, auto-deploy off; Neon 059/060 present. | 061 is absent from existing Neon branches; authenticated hosted flow, paired PDF/DB recovery and institutional acceptance remain pending. | High | Reviewer staging |
+| Assigned Project Guide directly requests a specific overall-result correction after publication. | **Verified isolated real Django/Chromium; not hosted-accepted** | Candidate 059 is on Neon main; direct-correction browser [CI 42549200764](https://github.com/10Stardust01/Smart-Pro/actions/runs/42549200764) and [CI 42680008963](https://github.com/10Stardust01/Smart-Pro/actions/runs/42680008963) passed. | 061 hosted read-model alignment and live authenticated flow pending. | Critical | Direct result correction |
+| Responsible Coordinator approves or rejects an exact direct overall correction, including when also the Guide or evaluator. | **Verified isolated API and real browser** | Same-person approval and retained successor version passed in [CI 42680008963](https://github.com/10Stardust01/Smart-Pro/actions/runs/42680008963). | Hosted 061 read alignment, result/version audit and staging acceptance pending; no additional approver required. | Critical | Direct result correction |
+| A direct overall-result correction preserves original release, exact mark change, reason, authorization, successor and audit while leaving stage releases intact. | **Verified disposable PostgreSQL and Student browser** | Prior CI 42549200764 and full CI 42680008963 verified old/new overall versions and unchanged stages. | Hosted paired database/PDF restore and source preservation under controlled 061 promotion pending. | Critical | Direct result correction |
+| Minimal non-HOD faculty account/access administration supports project work, without creating an HR app. | Scope decided; not implemented | Admin may amend faculty details and terminate/reinstate access, excluding HOD records. | Implement only account/access functions directly needed for project assignment and evaluation; do not build a separate faculty-management subsystem. Prior project-role restoration remains unspecified. | Low | Focused account access |
+| Real account provisioning, student identity mapping, and reviewer-to-institution transition. | Blocked: institutional approval | Staging reviewer sessions use configured synthetic actors; production identity integration not approved. | Institution-approved provider and account mapping required. | Critical | Institutional onboarding |
+| Hosted backups and private PDF restore have been rehearsed for the live free-tier stack. | Pending | Earlier local snapshot restoration passed; current Neon staging is populated. | Hosted paired DB + object storage recovery drill not yet evidenced. | Critical | Hosting recovery |
+| Accessibility verification includes screen-reader behavior and accessible document alternatives. | Partial | Keyboard-focused browser checks exist; screen-reader speech/table traversal and PDF accessibility remain unverified. | Institutional testing/criteria needed. | High | Institutional acceptance |
 
-See [repository status](REPOSITORY_STATUS.md), [institutional readiness](INSTITUTIONAL_READINESS.md)
+| Assigned Guide can request overall re-release from already corrected, complete stage evidence, with no new approver. | **Verified in disposable PostgreSQL and actual signed-HTTPS Chromium workflow, not hosted** | The isolated source/authorization contract passed in [CI 42561282815](https://github.com/10Stardust01/Smart-Pro/actions/runs/42561282815). After migration 061 fixed the Guide and Coordinator read projections, [CI 42588186703](https://github.com/10Stardust01/Smart-Pro/actions/runs/42588186703) passed the actual staging-auth HTTPS Guide form submission → Coordinator approval → Student history journey; the enclosing workflow failed later in the separate public hosted smoke step. | Not deployed/host-accepted; validate 060 then 061 on the existing Neon validation branch before any approved forward-only rollout. Preserve original release, stage evidence and exact actor/decision history. | High | Correction alignment |
+
+| Exceptional published-correction Guide project and Coordinator request lists work beyond 100 records. | **Known scalability gap** | Candidate 061 still includes two inherited `LIMIT 100` projections; [issue #3](https://github.com/10Stardust01/Smart-Pro/issues/3). | Forward-only scoped pagination with stable navigation, 125+ project/request fixtures and role/end-to-end acceptance. | High | Correction pagination |
+
+See [consolidated development checkpoint](CONSOLIDATED_DEVELOPMENT_CHECKPOINT.md), [repository status](REPOSITORY_STATUS.md), [institutional readiness](INSTITUTIONAL_READINESS.md)
 and [deployment and recovery](DEPLOYMENT_AND_RECOVERY.md) for evidence and boundaries.
+
+
+> **Updated 10 November 2026:** Neon main and the existing validation branch
+> **already have 059 and 060**; **061 remains unapplied**. Do not rerun 059 or 060.
+> Signed-HTTPS correction and public smoke checks passed in [CI 42680008963](https://github.com/10Stardust01/Smart-Pro/actions/runs/42680008963),
+> but authenticated hosted correction acceptance and controlled 061 promotion
+> remain open under [release gate #4](https://github.com/10Stardust01/Smart-Pro/issues/4).
+
+> 10 November 2026 audit addendum: `de623bc2` passed the disposable PostgreSQL
+> correction contracts and both actual Django/Chromium browser correction steps,
+> including HTTPS reviewer-session authentication. The only failing step in
+> [CI 42588186703](https://github.com/10Stardust01/Smart-Pro/actions/runs/42588186703)
+> was the subsequent read-only hosted smoke check: HTTP 302 was returned but
+> a case-sensitive header dictionary missed the redirect `Location` header.
+> The smoke-script correction must still be independently verified; this is
+> not evidence of a hosted correction migration or authenticated hosted acceptance.

@@ -1,0 +1,124 @@
+name: SMART-PRO staging syntax and boot checks
+on:
+  push:
+    branches: [deployment/reviewer-staging]
+  pull_request:
+    paths:
+      - "backend/**"
+      - "frontend/**"
+      - "Dockerfile"
+      - "requirements-lock.txt"
+      - ".github/workflows/staging-checks.yml"
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install hosted application dependencies
+        run: python -m pip install -r backend/requirements-render.txt
+      - name: Compile source without accessing a database
+        run: python -m compileall -q backend scripts
+      - name: Parse frontend module without executing it
+        run: |
+          for source in frontend/*.js; do node --check "$source"; done
+      - name: Check Django staging startup wiring
+        env:
+          PYTHONPATH: backend
+          DJANGO_SETTINGS_MODULE: smartpro.settings
+          DJANGO_SECRET_KEY: "testonly0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmn"
+          DATABASE_URL: "postgresql://no_user:no_password@127.0.0.1:5432/no_db"
+          SMARTPRO_DEPLOYMENT: "staging"
+          SMARTPRO_ALLOWED_HOSTS: "smartpro.example.test"
+          SMARTPRO_STAGING_REVIEWER_AUTH: "YES"
+          SMARTPRO_REVIEWER_ACCOUNTS: '{"student":{"actor":"00000000-0000-4000-8000-000000000001","passwordHash":"pbkdf2_sha256$100000$salt$2ezm"}}'
+        run: |
+          python - <<'PY'
+          import django
+          django.setup()
+          from django.conf import settings
+          from django.urls import resolve
+          assert settings.STAGING_REVIEWER_AUTH
+          assert 'smartpro.reviewer_auth.ReviewerAuthentication' in settings.REST_FRAMEWORK['DEFAULT_AUTHENTICATION_CLASSES']
+          assert resolve('/reviewer/login').url_name is None
+          from smartpro.reviewer_auth import reviewer_session, ReviewerAuthentication
+          print('Staging Django URL and authentication configuration imports')
+          PY
+      - name: Exercise HTTPS reviewer CSRF, signed session, and authenticated workspace
+        env:
+          PYTHONPATH: backend
+          DJANGO_SETTINGS_MODULE: smartpro.settings
+          DJANGO_SECRET_KEY: "testonly0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmn"
+          DATABASE_URL: "postgresql://no_user:no_password@127.0.0.1:5432/no_db"
+          SMARTPRO_DEPLOYMENT: "staging"
+          SMARTPRO_ALLOWED_HOSTS: "smartpro.example.test"
+          SMARTPRO_CSRF_TRUSTED_ORIGINS: "https://smartpro.example.test"
+          SMARTPRO_TRUST_TLS_PROXY: "YES"
+          SMARTPRO_STAGING_REVIEWER_AUTH: "YES"
+          SMARTPRO_REVIEWER_ACCOUNTS: "{}"
+          SMARTPRO_UI: "YES"
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from unittest.mock import patch
+          import django
+          django.setup()
+          from django.contrib.auth.hashers import make_password
+          from django.test import Client
+
+          actor = "00000000-0000-4000-8000-000000000001"
+          password = "ci-only-synthetic-password"
+          os.environ["SMARTPRO_REVIEWER_ACCOUNTS"] = json.dumps({
+              "student": {"actor": actor, "passwordHash": make_password(password), "label": "Synthetic student"}
+          })
+
+          class Cursor:
+              def __enter__(self):
+                  return self
+              def __exit__(self, *_):
+                  return False
+              def execute(self, statement, params):
+                  assert statement.strip() == "SELECT public.smartpro_role_choices(%s)"
+                  assert params == (actor,)
+              def fetchone(self):
+                  return (["Student"],)
+
+          class Connection:
+              def cursor(self):
+                  return Cursor()
+
+          with patch("smartpro.reviewer_auth.connection", new=Connection()), \
+               patch("smartpro.demo_views._execute", return_value={"dashboard": "synthetic"}):
+              client = Client(enforce_csrf_checks=True, HTTP_HOST="smartpro.example.test")
+              login = client.get("/reviewer/login", secure=True)
+              assert login.status_code == 200, login.status_code
+              assert login.headers["Referrer-Policy"] == "same-origin"
+              assert "csrftoken" in client.cookies
+              import re
+              match = re.search(r'name="csrfmiddlewaretoken" value="([^"]+)"', login.content.decode("utf-8"))
+              assert match, "Hidden CSRF form token missing"
+              payload = {"username": "student", "password": password, "csrfmiddlewaretoken": match.group(1)}
+              missing_referer = client.post("/reviewer/login", payload, secure=True)
+              assert missing_referer.status_code == 403, missing_referer.status_code
+              authorized = client.post(
+                  "/reviewer/login", payload, secure=True,
+                  HTTP_REFERER="https://smartpro.example.test/reviewer/login",
+              )
+              assert authorized.status_code == 302, authorized.status_code
+              assert authorized.headers["Location"] == "/"
+              assert "smartpro_staging_session" in client.cookies
+              homepage = client.get("/", secure=True)
+              assert homepage.status_code == 200, homepage.status_code
+              homepage.close()
+              workspace = client.get("/api/v1/workspace", secure=True)
+              assert workspace.status_code == 200, workspace.status_code
+              assert workspace.json()["dashboard"] == "synthetic"
+          print("HTTPS CSRF rejection, successful reviewer login, and authenticated workspace passed")
+          PY

@@ -38,3 +38,33 @@ jobs:
         with:
           name: django-compatibility-evidence
           path: evidence/django-*
+
+  # Chromium suite runs only on an explicit manual action or initial opt-in commit.
+  browser-smoke:
+    if: >-
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/deployment/reviewer-staging') ||
+      (github.event_name == 'push' && github.ref == 'refs/heads/deployment/reviewer-staging' &&
+      contains(github.event.head_commit.message, '[run-browser-smoke]'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install pinned Playwright
+        run: python -m pip install playwright==1.64.1
+      - name: Install Chromium browser
+        run: python -m playwright install --with-deps chromium
+      - name: Exercise synthetic academic workspaces
+        run: python scripts/browser_smoke.py
+      - name: Archive synthetic screenshots and request counts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smartpro-synthetic-browser-smoke
+          path: browser-artifacts/
+          if-no-files-found: warn
+          retention-days: 7
