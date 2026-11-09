@@ -183,7 +183,9 @@ function finalRevisionPanel(course,projects,state,esc){
  const detail=state.courseDetail;
  if(!detail||!["Coordinator","HOD"].includes(state.role))return "";
  const canAuthorize=state.role==="Coordinator"&&course.responsibilities.includes("CORRECTIONS");
- const requests=(detail.finalRevisions||[]).map(item=>{
+ const listing=state.finalRevisionListing;
+ if(!listing)return `<section class="panel" role="alert"><h2>Published-result corrections</h2><p>Correction request pages are unavailable. Refresh the offering; do not assume no requests exist.</p></section>`;
+ const requests=(listing.requests||[]).map(item=>{
    const title=projects.find(project=>project.id===item.project_id)?.title||"Offering project";
    const change=item.snapshot?.changes?.[0];
    const fromStages=item.snapshot?.type==='STAGE_EVIDENCE_OVERALL_CORRECTION';
@@ -195,5 +197,9 @@ function finalRevisionPanel(course,projects,state,esc){
     ${pending&&canAuthorize?`<form data-form="final-revision-authorization" data-offering="${esc(course.id)}" data-id="${esc(item.id)}"><label>Decision<select name="approved"><option value="true">Approve and publish revised overall result</option><option value="false">Decline correction</option></select></label><button class="primary">Record decision</button></form>`:""}
     </article>`;
  }).join("");
- return `<section class="panel"><h2>Published-result corrections</h2><p>The assigned Guide proposes a corrected overall mark or asks to release already-corrected stage evidence. The responsible Coordinator alone decides the exact change; approval appends a new overall result without rewriting older evidence. No HOD or independent approval is involved.</p>${requests||"<p>No published-result corrections have been requested.</p>"}</section>`;
+ return `<section class="panel"><h2>Published-result corrections</h2><p>The assigned Guide proposes a corrected overall mark or asks to release already-corrected stage evidence. The responsible Coordinator alone decides the exact change; approval appends a new overall result without rewriting older evidence. No HOD or independent approval is involved.</p>${requests||"<p>No published-result corrections on this page.</p>"}<nav class="actions" aria-label="Published correction request pages">
+    <button class="secondary" data-action="final-revision-page" data-page="${listing.page-1}" ${listing.page===1?'disabled':''}>Previous requests</button>
+    <span role="status">${listing.total} requests · page ${listing.page}</span>
+    <button class="secondary" data-action="final-revision-page" data-page="${listing.page+1}" ${listing.page*listing.pageSize>=listing.total?'disabled':''}>Next requests</button>
+  </nav></section>`;
 }
