@@ -958,6 +958,139 @@ def main(test_name=None):
    self.assertEqual(versions[1]['sources'],original['sources'])
    self.assertEqual(self.db.execute('SELECT to_jsonb(v) AS evidence FROM academic_result_versions v WHERE review_id=%s ORDER BY version_no',(rid,)).fetchall(),stage)
 
+  def test_browser_https_reviewer_stage_evidence_actual_django_postgres(self):
+      """Real staging HTTPS sign-in and Guide-to-Coordinator-to-Student flow.
+      Only the disposable PostgreSQL fixture is modified; never hosted data.
+      """
+      import json, secrets, socket, ssl, subprocess, tempfile, time, urllib.request
+      from django.contrib.auth.hashers import make_password
+      from playwright.sync_api import sync_playwright
+      oid=self.offering()
+      self.ok(self.appoint(oid,uid='00000000-0000-4000-8000-000000000008'))
+      self.ok(self.appoint(oid,uid=FACULTY,permissions=['OVERVIEW','CORRECTIONS','RESULTS']))
+      pid=self.project(oid);self.framework(oid)
+      rid,_,_=self.stage(oid,pid,'stage-1',20)
+      original=self.ok(self.command(oid,'PUBLISH_FINAL',dict(projectId=pid,expectedVersion=0)))['id']
+      # This test's isolated policy explicitly enables exceptional corrections.
+      # Model stage evidence already corrected by its separate authorized process.
+      self.db.execute("""INSERT INTO academic_result_versions
+         (review_id,version_no,supersedes_id,legacy_release_id,roster_version_id,
+          policy_id,actor_id,reason,sources,results,calculation_version)
+         SELECT review_id,version_no+1,id,legacy_release_id,roster_version_id,
+           policy_id,actor_id,'Synthetic corrected stage release',
+           jsonb_set(sources,'{0,scores,0,marks}',to_jsonb('22'::text),false),
+           jsonb_set(results,ARRAY['00000000-0000-4000-8000-000000000001'],
+                     to_jsonb('42.00'::text)),calculation_version
+         FROM academic_result_versions WHERE review_id=%s
+         ORDER BY version_no DESC LIMIT 1""",(rid,))
+      before_stages=self.db.execute('SELECT to_jsonb(v) evidence FROM academic_result_versions v WHERE review_id=%s ORDER BY version_no',(rid,)).fetchall()
+      self.assertEqual(len(before_stages),2)
+      password={'test-guide':secrets.token_urlsafe(20),'test-student':secrets.token_urlsafe(20)}
+      accounts={alias:dict(actor=actor,label=alias,passwordHash=make_password(password[alias]))
+                for alias,actor in [('test-guide',FACULTY),('test-student','00000000-0000-4000-8000-000000000001')]}
+      server_code="""
+  import os, ssl
+  from socketserver import ThreadingMixIn
+  from wsgiref.simple_server import WSGIServer, WSGIRequestHandler, make_server
+  from django.core.wsgi import get_wsgi_application
+  class Threaded(ThreadingMixIn,WSGIServer): daemon_threads=True
+  class SecureHandler(WSGIRequestHandler):
+      def get_environ(self):
+          e=super().get_environ();e['wsgi.url_scheme']='https';e['HTTPS']='on';return e
+  srv=make_server('127.0.0.1',int(os.environ['TEST_HTTPS_PORT']),
+                  get_wsgi_application(),server_class=Threaded,handler_class=SecureHandler)
+  ctx=ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+  ctx.load_cert_chain(os.environ['TEST_CERT'],os.environ['TEST_KEY'])
+  srv.socket=ctx.wrap_socket(srv.socket,server_side=True)
+  srv.serve_forever()
+  """
+      with socket.socket() as sk:
+          sk.bind(('127.0.0.1',0));port=sk.getsockname()[1]
+      url=f'https://127.0.0.1:{port}'
+      with tempfile.TemporaryDirectory(prefix='smartpro-https-') as tmp:
+          cert,key=str(Path(tmp)/'cert.pem'),str(Path(tmp)/'key.pem')
+          subprocess.run(['openssl','req','-x509','-newkey','rsa:2048','-nodes',
+                          '-keyout',key,'-out',cert,'-days','1','-subj','/CN=127.0.0.1',
+                          '-addext','subjectAltName=IP:127.0.0.1'],check=True,
+                         stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+          env=dict(os.environ,PYTHONPATH=str(ROOT/'backend'),
+            DJANGO_SETTINGS_MODULE='smartpro.settings',DJANGO_SECRET_KEY=secrets.token_hex(48),
+            SMARTPRO_DEPLOYMENT='staging',SMARTPRO_ENV='staging',SMARTPRO_DEMO_AUTH='NO',
+            SMARTPRO_DEPARTMENT_DEMO='NO',SMARTPRO_UI='YES',
+            SMARTPRO_STAGING_REVIEWER_AUTH='YES',SMARTPRO_ALLOWED_HOSTS='127.0.0.1,localhost',
+            SMARTPRO_CSRF_TRUSTED_ORIGINS=url,SMARTPRO_TRUST_TLS_PROXY='NO',
+            SMARTPRO_REVIEWER_ACCOUNTS=json.dumps(accounts),SMARTPRO_REVIEWER_TEST_ACCOUNTS='',
+            SMARTPRO_IDENTITY_RESOLVER='',TEST_HTTPS_PORT=str(port),TEST_CERT=cert,TEST_KEY=key)
+          with (Path(tmp)/'server.log').open('w') as log:
+              proc=subprocess.Popen([sys.executable,'-c',server_code],cwd=str(ROOT),env=env,
+                                    stdout=log,stderr=subprocess.STDOUT)
+              try:
+                  for _ in range(70):
+                      if proc.poll() is not None:
+                          raise RuntimeError('HTTPS staging server exited: '+(Path(tmp)/'server.log').read_text()[-1800:])
+                      try:
+                          with urllib.request.urlopen(url+'/health/live',timeout=2,
+                               context=ssl._create_unverified_context()) as response:
+                              if response.status==200:break
+                      except Exception:time.sleep(.2)
+                  else:raise RuntimeError('HTTPS staging server unavailable: '+(Path(tmp)/'server.log').read_text()[-1800:])
+                  with sync_playwright() as pw:
+                      browser=pw.chromium.launch(headless=True)
+                      page=browser.new_page(ignore_https_errors=True,viewport={'width':1280,'height':900})
+                      errors=[]
+                      page.on('pageerror',lambda error:errors.append(str(error)))
+                      page.goto(url,wait_until='domcontentloaded')
+                      self.assertIn('/reviewer/login',page.url)
+                      def login(alias):
+                          page.locator('input[name="username"]').fill(alias)
+                          page.locator('input[name="password"]').fill(password[alias])
+                          page.locator('button[type="submit"]').click()
+                          page.wait_for_url(url+'/',timeout=20000)
+                          page.locator(f'button[data-action="login"][data-alias="{alias}"]').click()
+                      login('test-guide')
+                      page.locator('button[data-action="choose-role"][data-role="Faculty"]').click(timeout=20000)
+                      page.locator('aside.sidebar nav button[data-go="documents"]').click()
+                      page.locator(f'button[data-action="open-project"][data-project="{pid}"]').click()
+                      form=page.locator('form[data-form="guide-stage-evidence-correction"]')
+                      form.wait_for(state='attached',timeout=20000)
+                      form.locator('xpath=..').evaluate('(e)=>{if(e.tagName==="DETAILS")e.open=true}')
+                      form.locator('textarea[name="reason"]').fill('Publish already-corrected synthetic stage evidence')
+                      form.locator('button').click()
+                      page.get_by_text('Awaiting Coordinator decision',exact=False).first.wait_for(timeout=20000)
+                      self.assertEqual(self.db.execute('SELECT count(*) n FROM course_final_results WHERE project_id=%s',(pid,)).fetchone()['n'],1)
+                      page.locator('#activeRole').select_option('Coordinator')
+                      page.locator(f'button[data-action="open-course"][data-id="{oid}"]').click()
+                      page.locator('button[data-action="course-section"][data-section="results"]').first.click()
+                      decision=page.locator('form[data-form="final-revision-authorization"]')
+                      decision.wait_for(state='visible',timeout=20000)
+                      decision.locator('select[name="approved"]').select_option('true')
+                      decision.locator('button').click()
+                      page.get_by_text('Approved and published',exact=False).first.wait_for(timeout=20000)
+                      page.locator('button[data-action="logout"]').click()
+                      page.wait_for_url(url+'/reviewer/login',timeout=20000)
+                      login('test-student')
+                      page.locator('aside.sidebar nav button[data-go="documents"]').click()
+                      page.locator(f'button[data-action="open-project"][data-project="{pid}"]').click()
+                      history=page.locator('section:has(h3:text("Overall final result history"))').last
+                      history.wait_for(state='visible',timeout=20000)
+                      self.assertIn('Version 1',history.inner_text())
+                      self.assertIn('Version 2',history.inner_text())
+                      self.assertIn('42.00',history.inner_text())
+                      self.assertFalse(errors,repr(errors))
+                      browser.close()
+              finally:
+                  proc.terminate()
+                  try:proc.wait(timeout=7)
+                  except subprocess.TimeoutExpired:proc.kill();proc.wait()
+      versions=self.db.execute('SELECT id,version,supersedes_id,results,sources FROM course_final_results WHERE project_id=%s ORDER BY version',(pid,)).fetchall()
+      self.assertEqual([v['version'] for v in versions],[1,2])
+      self.assertEqual(str(versions[0]['id']),original)
+      self.assertEqual(versions[1]['supersedes_id'],versions[0]['id'])
+      self.assertEqual([v['results']['00000000-0000-4000-8000-000000000001'] for v in versions],['40.00','42.00'])
+      self.assertNotEqual(versions[0]['sources'],versions[1]['sources'])
+      self.assertEqual(self.db.execute('SELECT to_jsonb(v) evidence FROM academic_result_versions v WHERE review_id=%s ORDER BY version_no',(rid,)).fetchall(),before_stages)
+      self.assertEqual(self.db.execute('SELECT count(*) n FROM course_final_revision_authorizations WHERE request_id IN (SELECT id FROM course_final_revision_requests WHERE project_id=%s)',(pid,)).fetchone()['n'],1)
+
   def test_milestone_completion_and_exact_requirement_permission(self):
    oid=self.offering()
    self.ok(self.appoint(oid,uid='00000000-0000-4000-8000-000000000008'))
