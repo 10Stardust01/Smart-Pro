@@ -1,5 +1,27 @@
 # SMART-PRO implementation status
 
+## 9 November 2026 — correction workflow branch verified, not deployed
+
+The reviewer staging deployment currently **live on Render Free** is `c20e15b`
+(verified by Render's deploy list), matching GitHub
+`deployment/reviewer-staging`. Auto-deploy remains off.
+No change from this review work was deployed.
+
+On the isolated review branch at `c0564cc`, the assigned Guide can either
+propose a corrected published overall mark or request an overall re-release
+from **already corrected, complete stage evidence**. A current offering
+Coordinator approves/rejects even when Guide, requester, or evaluator;
+no extra HOD/independent authorization is introduced. The initial release
+and all original review evidence remain available. [Correction CI](https://github.com/10Stardust01/Smart-Pro/actions/runs/42561282815)
+passed disposable PostgreSQL 16, direct and stage-evidence contracts,
+backend syntax and the real Django/Chromium Guide→Coordinator→Student
+journey. The stage-evidence form itself has not had a separate browser click
+test. This does not constitute hosted or institutional acceptance.
+
+The requirements register separates code-verified results from remaining
+institutional decisions, hosting recovery, account-access work and accessibility.
+
+
 ## 9 November 2026 — hosted snapshot and product-policy reconciliation
 
 Render Free already hosts the reviewer service from `deployment/reviewer-staging`
