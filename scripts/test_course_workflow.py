@@ -1055,8 +1055,16 @@ def main(test_name=None):
                       form.wait_for(state='attached',timeout=20000)
                       form.locator('xpath=..').evaluate('(e)=>{if(e.tagName==="DETAILS")e.open=true}')
                       form.locator('textarea[name="reason"]').fill('Publish already-corrected synthetic stage evidence')
-                      form.locator('button').click()
-                      page.get_by_text('Awaiting Coordinator decision',exact=False).first.wait_for(timeout=20000)
+                      with page.expect_response(lambda response: response.url.endswith('/commands') and response.request.method=='POST',timeout=20000) as sent:
+                          form.locator('button').click()
+                      response=sent.value
+                      self.assertEqual(response.status,200,'Stage-evidence UI POST: '+response.text()[:600])
+                      try:
+                          page.get_by_text('Awaiting Coordinator decision',exact=False).first.wait_for(timeout=5000)
+                      except Exception:
+                          print('Synthetic stage request UI diagnostic:',page.locator('#toast').inner_text()[:500],page.locator('#main').inner_text()[-1500:],flush=True)
+                          print('Synthetic stage DB request count:',self.db.execute('SELECT count(*) n FROM course_final_revision_requests WHERE project_id=%s',(pid,)).fetchone()['n'],flush=True)
+                          raise
                       self.assertEqual(self.db.execute('SELECT count(*) n FROM course_final_results WHERE project_id=%s',(pid,)).fetchone()['n'],1)
                       page.locator('#activeRole').select_option('Coordinator')
                       page.locator(f'button[data-action="open-course"][data-id="{oid}"]').click()
