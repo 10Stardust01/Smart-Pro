@@ -44,7 +44,7 @@ Change a row when its behavior, verification evidence or assigned milestone chan
 | Hosted backups and private PDF restore have been rehearsed for the live free-tier stack. | Pending | Earlier local snapshot restoration passed; current Neon staging is populated. | Hosted paired DB + object storage recovery drill not yet evidenced. | Critical | Hosting recovery |
 | Accessibility verification includes screen-reader behavior and accessible document alternatives. | Partial | Keyboard-focused browser checks exist; screen-reader speech/table traversal and PDF accessibility remain unverified. | Institutional testing/criteria needed. | High | Institutional acceptance |
 
-| Assigned Guide can request overall re-release from already corrected, complete stage evidence, with no new approver. | Verified in disposable PostgreSQL/API contract, not hosted | Candidate 059 installed through 058 in the isolated database; request, no-change denial, source snapshot, Coordinator approval and unchanged original release verified in [CI run 42561282815](https://github.com/10Stardust01/Smart-Pro/actions/runs/42561282815) at `c0564cc`. | Direct-score Guide/Coordinator/Student browser journey also passed; the separate stage-evidence UI form itself has not had an independent click-through acceptance test. Any stage correction must already have valid prior authority. Hosted migration unapproved. | High | Correction alignment |
+| Assigned Guide can request overall re-release from already corrected, complete stage evidence, with no new approver. | **Verified in disposable PostgreSQL and actual signed-HTTPS Chromium workflow, not hosted** | The isolated source/authorization contract passed in [CI 42561282815](https://github.com/10Stardust01/Smart-Pro/actions/runs/42561282815). After migration 061 fixed the Guide and Coordinator read projections, [CI 42588186703](https://github.com/10Stardust01/Smart-Pro/actions/runs/42588186703) passed the actual staging-auth HTTPS Guide form submission → Coordinator approval → Student history journey; the enclosing workflow failed later in the separate public hosted smoke step. | Not deployed/host-accepted; validate 060 then 061 on the existing Neon validation branch before any approved forward-only rollout. Preserve original release, stage evidence and exact actor/decision history. | High | Correction alignment |
 
 See [repository status](REPOSITORY_STATUS.md), [institutional readiness](INSTITUTIONAL_READINESS.md)
 and [deployment and recovery](DEPLOYMENT_AND_RECOVERY.md) for evidence and boundaries.
@@ -54,3 +54,12 @@ and [deployment and recovery](DEPLOYMENT_AND_RECOVERY.md) for evidence and bound
 > direct-correction functions installed. The new stage-evidence mode requires
 > forward-only candidate **060**, never a re-run of 059. Live-service acceptance
 > and approval of actual institutional usage remain separately tracked.
+
+> 10 November 2026 audit addendum: `de623bc2` passed the disposable PostgreSQL
+> correction contracts and both actual Django/Chromium browser correction steps,
+> including HTTPS reviewer-session authentication. The only failing step in
+> [CI 42588186703](https://github.com/10Stardust01/Smart-Pro/actions/runs/42588186703)
+> was the subsequent read-only hosted smoke check: HTTP 302 was returned but
+> a case-sensitive header dictionary missed the redirect `Location` header.
+> The smoke-script correction must still be independently verified; this is
+> not evidence of a hosted correction migration or authenticated hosted acceptance.
