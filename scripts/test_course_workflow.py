@@ -801,6 +801,10 @@ def main(test_name=None):
    self.assertEqual([row['results']['00000000-0000-4000-8000-000000000001'] for row in v],['40.00','42.00'])
    self.assertEqual(str(v[-1]['supersedes_id']),original)
    self.assertEqual(v[0]['sources'],v[-1]['sources'])
+   self.assertEqual(self.command(oid,'REQUEST_FINAL_REVISION',
+      dict(projectId=pid,expectedVersion=2,mode='STAGE_EVIDENCE',
+           reason='Attempt to republish unchanged stage evidence'),
+      who='faculty-a').status_code,409)
    self.assertEqual(self.db.execute('SELECT to_jsonb(v) AS evidence FROM academic_result_versions v WHERE review_id=%s ORDER BY version_no',(rid,)).fetchall(),frozen)
    self.assertEqual(self.command(oid,'AUTHORIZE_FINAL_REVISION',decision,who='coordinator').status_code,409)
    self.assertEqual(self.command(oid,'REQUEST_EXCEPTIONAL_STAGE_CORRECTION',dict(reviewId=rid,assessmentId=aid,expectedReviewRevision=0,scores=scores),who='faculty-a').status_code,400)

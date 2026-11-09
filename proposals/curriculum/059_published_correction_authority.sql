@@ -95,7 +95,7 @@ BEGIN
      proposed:=candidate->'results';
      proposed_sources:=candidate->'sources';
      IF proposed IS NULL OR proposed_sources IS NULL OR
-        (proposed=released.results AND proposed_sources=released.sources) THEN
+        proposed_sources=released.sources THEN
        RAISE EXCEPTION 'No updated, complete stage evidence to release' USING ERRCODE='23514';
      END IF;
      correction_type:='STAGE_EVIDENCE_OVERALL_CORRECTION';
