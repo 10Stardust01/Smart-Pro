@@ -905,7 +905,7 @@ def main(test_name=None):
      page.locator('button[data-action="login"][data-alias="student-a"]').click()
      page.locator('aside.sidebar nav button[data-go="documents"]').click()
      page.locator(f'button[data-action="open-project"][data-project="{pid}"]').click()
-     history=page.locator('section:has(h3:text("Overall final result history"))')
+     history=page.locator('section:has(h3:text("Overall final result history"))').last
      history.wait_for(state='visible',timeout=15000)
      self.assertIn('Version 1',history.inner_text())
      self.assertIn('Version 2',history.inner_text())
