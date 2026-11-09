@@ -1,12 +1,16 @@
 # Direct overall-result correction — finalized product direction
 
-> **10 November 2026 update:** reviewed source includes 059–061; signed HTTPS
-> Guide → Coordinator → Student acceptance passed in isolated CI. Connected
-> Neon main/validation already contain 059 and 060 but **lack 061**. Current
-> Render reviewer deployment is `319e3ebc` (Free, auto-deploy off). Older
-> paragraphs saying the original 059 was 'not deployed' are historical.
-> **Never re-run 059/060** on installed Neon; forward-only 061 and paired restore
-> require separate authorization. See [release gate #4](https://github.com/10Stardust01/Smart-Pro/issues/4).
+> **Updated 10 November 2026:** reviewed GitHub main includes candidates
+> **059–063**; the signed-HTTPS Guide → Coordinator → Student correction flow
+> passed on disposable PostgreSQL. Neon **main** has 059/060 only, whereas
+> the existing Neon **validation branch** successfully installed 061 → 062 →
+> 063 without changing published releases, audit rows or file metadata.
+> Render reviewer staging remains at `319e3ebc` (Free, auto-deploy off).
+> Earlier 059/060 upgrade descriptions below are **historical**, not current
+> execution instructions. **Never reapply 059/060** on these installed targets;
+> hosted migration must first pass paired private-PDF/database recovery.
+> See [validation evidence](NEON_061_063_VALIDATION_20261110.md) and
+> [release gate #4](https://github.com/10Stardust01/Smart-Pro/issues/4).
 
 SMART-PRO remains a project lifecycle and academic evaluation platform, not a
 faculty HR application.

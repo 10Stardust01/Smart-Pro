@@ -19,7 +19,8 @@ student records, global logins or HOD/independent authority. An appointment with
 active project/Coordinator responsibilities is not ended until existing
 assignment workflows resolve those responsibilities; reinstatement does not
 silently restore them. Isolated SQL/API validation is not hosted acceptance.
-Neon main/validation currently have 059/060, not 061–063. **PR #7 is merged**
+At the PR #7 merge checkpoint, Neon main and validation had 059/060 only.
+The later validation rehearsal added 061–063 **only to validation**. **PR #7 is merged**
 into main at `57881021` after six passing CI checks. No deployment, migration
 or institutional activation was authorized.
 
@@ -34,8 +35,8 @@ The old 061 API shape remains for compatibility but the new UI uses 062.
 Isolated PostgreSQL contracts exercised 126 correction requests, 126 additional
 Guide projects, role restrictions, and original release preservation.
 [PR #6](https://github.com/10Stardust01/Smart-Pro/pull/6) contains the tested
-code; this has **not** been installed in Neon or deployed to Render. The
-existing staged database has 059/060, and must receive 061 before 062 through
+code; 062 is now installed on the **isolated validation branch only**, not on
+Neon main or Render. Main still has 059/060 and requires 061 before 062 through
 a controlled forward-only migration with paired database/PDF recovery checks.
 
 # Source consolidation and hosted state (10 November 2026)
@@ -43,7 +44,9 @@ a controlled forward-only migration with paired database/PDF recovery checks.
 [Consolidated development checkpoint](CONSOLIDATED_DEVELOPMENT_CHECKPOINT.md)
 is the current summary of the reviewed 059–061 source, accepted product decisions,
 Milestones A–E and remaining gaps. Render Free reviewer staging is live at
-`319e3ebc`. Connected Neon main and validation have **059 and 060**, but **not 061**.
+`319e3ebc`. **At this earlier source-consolidation checkpoint**, Neon main and
+validation had 059/060 only. Later validation rehearsal added 061–063 on the
+validation branch, while Neon main remains at 059/060.
 Historical deployment SHAs and old 'not deployed' claims below remain dated
 provenance, **not current hosted-state assertions**. No hosted migration or academic
 record mutation is implied by source consolidation.
