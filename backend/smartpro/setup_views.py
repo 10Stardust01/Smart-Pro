@@ -316,7 +316,7 @@ def department_record(request, department_id, person_id):
     operation=request.data.get('action')
     management={'EDIT_DETAILS','AMEND_TERM','TERMINATE','REINSTATE'}
     if operation in management:
-        if not _execute("SELECT to_regprocedure('public.smartpro_faculty_manage(uuid,uuid,uuid,text,jsonb,text)') IS NOT NULL",()):
+        if not _execute("SELECT to_regprocedure('public.smartpro_faculty_manage(uuid,uuid,text,uuid,jsonb,text)') IS NOT NULL",()):
             from .staff import StaffUnavailable
             raise StaffUnavailable('Faculty management requires reviewed candidate 063')
         shapes={
