@@ -1,7 +1,7 @@
 name: SMART-PRO direct result correction PostgreSQL contracts
 on:
   push:
-    branches: ['review/live-staging-audit-20261109']
+    branches: ['main', 'review/live-staging-audit-20261109']
     paths:
       - 'proposals/curriculum/059_published_correction_authority.sql'
       - 'proposals/curriculum/060_published_stage_evidence_rerelease.sql'
@@ -68,5 +68,7 @@ jobs:
         run: python scripts/test_course_workflow.py test_browser_direct_result_correction_actual_django_postgres
       - name: Exercise HTTPS signed reviewer login and stage-evidence UI with disposable PostgreSQL
         run: python scripts/test_course_workflow.py test_browser_https_reviewer_stage_evidence_actual_django_postgres
+      - name: Verify redirect-header handling without network access
+        run: python scripts/test_hosted_public_smoke.py
       - name: Read-only smoke of deployed SMART-PRO HTTPS and authorization boundary
         run: python scripts/hosted_public_smoke.py

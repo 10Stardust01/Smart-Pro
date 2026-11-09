@@ -6,14 +6,16 @@ and approval, configurable evaluation, results, and academic history. The
 frontend contains role-specific workspaces for Student, Faculty, Coordinator,
 HOD, and Admin.
 
+**Current source and decisions:** [Consolidated development checkpoint](docs/CONSOLIDATED_DEVELOPMENT_CHECKPOINT.md). GitHub integration and live Render/Neon deployment are different steps.
+
 ## Existing reviewer staging deployment
 
 - **Application:** [SMART-PRO reviewer staging](https://smartpro-reviewer-25775915.onrender.com)
 - **Hosting:** Render **Free** web service (Docker, Singapore).
 - **Database:** existing SMART-PRO PostgreSQL 16 project on Neon **Free**.
 - **Source:** `deployment/reviewer-staging`; deployment verified at
-  commit `0d5281e7b0ff6fae07569a90c907bb75253cb442` on 9 November 2026.
-  Later commits require separate verification. Automatic Render deployment is off.
+  commit `319e3ebc1368745fcc7f2afe61d47a7bb202335a` (verified in connected Render, 10 November 2026).
+  Automatic Render deployment is off; newer development commits have not been promoted.
 - **Access:** staging-only authenticated reviewer sessions, backed by effective
   database roles. Use **synthetic academic identities and records only**; do not
   use the site for live institutional approvals or marks.
@@ -31,14 +33,12 @@ trial credits, or add charge-incurring services. Verify the relevant plan and
 limits before every infrastructure change. Keep the existing live service,
 database, and immutable academic history intact.
 
-**Policy alignment in draft PR:** the live deployment still has the older
-stage-based exceptional-result workflow. The review branch proposes direct
-Guide-requested corrections to published overall marks, with a single responsible
-Coordinator decision (including same-person approval), preserved historical
-results and no stage regrading. Do not alter the live database without reviewed
-migration acceptance. See
+**Correction alignment:** reviewed source includes 059, 060 and 061, but Neon
+staging already has **059 and 060 only**. The remaining **061 request-visibility
+change is not installed** on Neon main or the existing validation branch.
+Do not re-run 059 or 060, or mistake a code merge for a hosted release. See
 [post-publication correction alignment](docs/POST_PUBLICATION_CORRECTION_ALIGNMENT.md)
-for the exact gap and required regression checks.
+and [release gate #4](https://github.com/10Stardust01/Smart-Pro/issues/4).
 
 ## Historic PostgreSQL prototype reproduction
 

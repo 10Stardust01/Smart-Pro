@@ -1,3 +1,13 @@
+# Source consolidation and hosted state (10 November 2026)
+
+[Consolidated development checkpoint](CONSOLIDATED_DEVELOPMENT_CHECKPOINT.md)
+is the current summary of the reviewed 059–061 source, accepted product decisions,
+Milestones A–E and remaining gaps. Render Free reviewer staging is live at
+`319e3ebc`. Connected Neon main and validation have **059 and 060**, but **not 061**.
+Historical deployment SHAs and old 'not deployed' claims below remain dated
+provenance, **not current hosted-state assertions**. No hosted migration or academic
+record mutation is implied by source consolidation.
+
 ## 10 November 2026 — non-destructive correction CI audit
 
 The preserved review branch `review/live-staging-audit-20261109` at

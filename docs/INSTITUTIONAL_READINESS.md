@@ -1,5 +1,11 @@
 # Institutional readiness
 
+> **10 November 2026 staging clarification:** Render reviewer staging has
+> signed, CSRF-protected **synthetic reviewer sessions**, not approved production
+> authentication. Statements below about local demo-header identity describe
+> historical local testing. Neon staging contains 059/060 but not 061.
+> See [consolidated checkpoint](CONSOLIDATED_DEVELOPMENT_CHECKPOINT.md).
+
 Local assessment on 7 November 2026, with follow-up verification from `d01d22b`. The evidence covers
 synthetic identities, records and files in isolated PostgreSQL 16 databases.
 Production activation remains blocked.
@@ -30,9 +36,10 @@ Production activation remains blocked.
   Faculty workspace and apply it immediately. Previous versions and the actor
   remain in history. Exceptional overall revisions use the separate published
   result workflow.
-- The current application uses a demo header, a synthetic identity map and a
-  browser session-storage alias. It issues no production credentials or cookies
-  and has no production session, CSRF or identity provider integration.
+- The **local development mode** uses gated synthetic identities, demo headers
+  and a browser alias. **Hosted reviewer staging** uses signed synthetic sessions
+  with CSRF protection instead. Neither mode provisions institutionally verified
+  accounts or constitutes an approved production identity integration.
 
 ## Department leadership
 
