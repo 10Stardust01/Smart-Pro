@@ -35,6 +35,21 @@ def _accounts():
         raise RuntimeError("Invalid staging reviewer account configuration") from exc
     if not isinstance(data, dict):
         raise RuntimeError("Reviewer accounts must be a mapping")
+    # Temporary additional reviewer aliases use the same verified synthetic
+    # actor IDs and existing database roles; do not replace existing logins.
+    # Only staging can enable this adapter; no real institutional identities.
+    additional = os.environ.get("SMARTPRO_REVIEWER_TEST_ACCOUNTS")
+    if additional:
+        try:
+            extra = json.loads(additional)
+        except json.JSONDecodeError as exc:
+            raise RuntimeError("Invalid supplemental reviewer account configuration") from exc
+        if not isinstance(extra, dict) or any(
+            not isinstance(alias, str) or not alias.startswith("test-")
+            or alias in data for alias in extra
+        ):
+            raise RuntimeError("Supplemental reviewer accounts must be unique test aliases")
+        data = {**data, **extra}
     accounts = {}
     for alias, entry in data.items():
         if not isinstance(alias, str) or not re.fullmatch(r"[a-z][a-z0-9-]{1,39}", alias):
