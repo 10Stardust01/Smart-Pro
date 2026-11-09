@@ -835,6 +835,75 @@ def main(test_name=None):
    self.assertEqual(self.command(oid,'AUTHORIZE_FINAL_REVISION',dict(requestId=stale,approved=True),who='coordinator').status_code,409)
    self.assertEqual(self.db.execute('SELECT count(*) n FROM course_final_results WHERE project_id=%s',(pid,)).fetchone()['n'],2)
 
+  def test_browser_direct_result_correction_actual_django_postgres(self):
+   """Browser uses actual SMART-PRO frontend, Django routes and PostgreSQL;
+   the runner creates and destroys an isolated synthetic DB per test."""
+   import socket,subprocess,time,urllib.request
+   from playwright.sync_api import sync_playwright
+   oid=self.offering()
+   self.ok(self.appoint(oid,uid=FACULTY,permissions=['OVERVIEW','CORRECTIONS','RESULTS']))
+   pid=self.project(oid)
+   self.framework(oid)
+   rid,_,_=self.stage(oid,pid,'stage-1',20)
+   self.ok(self.command(oid,'PUBLISH_FINAL',dict(projectId=pid,expectedVersion=0)))
+   original=self.db.execute('SELECT id,results,sources FROM course_final_results WHERE project_id=%s ORDER BY version',(pid,)).fetchone()
+   stage=self.db.execute('SELECT to_jsonb(v) AS evidence FROM academic_result_versions v WHERE review_id=%s ORDER BY version_no',(rid,)).fetchall()
+   with socket.socket(socket.AF_INET,socket.SOCK_STREAM) as sock:
+    sock.bind(('127.0.0.1',0))
+    port=sock.getsockname()[1]
+   env=dict(os.environ,PYTHONPATH=str(ROOT/'backend'),SMARTPRO_UI='YES',SMARTPRO_ALLOWED_HOSTS='127.0.0.1,localhost,testserver')
+   url=f'http://127.0.0.1:{port}'
+   proc=subprocess.Popen([sys.executable,'-m','django','runserver','--noreload',f'127.0.0.1:{port}'],
+                          cwd=str(ROOT),env=env,stdout=subprocess.DEVNULL,stderr=subprocess.STDOUT)
+   try:
+    for _ in range(70):
+     if proc.poll() is not None:raise RuntimeError('SMART-PRO Django browser server exited')
+     try:
+      with urllib.request.urlopen(url+'/api/v1/ui/context',timeout=2) as resp:
+       if resp.status==200:break
+     except Exception:time.sleep(.2)
+    else:raise RuntimeError('SMART-PRO browser server did not start')
+    with sync_playwright() as pw:
+     browser=pw.chromium.launch(headless=True)
+     page=browser.new_page(viewport={'width':1280,'height':900})
+     errors=[]
+     page.on('pageerror',lambda error:errors.append(str(error)))
+     page.goto(url,wait_until='domcontentloaded')
+     page.locator('button[data-action="login"][data-alias="faculty-a"]').click()
+     page.locator('button[data-action="choose-role"][data-role="Faculty"]').click() if page.locator('button[data-action="choose-role"][data-role="Faculty"]').count() else None
+     page.locator('button[data-go="documents"]').click()
+     panel=page.locator('form[data-form="guide-final-correction"]')
+     panel.wait_for(state='attached',timeout=15000)
+     panel.locator('xpath=..').evaluate('(el)=>{if(el.tagName==="DETAILS")el.open=true}')
+     # A form can be rendered before its containing disclosure is expanded.
+     page.locator('form[data-form="guide-final-correction"]').locator('input[name="marks"]').fill('42.00')
+     panel.locator('textarea[name="reason"]').fill('Correct a verified published total')
+     panel.locator('button[type="submit"],button.primary').click()
+     page.get_by_text('Awaiting Coordinator decision',exact=False).first.wait_for(timeout=15000)
+     role=page.locator('#activeRole')
+     role.wait_for(timeout=15000)
+     role.select_option('Coordinator')
+     page.locator(f'button[data-action="open-course"][data-id="{oid}"]').click()
+     page.locator('button[data-action="course-section"][data-section="results"]').first.click()
+     decision=page.locator('form[data-form="final-revision-authorization"]')
+     decision.wait_for(state='visible',timeout=15000)
+     decision.locator('select[name="approved"]').select_option('true')
+     decision.locator('button').click()
+     page.get_by_text('Approved and published',exact=False).first.wait_for(timeout=15000)
+     self.assertFalse(errors,'Browser JavaScript errors: '+repr(errors))
+     browser.close()
+   finally:
+    proc.terminate()
+    try:proc.wait(timeout=7)
+    except subprocess.TimeoutExpired:proc.kill();proc.wait()
+   versions=self.db.execute('SELECT id,version,supersedes_id,results,sources FROM course_final_results WHERE project_id=%s ORDER BY version',(pid,)).fetchall()
+   self.assertEqual([r['version'] for r in versions],[1,2])
+   self.assertEqual(versions[0]['id'],original['id'])
+   self.assertEqual(versions[1]['supersedes_id'],original['id'])
+   self.assertEqual(versions[1]['results']['00000000-0000-4000-8000-000000000001'],'42.00')
+   self.assertEqual(versions[1]['sources'],original['sources'])
+   self.assertEqual(self.db.execute('SELECT to_jsonb(v) AS evidence FROM academic_result_versions v WHERE review_id=%s ORDER BY version_no',(rid,)).fetchall(),stage)
+
   def test_milestone_completion_and_exact_requirement_permission(self):
    oid=self.offering()
    self.ok(self.appoint(oid,uid='00000000-0000-4000-8000-000000000008'))
