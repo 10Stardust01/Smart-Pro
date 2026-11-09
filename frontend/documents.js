@@ -30,7 +30,7 @@ export function documentsUI({state,esc,displayDate,localDate,embedded=false}) {
   const visible=state.projectId?w.projects.filter(p=>p.id===state.projectId):w.projects;
   const projects=visible.map(p=>{
     const c=p.case, pending=c?.attempts.at(-1), synopsis=p.requirements?.find(r=>r.key==='SYNOPSIS'), canUpload=uploadAllowed(p)&&(c?.state!=='CHANGES_REQUESTED'||synopsis?.allowRevisions!==false);
-    const direct=state.role==='Faculty'?state.guideFinalCorrections?.projects?.find(item=>item.projectId===p.id):null;
+    const direct=state.role==='Faculty'&&state.guideFinalCorrections?.project?.projectId===p.id?state.guideFinalCorrections.project:null;
     const savedVersion=canUpload&&c?.versions.some(v=>!c.attempts.some(a=>a.versionId===v.id));
     const nextTask=state.role==='Student'?(savedVersion?'Submit the saved PDF version for faculty review.':canUpload?(c?.state==='CHANGES_REQUESTED'?'Read the feedback, then upload your revised synopsis.':'Upload a PDF synopsis.'):
       pending?.state==='SUBMITTED'?'Your synopsis is awaiting faculty review.':''):
@@ -60,7 +60,7 @@ export function documentsUI({state,esc,displayDate,localDate,embedded=false}) {
     <form data-form="guide-stage-evidence-correction" data-offering="${esc(direct.offeringId)}" data-project="${esc(direct.projectId)}" data-version="${esc(direct.version)}">
     <label>Reason for revised release<textarea name="reason" maxlength="500" required></textarea></label>
     <button class="secondary">Request updated overall result</button></form></details>
-    ${direct.requests.map(q=>`<p>${q.type==='STAGE_EVIDENCE_OVERALL_CORRECTION'?'Already-corrected stage evidence':'Direct overall mark'} · ${(q.changes||[]).length?q.changes.map(x=>`${esc(x.studentId||'Student')}: ${esc(x.from??'—')} → ${esc(x.to??'—')}`).join('; '):'Updated source evidence (overall marks unchanged)'} · ${q.applied?'Approved and published':q.approved===false?'Declined':'Awaiting Coordinator decision'} · ${esc(q.reason)}</p>`).join("")}
+    ${(state.guideFinalCorrections.requests||[]).map(q=>`<p>${q.type==='STAGE_EVIDENCE_OVERALL_CORRECTION'?'Already-corrected stage evidence':'Direct overall mark'} · ${(q.changes||[]).length?q.changes.map(x=>`${esc(x.studentId||'Student')}: ${esc(x.from??'—')} → ${esc(x.to??'—')}`).join('; '):'Updated source evidence (overall marks unchanged)'} · ${q.applied?'Approved and published':q.approved===false?'Declined':'Awaiting Coordinator decision'} · ${esc(q.reason)}</p>`).join("")}
     </section>`:""}
     ${guideForm(p,state,esc)}${p.overallResults?.length?`<section><h3>Overall final result history</h3>${p.overallResults.map(r=>`<p>Version ${r.version} · ${displayDate(r.createdAt)} · ${Object.values(r.results).filter(v=>v!==null).map(esc).join(', ')||'No mark in this historical roster'}</p>`).join('')}</section>`:''}
     ${w.manager?`<form data-form="assign-document-reviewer" data-project="${p.id}" class="section-spacer"><label for="faculty-${p.id}">Additional synopsis reviewer (optional)</label><select id="faculty-${p.id}" name="facultyId" required><option value="">Choose an additional authorized reviewer</option>${options(w.options.faculty,r=>r.display_name)}</select><p class="hint">Guide allocation records synopsis-review responsibility. Add another faculty reviewer only when authorized.</p><button class="secondary" type="submit">Assign additional reviewer</button></form>`:''}
