@@ -899,6 +899,17 @@ def main(test_name=None):
      decision.locator('select[name="approved"]').select_option('true')
      decision.locator('button').click()
      page.get_by_text('Approved and published',exact=False).first.wait_for(timeout=15000)
+     # Verify the same real application displays the preserved original and
+     # corrected overall publications to the affected Student.
+     page.locator('button[data-action="logout"]').click()
+     page.locator('button[data-action="login"][data-alias="student-a"]').click()
+     page.locator('aside.sidebar nav button[data-go="documents"]').click()
+     page.locator(f'button[data-action="open-project"][data-project="{pid}"]').click()
+     history=page.locator('section:has(h3:text("Overall final result history"))')
+     history.wait_for(state='visible',timeout=15000)
+     self.assertIn('Version 1',history.inner_text())
+     self.assertIn('Version 2',history.inner_text())
+     self.assertIn('42.00',history.inner_text())
      self.assertFalse(errors,'Browser JavaScript errors: '+repr(errors))
      browser.close()
    finally:
