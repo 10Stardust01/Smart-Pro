@@ -20,7 +20,7 @@ GitHub compare on 10 November showed `main` was **65 commits behind** the tested
 
 | Surface | Verified status as of 10 November 2026 | Required next step |
 | --- | --- | --- |
-| GitHub development | Milestones A–E and candidates 059–062 consolidated in main via PR #6; candidate 063 adds scoped non-HOD Faculty administration with isolated PostgreSQL/API checks through PR #7 | Review and merge candidate 063 only with its CI green; retain previous branch history |
+| GitHub development | Milestones A–E and candidates **059–063** consolidated in `main` (`57881021`, merged PRs #5–#7); 063 adds scoped non-HOD Faculty details and audited term management | Six of six PR #7 checks passed; source merge does not authorize Neon migration or Render deployment |
 | Render reviewer | `smartpro-reviewer-25775915`, Free Docker Singapore; auto-deploy off; `deployment/reviewer-staging` live SHA `319e3ebc1368745fcc7f2afe61d47a7bb202335a` | Explicit controlled deployment and authenticated hosted acceptance |
 | Neon `smartpro_staging` main | Original direct correction **059 present**, stage-evidence extension **060 present**, Guide/Coordinator read-projection **061 absent** | Preserve rows and perform versioned 061 preflight/recovery before approved release |
 | Neon validation | Existing `smartpro-059-validation-20261109` also has 059/060 but lacks 061 | Apply *only 061* after separately authorized validation-branch change; preserve recovery branches |

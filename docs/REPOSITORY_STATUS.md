@@ -9,8 +9,9 @@ student records, global logins or HOD/independent authority. An appointment with
 active project/Coordinator responsibilities is not ended until existing
 assignment workflows resolve those responsibilities; reinstatement does not
 silently restore them. Isolated SQL/API validation is not hosted acceptance.
-Neon main/validation currently have 059/060, not 061–063. PR #7 must pass full
-CI and be merged independently; no deployment or migration is authorized.
+Neon main/validation currently have 059/060, not 061–063. **PR #7 is merged**
+into main at `57881021` after six passing CI checks. No deployment, migration
+or institutional activation was authorized.
 
 ## Correction pagination candidate 062 (10 November 2026)
 
