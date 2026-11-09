@@ -304,7 +304,7 @@ async function load({reuseWorkspace=false}={}) {
         if(!offeringId||!next.courses.offerings.some(o=>o.id===offeringId))return;
         const base=`/api/v1/courses/offerings/${offeringId}`;
         const detail=get(base+'/details').then(value=>{next.courseDetail=value;});
-         const revisions=state.courseSection==='results'?get(base+'/final-revisions?'+new URLSearchParams({page:state.finalRevisionPageNumber||1,...(state.finalRevisionAnchor?{anchor:state.finalRevisionAnchor}:{})})).then(value=>{next.finalRevisionListing=value;next.finalRevisionAnchor=value.anchor;}):Promise.resolve();
+         const revisions=async()=>{if(state.courseSection==='results'){const value=await get(base+'/final-revisions?'+new URLSearchParams({page:state.finalRevisionPageNumber||1,...(state.finalRevisionAnchor?{anchor:state.finalRevisionAnchor}:{})}));next.finalRevisionListing=value;next.finalRevisionAnchor=value.anchor;}};
         const queue=async()=>{
           if(state.role!=='Coordinator'||!(state.courseSection==='evaluation'||state.courseReviewId))return;
           const focus=state.courseReviewId&&w.reviews.find(r=>r.id===state.courseReviewId)?.projectId;
@@ -315,7 +315,10 @@ async function load({reuseWorkspace=false}={}) {
           }
           catch(error){if(error.name==='AbortError')throw error;next.courseEvaluationError=error.message;}
         };
-        await Promise.all([detail,queue(),revisions]);
+        await Promise.all([detail,queue()]);
+         // Course authority reads may acquire coordinator-row locks. Do not
+         // run the separate paginated read concurrently with offering details.
+         await revisions();
       }
     }
     if(w.access.operations&&!next.management)next.management=await get(`/api/v1/staff/departments/${w.department.id}/offering-management`);
