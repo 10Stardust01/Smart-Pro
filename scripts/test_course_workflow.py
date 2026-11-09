@@ -1022,7 +1022,7 @@ def main(test_name=None):
             SMARTPRO_REVIEWER_ACCOUNTS=json.dumps(accounts),SMARTPRO_REVIEWER_TEST_ACCOUNTS='',
             SMARTPRO_IDENTITY_RESOLVER='',TEST_HTTPS_PORT=str(port),TEST_CERT=cert,TEST_KEY=key)
           with (Path(tmp)/'server.log').open('w') as log:
-              proc=subprocess.Popen([sys.executable,'-c',server_code],cwd=str(ROOT),env=env,
+              proc=subprocess.Popen([sys.executable,'-c',__import__('textwrap').dedent(server_code)],cwd=str(ROOT),env=env,
                                     stdout=log,stderr=subprocess.STDOUT)
               try:
                   for _ in range(70):
