@@ -2,7 +2,6 @@
 from concurrent.futures import ThreadPoolExecutor
 import hashlib
 import io
-import os
 import sys
 import threading
 import time
