@@ -56,7 +56,7 @@ def main():
     assert parser.dialog_label and "confirmation-title" in parser.ids
     assert len(set(parser.ids)) == len(parser.ids), "Duplicate static document IDs"
     assert ":focus-visible" in CSS and ".skip:focus" in CSS
-    assert 'aria-current="page"' in APP or "aria-current=\\"page\\"" in APP
+    assert 'aria-current="page"' in APP, "Active navigation announcement missing"
     assert "aria-busy" in APP and 'aria-label="Main navigation"' in APP
     assert 'for="username"' in AUTH and 'for="password"' in AUTH
     assert 'type="password"' in AUTH and '<h1>Sign in' in AUTH
