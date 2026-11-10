@@ -228,6 +228,14 @@ DO $handover_queue$ DECLARE def text; anchor text; BEGIN
    RAISE EXCEPTION 'Review queue projection changed; revise 064 before installing';
  END IF;
  def:=replace(def,anchor,$handover_projection
+    'facultyAccessHandoverCount',(SELECT count(*) FROM public.faculty_academic_access_handoffs h
+       WHERE h.project_id=project.id AND h.effective_at<=clock_timestamp()),
+    'stages',stages$handover_projection$);
+ EXECUTE def;
+END $handover_queue$;
+
+REVOKE ALL ON public.faculty_academic_access_handoffs FROM PUBLIC,smartpro_runtime;
+COMMIT;
 frameworkVersion',plan.framework_version,
     'facultyAccessHandoverCount',(SELECT count(*) FROM public.faculty_academic_access_handoffs h
        WHERE h.project_id=project.id AND h.effective_at<=clock_timestamp()),
