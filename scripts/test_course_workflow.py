@@ -798,6 +798,18 @@ def main(test_name=None):
      WHERE id=%s""",(term,))
    self.assertFalse(self.db.execute("""SELECT smartpro_has_role(%s,%s,'FACULTY',clock_timestamp()) AS ok""",
       (person,CSE)).fetchone()['ok'])
+   # Another active departmental role makes the old FACULTY_ACCESS setup
+   # path otherwise eligible; it must not bypass assignment cleanup.
+   self.db.execute("""INSERT INTO department_role_assignments(user_id,department_id,role_code)
+      VALUES(%s,%s,'STUDENT')""",(person,CSE))
+   route=f'/api/v1/staff/departments/{CSE}/setup'
+   requested=self.ok(self.post(route,dict(action='REQUEST',kind='FACULTY_ACCESS',
+      configuration=dict(userId=person,validUntil='2027-06-01T00:00:00Z'),
+      reason='Attempt old setup route'),who='department-admin'))['id']
+   self.ok(self.post(route,dict(action='APPROVE',requestId=requested),
+      who='staff-policy'))
+   denied=self.post(route,dict(action='APPLY',requestId=requested),who='department-admin')
+   self.assertEqual(denied.status_code,409,denied.content)
    self.ok(self.post(f'/api/v1/staff/departments/{CSE}/records/{person}',
       dict(action='REINSTATE',reason='New academic application access only'),who='department-admin'))
    self.assertTrue(self.db.execute("""SELECT smartpro_has_role(%s,%s,'FACULTY',clock_timestamp()) AS ok""",
