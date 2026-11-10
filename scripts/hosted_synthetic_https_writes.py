@@ -15,7 +15,6 @@ import time
 import uuid
 from decimal import Decimal
 from math import ceil
-from urllib.parse import urljoin
 
 import httpx
 
