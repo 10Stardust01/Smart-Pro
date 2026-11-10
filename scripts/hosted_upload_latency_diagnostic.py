@@ -16,7 +16,6 @@ from math import ceil
 import httpx
 
 from hosted_synthetic_https_writes import (
-    BASE,
     TIMEOUT,
     AcceptanceFailure,
     Reviewer,
@@ -138,6 +137,7 @@ async def run():
         print(f"UPLOAD_PERF_RESULT sample_size={len(results)} "
               f"clients={clients_count} rounds={rounds} size_bytes={actual_bytes} "
               f"median_s={statistics.median(results):.3f} "
+              f"nearest_rank_p50_s={p50:.3f} "
               f"nearest_rank_p95_s={p95:.3f} max_s={maximum:.3f} "
               f"error_count=0 read_back_sha256={len(results)}/{len(results)}",
               flush=True)
