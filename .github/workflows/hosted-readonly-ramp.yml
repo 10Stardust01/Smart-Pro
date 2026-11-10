@@ -1,0 +1,21 @@
+name: SMART-PRO bounded hosted read-only ramp
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: smartpro-hosted-bounded-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  actual-hosted-readonly-ramp:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile bounded hosted probe
+        run: python3 -m py_compile scripts/hosted_readonly_ramp.py
+      - name: Test actual Render Free staging URL (max 33 read-only requests)
+        run: python3 -u scripts/hosted_readonly_ramp.py

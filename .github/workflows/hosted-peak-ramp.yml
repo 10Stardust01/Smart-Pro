@@ -1,0 +1,21 @@
+name: SMART-PRO actual hosted stress ramp (owned staging only)
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: owned-smartpro-peak-ramp
+  cancel-in-progress: false
+
+jobs:
+  actual-hosted-stress:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify test script syntax
+        run: python -m py_compile scripts/hosted_peak_ramp.py
+      - name: Run one bounded stress ramp against owned Render Free staging
+        run: python -u scripts/hosted_peak_ramp.py
