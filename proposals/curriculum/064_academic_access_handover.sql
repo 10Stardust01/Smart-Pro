@@ -236,12 +236,3 @@ END $handover_queue$;
 
 REVOKE ALL ON public.faculty_academic_access_handoffs FROM PUBLIC,smartpro_runtime;
 COMMIT;
-frameworkVersion',plan.framework_version,
-    'facultyAccessHandoverCount',(SELECT count(*) FROM public.faculty_academic_access_handoffs h
-       WHERE h.project_id=project.id AND h.effective_at<=clock_timestamp()),
-    'stages',stages$handover_projection$);
- EXECUTE def;
-END $handover_queue$;
-
-REVOKE ALL ON public.faculty_academic_access_handoffs FROM PUBLIC,smartpro_runtime;
-COMMIT;
