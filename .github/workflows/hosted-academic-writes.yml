@@ -16,6 +16,11 @@ on:
         required: true
         default: '8b40a6e1-419d-43c8-b625-279f82713b02'
         type: string
+      team_id:
+        description: 'Existing synthetic team ID in the signed-in Student account, no membership changes'
+        required: true
+        default: '04da071d-f86b-415d-a580-123ba8f2236b'
+        type: string
       guide_user_id:
         description: 'Synthetic Faculty actor UUID matching the privately configured Faculty reviewer'
         required: true
@@ -49,6 +54,7 @@ jobs:
       SMARTPRO_HOSTED_WRITE_APPROVAL: ${{ inputs.approval }}
       SMARTPRO_WRITE_DEPARTMENT_ID: ${{ inputs.department_id }}
       SMARTPRO_WRITE_OFFERING_ID: ${{ inputs.offering_id }}
+      SMARTPRO_WRITE_TEAM_ID: ${{ inputs.team_id }}
       SMARTPRO_WRITE_GUIDE_USER_ID: ${{ inputs.guide_user_id }}
       SMARTPRO_WRITE_STAGE_KEY: ${{ inputs.stage_key }}
       SMARTPRO_WRITE_UPLOAD_CLIENTS: ${{ inputs.upload_clients }}
