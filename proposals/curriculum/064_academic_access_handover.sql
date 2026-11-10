@@ -195,21 +195,68 @@ $prior_reinstate$)=0
              ORDER BY z.version DESC LIMIT 1))
    THEN RAISE EXCEPTION 'Close previous project/Coordinator appointments before reinstatement'
      USING ERRCODE='23514'; END IF;
-$prior_reinstate$,$next_reinstate$   IF EXISTS(SELECT 1 FROM public.faculty_assignments a JOIN public.projects p ON p.id=a.project_id
-        WHERE p.department_id=dept AND a.faculty_user_id=person
-          AND (a.valid_until IS NULL OR stamp<a.valid_until))
-       OR EXISTS(SELECT 1 FROM public.course_coordinator_versions v
-         JOIN public.curriculum_offerings o ON o.id=v.offering_id
-         WHERE o.department_id=dept AND v.user_id=person AND v.active AND v.valid_until>stamp
-           AND NOT EXISTS(SELECT FROM public.faculty_academic_access_handoffs h
-             WHERE h.assignment_kind='COORDINATOR' AND h.assignment_id=v.id
-               AND h.effective_at<=stamp)
-           AND v.id=(SELECT z.id FROM public.course_coordinator_versions z
-             WHERE z.offering_id=v.offering_id AND z.user_id=person
-             ORDER BY z.version DESC LIMIT 1))
-   THEN RAISE EXCEPTION 'Close previous project/Coordinator appointments before reinstatement'
-     USING ERRCODE='23514'; END IF;
+$prior_reinstate$,$next_reinstate$   -- A naturally expired Faculty term can leave temporal project/Coordinator
+   -- and evaluator assignments in their old active state. Before new access,
+   -- record and prospectively end those responsibilities, not their evidence.
+   SELECT id INTO expired_term FROM public.department_role_assignments
+     WHERE department_id=dept AND user_id=person AND role_code='FACULTY'
+       AND valid_until<=stamp ORDER BY valid_until DESC,id DESC LIMIT 1 FOR UPDATE;
+   IF expired_term IS NULL THEN
+     RAISE EXCEPTION 'Prior Faculty application term required'
+       USING ERRCODE='23514';
+   END IF;
+   INSERT INTO public.faculty_academic_access_handoffs
+     (faculty_term_id,assignment_kind,assignment_id,department_id,offering_id,
+      project_id,effective_at,recorded_by)
+   SELECT expired_term,a.assignment_type,a.id,dept,t.curriculum_offering_id,
+     p.id,stamp,actor FROM public.faculty_assignments a
+     JOIN public.projects p ON p.id=a.project_id
+     JOIN public.teams t ON t.id=p.team_id
+   WHERE p.department_id=dept AND a.faculty_user_id=person
+     AND a.valid_from<=stamp AND (a.valid_until IS NULL OR stamp<a.valid_until)
+   ON CONFLICT DO NOTHING;
+   INSERT INTO public.faculty_academic_access_handoffs
+     (faculty_term_id,assignment_kind,assignment_id,department_id,offering_id,
+      project_id,effective_at,recorded_by)
+   SELECT expired_term,'EVALUATOR',e.id,dept,t.curriculum_offering_id,
+     p.id,stamp,actor FROM public.evaluator_assignments e
+     JOIN public.project_reviews r ON r.id=e.review_id
+     JOIN public.projects p ON p.id=r.project_id
+     JOIN public.teams t ON t.id=p.team_id
+   WHERE p.department_id=dept AND e.faculty_user_id=person
+     AND public.smartpro_evaluator_active(e.id)
+   ON CONFLICT DO NOTHING;
+   INSERT INTO public.faculty_academic_access_handoffs
+     (faculty_term_id,assignment_kind,assignment_id,department_id,offering_id,
+      project_id,effective_at,recorded_by)
+   SELECT expired_term,'COORDINATOR',v.id,dept,v.offering_id,
+     NULL::uuid,stamp,actor FROM public.course_coordinator_versions v
+     JOIN public.curriculum_offerings o ON o.id=v.offering_id
+   WHERE o.department_id=dept AND v.user_id=person AND v.active
+     AND v.valid_from<=stamp AND stamp<v.valid_until
+     AND v.id=(SELECT z.id FROM public.course_coordinator_versions z
+        WHERE z.offering_id=v.offering_id AND z.user_id=person
+        ORDER BY z.version DESC LIMIT 1)
+   ON CONFLICT DO NOTHING;
+   UPDATE public.faculty_assignments a SET valid_until=stamp
+   FROM public.projects p
+   WHERE p.id=a.project_id AND p.department_id=dept
+     AND a.faculty_user_id=person AND a.valid_from<=stamp
+     AND (a.valid_until IS NULL OR stamp<a.valid_until);
+   INSERT INTO public.evaluator_assignment_events
+     (assignment_id,version,active,actor_id)
+   SELECT h.assignment_id,
+     coalesce((SELECT max(ev.version) FROM public.evaluator_assignment_events ev
+       WHERE ev.assignment_id=h.assignment_id),0)+1,false,actor
+   FROM public.faculty_academic_access_handoffs h
+   WHERE h.faculty_term_id=expired_term AND h.assignment_kind='EVALUATOR'
+     AND public.smartpro_evaluator_active(h.assignment_id)
+   ORDER BY h.assignment_id;
 $next_reinstate$);
+ IF strpos(def,'busy boolean;old_rev integer;')=0
+ THEN RAISE EXCEPTION '063 declaration changed; review expired-term handling' USING ERRCODE='23514'; END IF;
+ def:=replace(def,'busy boolean;old_rev integer;',
+   'busy boolean;old_rev integer; expired_term uuid;');
  EXECUTE def;
 END $change$;
 
