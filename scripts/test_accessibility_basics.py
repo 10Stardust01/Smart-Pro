@@ -35,6 +35,8 @@ class LandmarkParser(HTMLParser):
 
 
 def luminance(hex_rgb):
+    if re.fullmatch(r"#[0-9a-fA-F]{3}", hex_rgb):
+        hex_rgb = "#" + "".join(c * 2 for c in hex_rgb[1:])
     assert re.fullmatch(r"#[0-9a-fA-F]{6}", hex_rgb), hex_rgb
     values = [int(hex_rgb[i:i+2], 16) / 255.0 for i in (1, 3, 5)]
     linear = [c / 12.92 if c <= .04045 else ((c + .055) / 1.055) ** 2.4 for c in values]
@@ -59,7 +61,7 @@ def main():
     assert 'for="username"' in AUTH and 'for="password"' in AUTH
     assert 'type="password"' in AUTH and '<h1>Sign in' in AUTH
 
-    definitions = dict(re.findall(r"--([a-z-]+):\s*(#[0-9a-fA-F]{6})", CSS))
+    definitions = dict(re.findall(r"--([a-z-]+):\s*(#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?)\s*;", CSS))
     for foreground in ("ink", "muted", "accent"):
         color = definitions[foreground]
         for background in ("surface", "white"):
