@@ -28,7 +28,7 @@ def main(test_name=None):
   @classmethod
   def setUpClass(cls):
    cls.db=psycopg.connect(**dict(owner,dbname=name),autocommit=True,row_factory=dict_row);install_documents(cls.db)
-   for candidate in ['037_course_coordination.sql','038_course_assessment_lifecycle.sql','039_course_deadlines_notifications.sql','040_course_integration.sql','041_course_scope_guards.sql','042_course_authorized_operations.sql','043_runtime_function_grants.sql','044_coordinator_own_corrections.sql','045_admin_course_appointments.sql','046_department_leadership.sql','047_department_intake.sql','048_course_evaluation_queue.sql','049_paginated_evaluation_queue.sql','050_document_project_pages.sql','051_department_intake_pages.sql','052_department_directory.sql','053_department_import_outcomes.sql','054_department_offering_pages.sql','055_leadership_history_pages.sql','056_coordinator_catalog_scope_prefilter.sql','057_department_identity_navigation.sql','058_course_command_lock_order.sql','059_published_correction_authority.sql','060_published_stage_evidence_rerelease.sql','061_published_correction_read_visibility.sql','062_paged_published_correction_reads.sql','063_department_faculty_management.sql']:execute_file(cls.db,ROOT/'proposals/curriculum'/candidate)
+   for candidate in ['037_course_coordination.sql','038_course_assessment_lifecycle.sql','039_course_deadlines_notifications.sql','040_course_integration.sql','041_course_scope_guards.sql','042_course_authorized_operations.sql','043_runtime_function_grants.sql','044_coordinator_own_corrections.sql','045_admin_course_appointments.sql','046_department_leadership.sql','047_department_intake.sql','048_course_evaluation_queue.sql','049_paginated_evaluation_queue.sql','050_document_project_pages.sql','051_department_intake_pages.sql','052_department_directory.sql','053_department_import_outcomes.sql','054_department_offering_pages.sql','055_leadership_history_pages.sql','056_coordinator_catalog_scope_prefilter.sql','057_department_identity_navigation.sql','058_course_command_lock_order.sql','059_published_correction_authority.sql','060_published_stage_evidence_rerelease.sql','061_published_correction_read_visibility.sql','062_paged_published_correction_reads.sql','063_department_faculty_management.sql','064_academic_access_handover.sql']:execute_file(cls.db,ROOT/'proposals/curriculum'/candidate)
   @classmethod
   def tearDownClass(cls):cls.db.close();connection.close()
   def client(self,who='staff-policy',role=None):
@@ -718,19 +718,62 @@ def main(test_name=None):
       LIMIT 1""",(CSE,)).fetchone()['user_id'])
    self.assertEqual(self.post(department+'/records/'+hod,
       dict(action='EDIT_DETAILS',**body),who='department-admin').status_code,403)
-   # An active project Guide assignment may not be silently discarded, or
-   # reactivated after a future Faculty term is granted.
+   # Immediate app-access revocation must not be blocked by unfinished
+   # academic work or the last-Coordinator ordinary appointment safeguard.
    offering=self.offering()
-   self.ok(self.appoint(offering,uid='00000000-0000-4000-8000-000000000008'))
+   other='00000000-0000-4000-8000-000000000008'
+   self.ok(self.appoint(offering,uid=other))
    assigned_project=self.project(offering,guide_id=person)
+   self.framework(offering)
+   review=self.ok(self.command(offering,'CREATE_STAGE',
+       dict(projectId=assigned_project,stageKey='stage-1',facultyIds=[]),
+       who='coordinator'))['id']
+   evaluator=str(self.db.execute("""SELECT id FROM evaluator_assignments
+       WHERE review_id=%s AND faculty_user_id=%s""",(review,person)).fetchone()['id'])
+   solo=self.offering();self.ok(self.appoint(solo,uid=person));self.activate(solo)
+   self.assertTrue(self.db.execute('SELECT EXISTS(SELECT 1 FROM smartpro_course_coordinators(%s)) AS ok',
+       (solo,)).fetchone()['ok'])
    current_term=next(t for t in record()['facultyAdmin']['terms'] if t['active'])
-   self.assertEqual(apply('TERMINATE',termId=current_term['id'],
-     expectedAuthorityRevision=current_term['staff_authority_revision'],
-     reason='Try to end active Guide without reassignment').status_code,409)
-   self.assertTrue(any(t['active'] for t in record()['facultyAdmin']['terms']))
-   self.assertTrue(self.db.execute("""SELECT 1 FROM faculty_assignments
-      WHERE project_id=%s AND faculty_user_id=%s AND valid_until IS NULL""",
-      (assigned_project,person)).fetchone())
+   termination=dict(action='TERMINATE',termId=current_term['id'],
+       expectedAuthorityRevision=current_term['staff_authority_revision'],
+       reason='Withdraw SMART-PRO access and hand off academic responsibilities')
+   retry_key=uuid4().hex
+   first=self.ok(self.post(url,termination,who='department-admin',key=retry_key))
+   self.assertEqual(first,self.ok(self.post(url,termination,who='department-admin',key=retry_key)))
+   self.assertFalse(any(t['active'] for t in record()['facultyAdmin']['terms']))
+   self.assertFalse(self.db.execute('SELECT smartpro_current_project_guide(%s,%s) AS ok',
+       (person,assigned_project)).fetchone()['ok'])
+   self.assertFalse(self.db.execute('SELECT smartpro_evaluator_active(%s) AS ok',
+       (evaluator,)).fetchone()['ok'])
+   self.assertFalse(self.db.execute('SELECT EXISTS(SELECT 1 FROM smartpro_course_coordinators(%s)) AS ok',
+       (solo,)).fetchone()['ok'])
+   handovers=self.db.execute("""SELECT assignment_kind,assignment_id FROM
+       faculty_academic_access_handoffs WHERE faculty_term_id=%s""",
+       (current_term['id'],)).fetchall()
+   self.assertTrue({'GUIDE','REVIEWER','EVALUATOR','COORDINATOR'}<=
+       {h['assignment_kind'] for h in handovers})
+   self.assertTrue(self.db.execute("""SELECT valid_until FROM faculty_assignments
+       WHERE project_id=%s AND faculty_user_id=%s AND assignment_type='GUIDE'""",
+       (assigned_project,person)).fetchone()['valid_until'])
+   self.assertEqual(self.db.execute("""SELECT count(*) AS n FROM
+       department_role_assignments WHERE id=%s""",
+       (current_term['id'],)).fetchone()['n'],1)
+   # New Faculty application access never revives the ended Guide, evaluator
+   # or immutable Coordinator appointment, even when a login is still valid.
+   self.ok(apply('REINSTATE',reason='New Faculty application access term'))
+   self.assertFalse(self.db.execute('SELECT smartpro_current_project_guide(%s,%s) AS ok',
+       (person,assigned_project)).fetchone()['ok'])
+   self.assertFalse(self.db.execute('SELECT smartpro_evaluator_active(%s) AS ok',
+       (evaluator,)).fetchone()['ok'])
+   self.assertFalse(self.db.execute('SELECT EXISTS(SELECT 1 FROM smartpro_course_coordinators(%s)) AS ok',
+       (solo,)).fetchone()['ok'])
+   # Authorized existing Coordinator can now explicitly appoint a new Guide.
+   self.ok(self.post(f'/api/v1/staff/departments/{CSE}/projects/{assigned_project}/guide',
+       dict(facultyId=other,expectedGuideId=None),who='coordinator'))
+   self.assertTrue(self.db.execute('SELECT smartpro_current_project_guide(%s,%s) AS ok',
+       (other,assigned_project)).fetchone()['ok'])
+   self.assertFalse(self.db.execute('SELECT smartpro_current_project_guide(%s,%s) AS ok',
+       (person,assigned_project)).fetchone()['ok'])
   def test_faculty_identity_crosswalk_and_candidate_discovery(self):
    from threading import Barrier
    from unittest.mock import patch
