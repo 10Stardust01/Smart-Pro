@@ -1,5 +1,11 @@
 # SMART-PRO — Project lifecycle and academic evaluation platform
 
+> **Latest hosted reviewer checkpoint — 10 November 2026 (not institutional production):**
+> Neon Free staging **main** now contains migrations **059–063**, with 061 → 062 → 063 installed as separate atomic transactions. Existing Render Free reviewer service manually deployed source commit **`0419358dc5a3c87d5ef5290909b7cbc00e59fb40`** ([PR #12](https://github.com/10Stardust01/Smart-Pro/pull/12)). All published-result, stage-result, audit and READY-file metadata digests remained unchanged. Permissioned Coordinator/Admin reads succeeded and unauthorized Student/Faculty reads were denied. The original pre-059 and new pre-061 recovery branches remain.
+>
+> **Still outstanding:** actual private PDF byte/hash restoration, independently verified paired database+file recovery, full authenticated hosted Guide → Coordinator → Student/Faculty browser acceptance, peak-load tests and institutional approval. PR #12 passed **five** checks; its sixth correction-browser check was **cancelled during Chromium installation at the 12-minute timeout**, so do not claim 6/6. No paid feature/trial was used. [Release evidence and open gates](https://github.com/10Stardust01/Smart-Pro/issues/4).
+
+
 SMART-PRO is a Django / Django REST Framework and PostgreSQL application for
 departmental project registration, teams, guide assignments, document revision
 and approval, configurable evaluation, results, and academic history. The
@@ -14,8 +20,8 @@ HOD, and Admin.
 - **Hosting:** Render **Free** web service (Docker, Singapore).
 - **Database:** existing SMART-PRO PostgreSQL 16 project on Neon **Free**.
 - **Source:** `deployment/reviewer-staging`; deployment verified at
-  commit `319e3ebc1368745fcc7f2afe61d47a7bb202335a` (verified in connected Render, 10 November 2026).
-  Automatic Render deployment is off; newer development commits have not been promoted.
+  commit `0419358dc5a3c87d5ef5290909b7cbc00e59fb40` (connected Render live deployment verified 10 November 2026).
+  Automatic Render deployment remains off; this is reviewer staging, not institutional production.
 - **Access:** staging-only authenticated reviewer sessions, backed by effective
   database roles. Use **synthetic academic identities and records only**; do not
   use the site for live institutional approvals or marks.

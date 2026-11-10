@@ -1,5 +1,11 @@
 # SMART-PRO — consolidated development checkpoint
 
+> **Latest hosted reviewer checkpoint — 10 November 2026 (not institutional production):**
+> Neon Free staging **main** now contains migrations **059–063**, with 061 → 062 → 063 installed as separate atomic transactions. Existing Render Free reviewer service manually deployed source commit **`0419358dc5a3c87d5ef5290909b7cbc00e59fb40`** ([PR #12](https://github.com/10Stardust01/Smart-Pro/pull/12)). All published-result, stage-result, audit and READY-file metadata digests remained unchanged. Permissioned Coordinator/Admin reads succeeded and unauthorized Student/Faculty reads were denied. The original pre-059 and new pre-061 recovery branches remain.
+>
+> **Still outstanding:** actual private PDF byte/hash restoration, independently verified paired database+file recovery, full authenticated hosted Guide → Coordinator → Student/Faculty browser acceptance, peak-load tests and institutional approval. PR #12 passed **five** checks; its sixth correction-browser check was **cancelled during Chromium installation at the 12-minute timeout**, so do not claim 6/6. No paid feature/trial was used. [Release evidence and open gates](https://github.com/10Stardust01/Smart-Pro/issues/4).
+
+
 **10 November 2026 (IST).** This is a source-code consolidation checkpoint, **not** authorization to migrate Neon main, deploy Render, or activate real academic records. Historical notes remain preserved, but outdated deployment assertions do not override the current verified state.
 
 ## Current project and lineage
