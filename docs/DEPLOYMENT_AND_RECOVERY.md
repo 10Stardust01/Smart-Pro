@@ -11,24 +11,24 @@
 ## Free-only hosted PDF recovery verification
 
 Before approving a hosted Neon database migration, independently retrieve the
-actual private \`smartpro-documents\` object **bytes** from the appropriate
+actual private `smartpro-documents` object **bytes** from the appropriate
 branch into a private directory on a trusted machine. Never paste or commit S3
 credentials or presigned GET links into GitHub issues, source, Actions logs, or
 a public artifact.
 
 Export a local manifest from the corresponding database's
-\`file_assets\` READY entries with the fields \`key\` (the database
-\`storage_key\`), \`size_bytes\`, and \`sha256\` under an \`objects\` array.
+`file_assets` READY entries with the fields `key` (the database
+`storage_key`), `size_bytes`, and `sha256` under an `objects` array.
 The manifest must represent the **same database checkpoint** as the files.
 Run this standard-library-only offline checker to confirm all files and then
 perform an independent local copy:
 
-\`\`\`powershell
+```powershell
 python scripts/verify_hosted_pdf_recovery.py .\recovery_manifest.json .\private-pdfs .\private-pdfs-recovered
-\`\`\`
+```
 
-A passing output includes \`PASS_LOCAL_FILE_RESTORE_ONLY\` in the
-\`private-pdfs-recovered/verification_receipt.json\` receipt. Failure leaves
+A passing output includes `PASS_LOCAL_FILE_RESTORE_ONLY` in the
+`private-pdfs-recovered/verification_receipt.json` receipt. Failure leaves
 the release blocked. A local copy validates byte-level recoverability but does
 **not** prove that Neon private S3 storage can be restored to another bucket,
 that a hosted app can authenticate and download the recovered objects, or that
