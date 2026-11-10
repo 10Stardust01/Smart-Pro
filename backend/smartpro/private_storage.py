@@ -5,11 +5,16 @@ Academic permissions remain in PostgreSQL; this layer never issues public URLs.
 import hashlib
 import logging
 import os
+import threading
 from uuid import UUID
 
 
 logger = logging.getLogger(__name__)
 MAX_BYTES = 2 * 1024 * 1024
+# Share one connection pool per worker process. Never share a client across forked workers.
+_client_lock = threading.Lock()
+_cached_client = None
+_cached_client_pid = None
 
 
 def enabled():
@@ -36,27 +41,47 @@ def _validate_key(key):
 
 
 def _client():
-    # S3 is an optional hosted extra; local development must import without boto3.
-    import boto3
-    from botocore.config import Config
+    """Return one S3 client per worker process to reuse HTTPS connections.
 
-    if not config_ready():
-        raise RuntimeError("S3 private storage is not configured")
-    return boto3.client(
-        "s3",
-        endpoint_url=os.environ["SMARTPRO_S3_ENDPOINT_URL"],
-        aws_access_key_id=os.environ["SMARTPRO_S3_ACCESS_KEY_ID"],
-        aws_secret_access_key=os.environ["SMARTPRO_S3_SECRET_ACCESS_KEY"],
-        region_name=os.getenv("SMARTPRO_S3_REGION", "ap-southeast-1"),
-        config=Config(
-            signature_version="s3v4",
-            s3={"addressing_style": "path"},
-            connect_timeout=5,
-            read_timeout=10,
-            retries={"max_attempts": 2, "mode": "standard"},
-        ),
-    )
+    Botocore clients support concurrent API requests; boto3 Session/client
+    construction is serialized to avoid using a shared default session from
+    competing request threads. A forked worker cannot inherit its parent's
+    live HTTPS connection pool. Deployment/environment changes restart
+    workers and recreate clients with the updated credentials and endpoint.
+    """
+    global _cached_client, _cached_client_pid
+    pid = os.getpid()
+    if _cached_client is not None and _cached_client_pid == pid:
+        return _cached_client
 
+    with _client_lock:
+        if _cached_client is not None and _cached_client_pid == pid:
+            return _cached_client
+        # S3 is an optional hosted extra; local development can import this
+        # module without installing boto3.
+        import boto3
+        from botocore.config import Config
+
+        if not config_ready():
+            raise RuntimeError("S3 private storage is not configured")
+        session = boto3.session.Session()
+        client = session.client(
+            "s3",
+            endpoint_url=os.environ["SMARTPRO_S3_ENDPOINT_URL"],
+            aws_access_key_id=os.environ["SMARTPRO_S3_ACCESS_KEY_ID"],
+            aws_secret_access_key=os.environ["SMARTPRO_S3_SECRET_ACCESS_KEY"],
+            region_name=os.getenv("SMARTPRO_S3_REGION", "ap-southeast-1"),
+            config=Config(
+                signature_version="s3v4",
+                s3={"addressing_style": "path"},
+                connect_timeout=5,
+                read_timeout=10,
+                retries={"max_attempts": 2, "mode": "standard"},
+            ),
+        )
+        _cached_client = client
+        _cached_client_pid = pid
+        return client
 
 def read(key):
     """Read only a bounded private PDF; caller must authorize via SQL first."""
