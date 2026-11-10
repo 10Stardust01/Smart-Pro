@@ -1,0 +1,73 @@
+name: SMART-PRO bounded authenticated HTTPS academic writes (MANUAL, free)
+on:
+  workflow_dispatch:
+    inputs:
+      approval:
+        description: 'Type RUN_SYNTHETIC_HOSTED_WRITES to authorize new synthetic project + permanent audited test records'
+        required: true
+        type: string
+      department_id:
+        description: 'Pre-existing synthetic staging department UUID'
+        required: true
+        default: '10000000-0000-4000-8000-000000000001'
+        type: string
+      offering_id:
+        description: 'Approved active synthetic staging offering UUID (never a real offering)'
+        required: true
+        default: '8b40a6e1-419d-43c8-b625-279f82713b02'
+        type: string
+      team_id:
+        description: 'Existing synthetic team ID in the signed-in Student account, no membership changes'
+        required: true
+        default: '04da071d-f86b-415d-a580-123ba8f2236b'
+        type: string
+      guide_user_id:
+        description: 'Synthetic Faculty actor UUID matching the privately configured Faculty reviewer'
+        required: true
+        default: '00000000-0000-4000-8000-000000000003'
+        type: string
+      stage_key:
+        description: 'Pre-approved stage key (must exist in offering framework)'
+        required: true
+        default: 'evidence'
+        type: string
+      upload_clients:
+        description: 'Bounded simultaneous Student sessions; no load ramp beyond 4'
+        required: true
+        default: '2'
+        type: choice
+        options:
+          - '2'
+          - '4'
+permissions:
+  contents: read
+concurrency:
+  group: smartpro-hosted-academic-writes-single-run
+  cancel-in-progress: false
+jobs:
+  actual-render-writes:
+    if: inputs.approval == 'RUN_SYNTHETIC_HOSTED_WRITES'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      SMARTPRO_HOSTED_TEST_ACCOUNTS: ${{ secrets.SMARTPRO_HOSTED_TEST_ACCOUNTS }}
+      SMARTPRO_HOSTED_WRITE_APPROVAL: ${{ inputs.approval }}
+      SMARTPRO_WRITE_DEPARTMENT_ID: ${{ inputs.department_id }}
+      SMARTPRO_WRITE_OFFERING_ID: ${{ inputs.offering_id }}
+      SMARTPRO_WRITE_TEAM_ID: ${{ inputs.team_id }}
+      SMARTPRO_WRITE_GUIDE_USER_ID: ${{ inputs.guide_user_id }}
+      SMARTPRO_WRITE_STAGE_KEY: ${{ inputs.stage_key }}
+      SMARTPRO_WRITE_UPLOAD_CLIENTS: ${{ inputs.upload_clients }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install free HTTPS client library
+        run: python -m pip install httpx==0.28.1
+      - name: Verify harness before any network writes
+        run: |
+          python -m py_compile scripts/hosted_synthetic_https_writes.py
+          python scripts/hosted_synthetic_https_writes.py --self-test
+      - name: Run one bounded synthetic-only HTTPS write test
+        run: python scripts/hosted_synthetic_https_writes.py
