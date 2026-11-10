@@ -226,9 +226,12 @@ async def run():
         # Never transfer/end any membership or modify an existing project.
         memberships = json_success(await student.get("/api/v1/me/memberships"),
                                    "Student current memberships")
-        current_team = json.dumps(memberships, separators=(",", ":"))
-        require(team_id in current_team and offering in current_team,
-                "Configured synthetic team is not in the signed-in Student's memberships")
+        verified_team = next((item for item in memberships.get("results", [])
+            if item.get("teamId") == team_id and item.get("offeringId") == offering
+            and item.get("scheduledEndAt") is None
+            and "synthetic" in str(item.get("teamName", "")).lower()), None)
+        require(verified_team is not None,
+                "Existing current Student membership must belong to an explicitly synthetic team")
         project = json_success(await student.post("/api/v1/projects",
             {"offeringId": offering, "teamId": team_id,
              "title": f"[SYNTHETIC-HTTPS-ACCEPTANCE] {nonce}",
