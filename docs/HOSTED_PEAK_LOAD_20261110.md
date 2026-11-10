@@ -2,10 +2,10 @@
 
 **The actual publicly hosted reviewer application was exercised, not a local
 Django test client or a simulated database.** The test targeted
-\`https://smartpro-reviewer-25775915.onrender.com\` running Render Free
-reviewer commit \`0419358dc5\` with Neon staging main through migration 063.
+`https://smartpro-reviewer-25775915.onrender.com` running Render Free
+reviewer commit `0419358dc5` with Neon staging main through migration 063.
 
-**Source and evidence:** \`scripts/hosted_peak_ramp.py\`;
+**Source and evidence:** `scripts/hosted_peak_ramp.py`;
 [GitHub Actions run 42776567147](https://github.com/10Stardust01/Smart-Pro/actions/runs/42776567147).
 This is deliberately reported as **HALTED_SLOW_P95_AT_300**; the runner exited
 nonzero because the configured 10-second p95 gate was crossed. It was **not**
@@ -42,7 +42,7 @@ appointment was edited.
   does not establish a root cause by itself.
 - A Render application-log query covering this window found **no matching**
   status-429, 5xx, traceback or out-of-memory entries. Server-side logs for
-  the test use User-Agent \`SMARTPRO-owned-staging-peak-ramp/20261110\`.
+  the test use User-Agent `SMARTPRO-owned-staging-peak-ramp/20261110`.
 - The post-test Neon staging database still contained 1 overall-result
   version, 1 stage-result version, 3 READY file records and 69 audit events.
   Published-result and READY-file metadata digests matched pre-test values.
@@ -64,7 +64,7 @@ journeys, simultaneous document upload, evaluation and publication writes,
 realistic large project data, multi-minute soak, PDF byte-level restore,
 and complete accessibility/institutional review.
 
-The follow-on **workflow is manual-only** (\`workflow_dispatch\`) and cannot
+The follow-on **workflow is manual-only** (`workflow_dispatch`) and cannot
 accidentally re-run a stress test on every GitHub push. If re-used,
 choose bounds and monitor the actual environment; do not treat the existing
 run's maximum as universally safe on all tiers.
