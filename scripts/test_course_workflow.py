@@ -779,6 +779,77 @@ def main(test_name=None):
        (other,assigned_project)).fetchone()['ok'])
    self.assertFalse(self.db.execute('SELECT smartpro_current_project_guide(%s,%s) AS ok',
        (person,assigned_project)).fetchone()['ok'])
+  def test_expired_faculty_term_reinstatement_never_reactivates_evaluator(self):
+   """Natural Faculty term expiry must not revive an old evaluator on reinstatement."""
+   person=str(self.db.execute("INSERT INTO users(display_name) VALUES('Expired evaluator fixture') RETURNING id").fetchone()['id'])
+   term=str(self.db.execute("""INSERT INTO department_role_assignments(user_id,department_id,role_code)
+     VALUES(%s,%s,'FACULTY') RETURNING id""",(person,CSE)).fetchone()['id'])
+   other='00000000-0000-4000-8000-000000000008'
+   oid=self.offering();self.ok(self.appoint(oid,uid=other))
+   pid=self.project(oid,guide_id=other);self.framework(oid)
+   rid=self.ok(self.command(oid,'CREATE_STAGE',dict(projectId=pid,stageKey='stage-1',
+      facultyIds=[person]),who='coordinator'))['id']
+   eid=str(self.db.execute("""SELECT id FROM evaluator_assignments
+      WHERE review_id=%s AND faculty_user_id=%s""",(rid,person)).fetchone()['id'])
+   self.assertTrue(self.db.execute('SELECT smartpro_evaluator_active(%s) AS ok',(eid,)).fetchone()['ok'])
+   # Expire the app role naturally, without the Admin TERMINATE command. This
+   # recreates stale academic assignment intervals left after scheduled expiry.
+   self.db.execute("""UPDATE department_role_assignments SET valid_until=clock_timestamp()
+     WHERE id=%s""",(term,))
+   self.assertFalse(self.db.execute("""SELECT smartpro_has_role(%s,%s,'FACULTY',clock_timestamp()) AS ok""",
+      (person,CSE)).fetchone()['ok'])
+   self.ok(self.post(f'/api/v1/staff/departments/{CSE}/records/{person}',
+      dict(action='REINSTATE',reason='New academic application access only'),who='department-admin'))
+   self.assertTrue(self.db.execute("""SELECT smartpro_has_role(%s,%s,'FACULTY',clock_timestamp()) AS ok""",
+      (person,CSE)).fetchone()['ok'])
+   self.assertFalse(self.db.execute('SELECT smartpro_evaluator_active(%s) AS ok',(eid,)).fetchone()['ok'],
+      'Previously expired evaluation responsibility cannot return without explicit appointment')
+   handover=self.db.execute("""SELECT count(*) AS n FROM faculty_academic_access_handoffs
+      WHERE faculty_term_id=%s AND assignment_kind='EVALUATOR' AND assignment_id=%s""",
+      (term,eid)).fetchone()['n']
+   self.assertEqual(handover,1)
+
+  def test_faculty_revocation_concurrent_with_evaluator_assignment(self):
+   """Concurrent stage assignment cannot leave revoked Faculty evaluator access."""
+   from threading import Barrier
+   person=str(self.db.execute("INSERT INTO users(display_name) VALUES('Racing evaluator fixture') RETURNING id").fetchone()['id'])
+   term=str(self.db.execute("""INSERT INTO department_role_assignments(user_id,department_id,role_code)
+      VALUES(%s,%s,'FACULTY') RETURNING id""",(person,CSE)).fetchone()['id'])
+   other='00000000-0000-4000-8000-000000000008'
+   oid=self.offering();self.ok(self.appoint(oid,uid=other))
+   pid=self.project(oid,guide_id=other);self.framework(oid)
+   current=self.ok(self.client('department-admin').get(f'/api/v1/staff/departments/{CSE}/records/{person}'))
+   active=next(t for t in current['facultyAdmin']['terms'] if t['active'])
+   body=dict(action='TERMINATE',termId=term,
+     expectedAuthorityRevision=active['staff_authority_revision'],reason='End application access now')
+   gate=Barrier(2)
+   def revoke(_):
+    close_old_connections()
+    try:
+     gate.wait(timeout=10)
+     return self.post(f'/api/v1/staff/departments/{CSE}/records/{person}',
+          body,who='department-admin')
+    finally:close_old_connections()
+   def assign(_):
+    close_old_connections()
+    try:
+     gate.wait(timeout=10)
+     return self.command(oid,'CREATE_STAGE',
+       dict(projectId=pid,stageKey='stage-1',facultyIds=[person]),who='coordinator')
+    finally:close_old_connections()
+   with ThreadPoolExecutor(max_workers=2) as pool:
+    a=pool.submit(revoke,None);b=pool.submit(assign,None)
+    revoked=a.result(timeout=25);assigned=b.result(timeout=25)
+   self.assertEqual(revoked.status_code,200,revoked.content)
+   self.assertIn(assigned.status_code,(200,403,409),assigned.content)
+   self.assertFalse(self.db.execute("""SELECT smartpro_has_role(%s,%s,'FACULTY',clock_timestamp()) AS ok""",
+      (person,CSE)).fetchone()['ok'])
+   remaining=self.db.execute("""SELECT e.id,smartpro_evaluator_active(e.id) AS active
+      FROM evaluator_assignments e JOIN project_reviews r ON r.id=e.review_id
+      WHERE r.project_id=%s AND e.faculty_user_id=%s""",(pid,person)).fetchall()
+   self.assertFalse(any(row['active'] for row in remaining),
+     'Revocation must close any simultaneously created evaluator assignment')
+
   def test_faculty_identity_crosswalk_and_candidate_discovery(self):
    from threading import Barrier
    from unittest.mock import patch
