@@ -7,6 +7,7 @@ import re
 import shutil
 import subprocess
 import tempfile
+import time
 from uuid import uuid4
 
 from django.http import HttpResponse
@@ -150,6 +151,7 @@ def pdf_pages(content):
 @api_view(['POST'])
 def upload(request, department_id, project_id):
     enabled()
+    timing_start = time.perf_counter()
     try: length=int(request.META.get('CONTENT_LENGTH','0'))
     except ValueError: raise ValidationError('Invalid upload length') from None
     if not 0<length<=domain.MAX_SIZE+65536:
@@ -165,7 +167,9 @@ def upload(request, department_id, project_id):
         content.extend(chunk)
         if len(content) > domain.MAX_SIZE:
             raise ValidationError('PDF exceeds 2 MiB')
+    timing_parsed = time.perf_counter()
     digest, size = verify_pdf(bytes(content))
+    timing_validated = time.perf_counter()
     actor, dept, pid = request.user.id, department_id, str(project_id)
     key = request.headers.get('Idempotency-Key', '')
     if len(key) > 110:
@@ -175,8 +179,11 @@ def upload(request, department_id, project_id):
     if requirement_key is not None:
         from rest_framework import serializers
         context['requirementKey']=serializers.CharField(max_length=100).run_validation(requirement_key)
+    timing_before_prepare = time.perf_counter()
     command(actor, dept, 'PREPARE', context, key + ':prepare' if key else '')
+    timing_prepared = time.perf_counter()
     session = command(actor, dept, 'START_UPLOAD', context, key + ':start')
+    timing_session_started = time.perf_counter()
     if size > session['maxBytes']:
         raise ValidationError('PDF exceeds the approved requirement size')
     if private_storage.enabled():
@@ -186,6 +193,7 @@ def upload(request, department_id, project_id):
             raise ValidationError('The document identity or bytes are invalid') from None
         except IOError:
             raise StaffUnavailable('Private document storage is unavailable') from None
+        timing_stored = time.perf_counter()
         result = command(actor, dept, 'COMPLETE_UPLOAD',
                          {**context, 'uploadId': session['uploadId'], 'sha256': digest, 'size': size}, key + ':complete')
     else:
@@ -211,10 +219,26 @@ def upload(request, department_id, project_id):
                     os.fsync(directory)
                 finally:
                     os.close(directory)
+            timing_stored = time.perf_counter()
             result = command(actor, dept, 'COMPLETE_UPLOAD',
                              {**context, 'uploadId': session['uploadId'], 'sha256': digest, 'size': size}, key + ':complete')
         finally:
             staging.unlink(missing_ok=True)
+    if os.getenv('SMARTPRO_UPLOAD_TIMINGS') == 'YES':
+        finished = time.perf_counter()
+        logger.info(
+            'smartpro_upload_timing backend=%s size_bytes=%d parse_ms=%.1f pdf_verify_ms=%.1f '
+            'prepare_sql_ms=%.1f start_sql_ms=%.1f storage_ms=%.1f complete_sql_ms=%.1f '
+            'handler_ms=%.1f',
+            's3' if private_storage.enabled() else 'filesystem', size,
+            (timing_parsed - timing_start) * 1000,
+            (timing_validated - timing_parsed) * 1000,
+            (timing_prepared - timing_before_prepare) * 1000,
+            (timing_session_started - timing_prepared) * 1000,
+            (timing_stored - timing_session_started) * 1000,
+            (finished - timing_stored) * 1000,
+            (finished - timing_start) * 1000,
+        )
     return private_response(result)
 
 
