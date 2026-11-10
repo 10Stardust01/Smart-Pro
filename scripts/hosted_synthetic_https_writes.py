@@ -55,9 +55,15 @@ def get_config():
     return accounts, values, count, stage_key
 
 
-def pdf_bytes(label):
+def pdf_bytes(label, *, padding_bytes=0):
     require(bool(re.fullmatch(r"[A-Za-z0-9 _-]{1,90}", label)), "Safe PDF label required")
+    require(type(padding_bytes) is int and 0 <= padding_bytes <= 2 * 1024 * 1024 - 4096,
+            "PDF padding is outside the approved maximum")
     content = f"BT /F1 12 Tf 72 720 Td ({label}) Tj ET\n".encode("ascii")
+    if padding_bytes:
+        # Inert PDF stream comment; offsets and length are recalculated below.
+        # Tests network/storage byte throughput without introducing extra pages or active content.
+        content += b"%" + b"P" * padding_bytes + b"\n"
     parts = [
         b"<< /Type /Catalog /Pages 2 0 R >>",
         b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
