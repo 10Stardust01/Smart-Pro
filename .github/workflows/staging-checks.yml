@@ -50,6 +50,22 @@ jobs:
           from smartpro.reviewer_auth import reviewer_session, ReviewerAuthentication
           print('Staging Django URL and authentication configuration imports')
           PY
+      - name: Check static accessibility and WCAG AA color-token contrasts
+        run: python scripts/test_accessibility_basics.py
+      - name: Test synthetic sign-in and permission boundaries across five roles
+        env:
+          PYTHONPATH: backend
+          DJANGO_SETTINGS_MODULE: smartpro.settings
+          DJANGO_SECRET_KEY: "testonly0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmn"
+          DATABASE_URL: "postgresql://no_user:no_password@127.0.0.1:5432/no_db"
+          SMARTPRO_DEPLOYMENT: "staging"
+          SMARTPRO_ALLOWED_HOSTS: "smartpro.example.test"
+          SMARTPRO_CSRF_TRUSTED_ORIGINS: "https://smartpro.example.test"
+          SMARTPRO_TRUST_TLS_PROXY: "YES"
+          SMARTPRO_STAGING_REVIEWER_AUTH: "YES"
+          SMARTPRO_REVIEWER_ACCOUNTS: "{}"
+          SMARTPRO_UI: "YES"
+        run: python scripts/test_staging_reviewer_roles.py
       - name: Exercise HTTPS reviewer CSRF, signed session, and authenticated workspace
         env:
           PYTHONPATH: backend
