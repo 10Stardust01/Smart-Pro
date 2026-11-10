@@ -1,5 +1,14 @@
 name: PostgreSQL 16 schema and synopsis contracts
-on: [push, pull_request]
+on:
+  push:
+    branches: ['main']
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+permissions:
+  contents: read
 jobs:
   postgres-validation:
     runs-on: ubuntu-latest

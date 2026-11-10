@@ -3,7 +3,9 @@
 > **10 November 2026 staging clarification:** Render reviewer staging has
 > signed, CSRF-protected **synthetic reviewer sessions**, not approved production
 > authentication. Statements below about local demo-header identity describe
-> historical local testing. Neon staging contains 059/060 but not 061.
+> historical local testing. Neon main contains 059/060 only; the existing
+> Neon validation branch now has 061–063, without a hosted rollout or paired
+> private-file recovery.
 > See [consolidated checkpoint](CONSOLIDATED_DEVELOPMENT_CHECKPOINT.md).
 
 Local assessment on 7 November 2026, with follow-up verification from `d01d22b`. The evidence covers

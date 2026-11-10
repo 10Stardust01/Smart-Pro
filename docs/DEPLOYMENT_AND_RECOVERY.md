@@ -1,12 +1,10 @@
-> **Forward-only 061–063 release warning (10 Nov 2026):** Neon main and the
-> existing validation branch already have **059/060**; do not reinstall them.
-> Source candidates **061, then 062, then 063** must be installed strictly in
-> order on an authorized validation branch after recorded paired database/PDF
-> recovery evidence. 061 repairs request visibility; 062 adds correction paging;
-> 063 adds departmental Faculty metadata and audited term management. None is
-> automatically installed by merging source. Hosted rollout and actual signed
-> reviewer acceptance remain separately gated by
-> [issue #4](https://github.com/10Stardust01/Smart-Pro/issues/4).
+> **Validation rehearsal completed (10 Nov 2026), not hosted acceptance:**
+> existing Neon validation now contains **059–063**, with 061, 062 and 063
+> installed atomically in order. Neon **main** and Render remain unchanged at
+> 059/060. Do **not** rerun 059 or 060. The actual private PDF bytes still
+> require a paired backup and fresh-destination restore before any live main
+> migration. See [validation evidence](NEON_061_063_VALIDATION_20261110.md)
+> and [release gate #4](https://github.com/10Stardust01/Smart-Pro/issues/4).
 
 # SMART-PRO deployment and recovery
 
