@@ -26,6 +26,9 @@ CREATE TABLE public.faculty_academic_access_handoffs(
  CHECK((assignment_kind='COORDINATOR' AND project_id IS NULL)
     OR (assignment_kind<>'COORDINATOR' AND project_id IS NOT NULL))
 );
+CREATE TRIGGER immutable_faculty_academic_handoffs
+ BEFORE UPDATE OR DELETE ON public.faculty_academic_access_handoffs
+ FOR EACH ROW EXECUTE FUNCTION public.smartpro_forbid_mutation();
 CREATE INDEX faculty_academic_handoffs_offering ON
  public.faculty_academic_access_handoffs(offering_id,effective_at DESC,assignment_id);
 CREATE INDEX faculty_academic_handoffs_assignment ON
