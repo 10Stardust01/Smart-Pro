@@ -227,7 +227,7 @@ DO $handover_queue$ DECLARE def text; anchor text; BEGIN
  IF strpos(def,anchor)=0 THEN
    RAISE EXCEPTION 'Review queue projection changed; revise 064 before installing';
  END IF;
- def:=replace(def,anchor,$handover_projection
+ def:=replace(def,anchor,$handover_projection$'frameworkVersion',plan.framework_version,
     'facultyAccessHandoverCount',(SELECT count(*) FROM public.faculty_academic_access_handoffs h
        WHERE h.project_id=project.id AND h.effective_at<=clock_timestamp()),
     'stages',stages$handover_projection$);
