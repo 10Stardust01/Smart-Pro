@@ -281,5 +281,19 @@ DO $handover_queue$ DECLARE def text; anchor text; BEGIN
  EXECUTE def;
 END $handover_queue$;
 
+DO $setup_guard$ DECLARE def text; marker text; BEGIN
+ def:=pg_get_functiondef('public.smartpro_setup_current(uuid,uuid,text,jsonb,text)'::regprocedure);
+ marker:='IF EXISTS(SELECT FROM public.department_role_assignments WHERE user_id=(cfg->>''userId'')::uuid AND department_id=dept AND role_code=''FACULTY'' AND valid_from<=clock_timestamp()';
+ IF strpos(def,marker)=0 THEN
+   RAISE EXCEPTION 'Legacy Faculty first-access boundary changed; review 064';
+ END IF;
+ def:=replace(def,marker,$require_first_term$IF EXISTS(SELECT FROM public.department_role_assignments
+     WHERE user_id=(cfg->>'userId')::uuid AND department_id=dept AND role_code='FACULTY')
+   THEN RAISE EXCEPTION 'Returning Faculty requires Department Admin reinstatement'
+     USING ERRCODE='23514'; END IF;
+   IF EXISTS(SELECT FROM public.department_role_assignments WHERE user_id=(cfg->>'userId')::uuid AND department_id=dept AND role_code='FACULTY' AND valid_from<=clock_timestamp()$require_first_term$);
+ EXECUTE def;
+END $setup_guard$;
+
 REVOKE ALL ON public.faculty_academic_access_handoffs FROM PUBLIC,smartpro_runtime;
 COMMIT;
