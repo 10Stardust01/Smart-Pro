@@ -68,7 +68,6 @@ we do not infer available peak capacity or a production SLA from those samples.
   or automatic recurring load test was installed.
 
 **Reproduction:** `.github/workflows/hosted-readonly-ramp.yml` is manually
-dispatchable on the default branch. Its branch-specific push trigger exists
-only on `test/hosted-readonly-ramp-20261110`; it **does not auto-run** on
-ordinary main commits. No user secrets required. The source is
+dispatchable on the default branch. It has **no push or schedule trigger**; authorized maintainers must
+start it manually in GitHub Actions. It does not run on normal commits. No user secrets required. The source is
 `scripts/hosted_readonly_ramp.py`.

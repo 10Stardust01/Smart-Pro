@@ -12,10 +12,8 @@ from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
-from email.message import Message
 import json
 import os
-import statistics
 import sys
 import threading
 import time
