@@ -45,7 +45,7 @@ def get_config():
                 and isinstance(entry.get("password"), str) and entry["password"],
                 f"Private {role} reviewer account not configured")
     values = {}
-    for field in ("DEPARTMENT_ID", "OFFERING_ID", "GUIDE_USER_ID"):
+    for field in ("DEPARTMENT_ID", "OFFERING_ID", "GUIDE_USER_ID", "TEAM_ID"):
         value = os.getenv("SMARTPRO_WRITE_" + field, "")
         values[field] = str(uuid.UUID(value))
     count = int(os.getenv("SMARTPRO_WRITE_UPLOAD_CLIENTS", "2"))
@@ -198,7 +198,7 @@ def score_rows(review, candidate):
 
 async def run():
     accounts, targets, uploads, stage_key = get_config()
-    dept, offering, guide = (targets[k] for k in ("DEPARTMENT_ID", "OFFERING_ID", "GUIDE_USER_ID"))
+    dept, offering, guide, team_id = (targets[k] for k in ("DEPARTMENT_ID", "OFFERING_ID", "GUIDE_USER_ID", "TEAM_ID"))
     nonce = uuid.uuid4().hex[:10]
     clients = [Reviewer("Student", accounts["Student"]) for _ in range(uploads)]
     faculty = [Reviewer("Faculty", accounts["Faculty"]) for _ in range(2)]
@@ -221,11 +221,15 @@ async def run():
         require(any(x.get("key") == stage_key for f in frameworks
                     for x in (f.get("configuration", {}).get("stages") or [])),
                 "Selected stage key does not exist in approved framework")
-        label = f"SMARTPRO-HTTPS-ACCEPTANCE-{nonce}"
-        team = json_success(await student.post("/api/v1/teams",
-            {"offeringId": offering, "name": label},
-            key=f"accept-{nonce}-team"), "Create new synthetic team", (201,))
-        team_id = str(uuid.UUID(team["id"]))
+        # Use the pre-existing verified synthetic team. The staging Student
+        # already has an active membership and cannot join another team in the
+        # same offering; creating another would fail before testing anything.
+        # Never transfer/end any membership or modify an existing project.
+        memberships = json_success(await student.get("/api/v1/me/memberships"),
+                                   "Student current memberships")
+        current_team = json.dumps(memberships, separators=(",", ":"))
+        require(team_id in current_team and offering in current_team,
+                "Configured synthetic team is not in the signed-in Student's memberships")
         project = json_success(await student.post("/api/v1/projects",
             {"offeringId": offering, "teamId": team_id,
              "title": f"[SYNTHETIC-HTTPS-ACCEPTANCE] {nonce}",
@@ -233,6 +237,7 @@ async def run():
             key=f"accept-{nonce}-project"), "Create new synthetic project", (201,))
         synthetic_project = str(uuid.UUID(project["id"]))
         require(project["id"] == synthetic_project, "Invalid new project")
+        require(project.get("teamId") == team_id, "Project not registered to the verified synthetic team")
         print(f"CREATED_SYNTHETIC_PROJECT {synthetic_project}; marker={nonce}; retained for audit", flush=True)
         assigned = await coordinator.post(f"/api/v1/staff/departments/{dept}/projects/{synthetic_project}/guide",
             {"facultyId": guide, "expectedGuideId": None}, key=f"accept-{nonce}-guide")
@@ -264,13 +269,14 @@ async def run():
             f"/api/v1/documents/departments/{dept}?project={synthetic_project}"),
             "Student document case")
         case = case_from(snapshot, synthetic_project)
-        require(case and isinstance(case.get("version"), int),
+        require(case and str(case.get("version", "")).isdigit(),
                 "Cannot obtain scoped document case revision; stop before submission race")
+        case_revision = int(case["version"])
         submit_path = f"/api/v1/documents/departments/{dept}"
         contenders = await simultaneous([
             (lambda i=i: clients[i].post(submit_path,
                 {"action": "SUBMIT", "projectId": synthetic_project,
-                 "documentVersionId": versions[i], "expectedCaseVersion": case["version"]},
+                 "documentVersionId": versions[i], "expectedCaseVersion": case_revision},
                 key=f"accept-{nonce}-submit-{i}"))
             for i in range(2)
         ])
