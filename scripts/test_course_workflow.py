@@ -750,6 +750,11 @@ def main(test_name=None):
    handovers=self.db.execute("""SELECT assignment_kind,assignment_id FROM
        faculty_academic_access_handoffs WHERE faculty_term_id=%s""",
        (current_term['id'],)).fetchall()
+   queue=self.ok(self.client('coordinator').get(
+       f'/api/v1/courses/offerings/{offering}/evaluation-queue',
+       {'q':'','status':'all','page':1}))
+   shown=next(p for p in queue['projects'] if p['id']==assigned_project)
+   self.assertGreaterEqual(shown['facultyAccessHandoverCount'],3)
    self.assertTrue({'GUIDE','REVIEWER','EVALUATOR','COORDINATOR'}<=
        {h['assignment_kind'] for h in handovers})
    self.assertTrue(self.db.execute("""SELECT valid_until FROM faculty_assignments

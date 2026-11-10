@@ -30,6 +30,9 @@ CREATE INDEX faculty_academic_handoffs_offering ON
  public.faculty_academic_access_handoffs(offering_id,effective_at DESC,assignment_id);
 CREATE INDEX faculty_academic_handoffs_assignment ON
  public.faculty_academic_access_handoffs(assignment_kind,assignment_id,effective_at);
+CREATE INDEX faculty_academic_handoffs_project ON
+ public.faculty_academic_access_handoffs(project_id,effective_at DESC)
+ WHERE project_id IS NOT NULL;
 REVOKE ALL ON public.faculty_academic_access_handoffs FROM PUBLIC,smartpro_runtime;
 
 -- A published coordinator version is immutable. Its authorization can be
@@ -214,6 +217,23 @@ END $change$;
 -- termination action writes inactive events even for already finalized
 -- assessments; immutable score/result histories are never rewritten.
 -- New eligibility still requires explicit authorized assignment/review action.
+
+-- Mark past access revocations alongside the existing bounded Coordinator
+-- project queue. The count is historical evidence, not automatic reassignment
+-- and not a claim that a replacement is still outstanding.
+DO $handover_queue$ DECLARE def text; anchor text; BEGIN
+ def:=pg_get_functiondef('public.smartpro_course_evaluation_queue(uuid,uuid,text,text,text,integer)'::regprocedure);
+ anchor:='''frameworkVersion'',plan.framework_version,''stages'',stages';
+ IF strpos(def,anchor)=0 THEN
+   RAISE EXCEPTION 'Review queue projection changed; revise 064 before installing';
+ END IF;
+ def:=replace(def,anchor,$handover_projection
+frameworkVersion',plan.framework_version,
+    'facultyAccessHandoverCount',(SELECT count(*) FROM public.faculty_academic_access_handoffs h
+       WHERE h.project_id=project.id AND h.effective_at<=clock_timestamp()),
+    'stages',stages$handover_projection$);
+ EXECUTE def;
+END $handover_queue$;
 
 REVOKE ALL ON public.faculty_academic_access_handoffs FROM PUBLIC,smartpro_runtime;
 COMMIT;
