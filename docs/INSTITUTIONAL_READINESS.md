@@ -1,5 +1,13 @@
 # Institutional readiness
 
+> **10 November 2026 staging clarification:** Render reviewer staging has
+> signed, CSRF-protected **synthetic reviewer sessions**, not approved production
+> authentication. Statements below about local demo-header identity describe
+> historical local testing. Neon main contains 059/060 only; the existing
+> Neon validation branch now has 061–063, without a hosted rollout or paired
+> private-file recovery.
+> See [consolidated checkpoint](CONSOLIDATED_DEVELOPMENT_CHECKPOINT.md).
+
 Local assessment on 7 November 2026, with follow-up verification from `d01d22b`. The evidence covers
 synthetic identities, records and files in isolated PostgreSQL 16 databases.
 Production activation remains blocked.
@@ -8,7 +16,7 @@ Production activation remains blocked.
 | --- | --- | --- |
 | HOD result history | Verified | The HOD opened the original and corrected stage marks, 76.00 and 80.00, in the browser. A second isolated workspace showed both overall release versions and the approved revision. Course contracts cover scoped result access. |
 | Faculty appointment and project responsibilities | Verified in isolation | Application requests exercised the Admin recording an approved faculty grant and the HOD reassigning and ending a project guide appointment. The same faculty client gained and lost project access on subsequent requests. Admin could not end the guide assignment. An unrelated review and a changed department identifier were rejected. A separate finalized assessment and its published history stayed available to authorized readers. A short appointment reached its approved end naturally. The same client lost Faculty access and retained its separate Student role. |
-| Departmental faculty detail management, amendment, termination and reinstatement | Authority confirmed; implementation pending | Product owner confirmed **department Admin** may edit other non-HOD faculty details, not only appointment end dates, and may amend, terminate and reinstate appointments (9 November 2026). **HOD details are excluded from Admin editing.** Existing application has no complete implementation. Preserve appointment/academic history and current authorizations; do not require additional approval. Whether reinstatement restores prior project-specific assignments remains undecided. |
+| Departmental faculty detail management, amendment, termination and reinstatement | **Verified in isolated API/SQL; not hosted-accepted** | Candidate 063 adds Admin-only departmental profile fields, temporal Faculty appointment amendment/termination/new-term reinstatement, idempotency and before/after audit. Denies HOD edits and unrelated roles. Protects existing Guide and offering appointments from unapproved automatic termination/reinstatement. Existing project-specific assignments must first be resolved with authorized assignment actions. The profile does not modify global sign-in credentials or identity-provider state. [PR #7](https://github.com/10Stardust01/Smart-Pro/pull/7). |
 | Accessibility | Partially verified | Browser samples across all five roles covered Tab, visible focus, Enter and Space, named controls, validation, disclosures and published-result semantics. The recorded rubric table now exposes its stage name and column headers. The PDF dialog exposes the original download and restores focus on Escape. The raster preview cannot expose PDF text and untagged source PDFs may still require an accessible alternative. Windows Narrator is present, but the available browser controls cannot operate it or verify spoken output or table traversal. |
 | Identity and role security | Partially verified | Local header-selected identities are gated to demo mode and a loopback test database. Effective roles are checked on each request. Database functions also enforce assignment, department and academic authority. The runtime audit and grant correction below cover the local role layout. |
 | Migration and transaction checks | Verified in isolation | A seeded schema installed 001–009, the runtime boundary, 010 preparation and preflight, and candidates through 047 in order. The chain preserved sampled legacy document versions, marks, result releases, scores and approval evidence. The separate acceptance restore installed 043–047 with both uploaded files and result history already present. Real legacy mappings and deployment-volume compatibility remain open. |
@@ -30,9 +38,10 @@ Production activation remains blocked.
   Faculty workspace and apply it immediately. Previous versions and the actor
   remain in history. Exceptional overall revisions use the separate published
   result workflow.
-- The current application uses a demo header, a synthetic identity map and a
-  browser session-storage alias. It issues no production credentials or cookies
-  and has no production session, CSRF or identity provider integration.
+- The **local development mode** uses gated synthetic identities, demo headers
+  and a browser alias. **Hosted reviewer staging** uses signed synthetic sessions
+  with CSRF protection instead. Neither mode provisions institutionally verified
+  accounts or constitutes an approved production identity integration.
 
 ## Department leadership
 

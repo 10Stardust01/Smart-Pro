@@ -8,8 +8,10 @@ exceptional corrected overall-result version; stage marks are not reopened or
 recalculated. No HOD escalation, independent authorizer or separate apply step.
 Original release, exact correction and decision audit are retained. The historical
 independent-authorization passages below concern older ordinary workflows.
-Pre-publication corrections remain unchanged. Candidate 059 is prepared only;
-the live deployment and database are unaffected.
+Pre-publication corrections follow their separately approved stage authority.
+At the 10 November 2026 checkpoint, **059 and 060 are already installed** in
+Neon staging, while **061 is not**. The reviewed 059–061 code passed isolated
+browser/DB verification, but hosted result-correction acceptance remains gated.
 
 The user's continuation instruction authorizes implementing configurable quorum,
 aggregation, original-evaluator mark corrections, coordinator retrospective roster

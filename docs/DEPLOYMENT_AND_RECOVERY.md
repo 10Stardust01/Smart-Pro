@@ -1,4 +1,42 @@
+> **Validation rehearsal completed (10 Nov 2026), not hosted acceptance:**
+> existing Neon validation now contains **059–063**, with 061, 062 and 063
+> installed atomically in order. Neon **main** and Render remain unchanged at
+> 059/060. Do **not** rerun 059 or 060. The actual private PDF bytes still
+> require a paired backup and fresh-destination restore before any live main
+> migration. See [validation evidence](NEON_061_063_VALIDATION_20261110.md)
+> and [release gate #4](https://github.com/10Stardust01/Smart-Pro/issues/4).
+
 # SMART-PRO deployment and recovery
+
+## Free-only hosted PDF recovery verification
+
+Before approving a hosted Neon database migration, independently retrieve the
+actual private `smartpro-documents` object **bytes** from the appropriate
+branch into a private directory on a trusted machine. Never paste or commit S3
+credentials or presigned GET links into GitHub issues, source, Actions logs, or
+a public artifact.
+
+Export a local manifest from the corresponding database's
+`file_assets` READY entries with the fields `key` (the database
+`storage_key`), `size_bytes`, and `sha256` under an `objects` array.
+The manifest must represent the **same database checkpoint** as the files.
+Run this standard-library-only offline checker to confirm all files and then
+perform an independent local copy:
+
+```powershell
+python scripts/verify_hosted_pdf_recovery.py .\recovery_manifest.json .\private-pdfs .\private-pdfs-recovered
+```
+
+A passing output includes `PASS_LOCAL_FILE_RESTORE_ONLY` in the
+`private-pdfs-recovered/verification_receipt.json` receipt. Failure leaves
+the release blocked. A local copy validates byte-level recoverability but does
+**not** prove that Neon private S3 storage can be restored to another bucket,
+that a hosted app can authenticate and download the recovered objects, or that
+a full database dump was restored. Those gates must be separately executed and
+recorded. Retain the original pre-059, pre-061 and validation branches without
+deleting or overwriting academic history.
+
+
 
 Use a reviewed local commit and an explicitly provisioned PostgreSQL database.
 Development uses the Django launcher on loopback. Tests use disposable

@@ -30,7 +30,7 @@ export function documentsUI({state,esc,displayDate,localDate,embedded=false}) {
   const visible=state.projectId?w.projects.filter(p=>p.id===state.projectId):w.projects;
   const projects=visible.map(p=>{
     const c=p.case, pending=c?.attempts.at(-1), synopsis=p.requirements?.find(r=>r.key==='SYNOPSIS'), canUpload=uploadAllowed(p)&&(c?.state!=='CHANGES_REQUESTED'||synopsis?.allowRevisions!==false);
-    const direct=state.role==='Faculty'?state.guideFinalCorrections?.projects?.find(item=>item.projectId===p.id):null;
+    const direct=state.role==='Faculty'&&state.guideFinalCorrections?.project?.projectId===p.id?state.guideFinalCorrections.project:null;
     const savedVersion=canUpload&&c?.versions.some(v=>!c.attempts.some(a=>a.versionId===v.id));
     const nextTask=state.role==='Student'?(savedVersion?'Submit the saved PDF version for faculty review.':canUpload?(c?.state==='CHANGES_REQUESTED'?'Read the feedback, then upload your revised synopsis.':'Upload a PDF synopsis.'):
       pending?.state==='SUBMITTED'?'Your synopsis is awaiting faculty review.':''):
@@ -47,7 +47,7 @@ export function documentsUI({state,esc,displayDate,localDate,embedded=false}) {
     ${p.requirement?`<p class="muted">PDF · maximum ${megabytes(p.requirement.maxBytes)} · ${displayDate(p.requirement.opensAt)} to ${displayDate(p.requirement.closesAt)}</p><p class="hint">Submission window: ${p.overallFinalPublished?'Closed by overall publication':esc(natural(windowState(p)))}</p>`:''}
     ${p.canReviseProposal?`<details><summary>Revise proposal details</summary><p>Details can be revised before the first document submission or evaluation.</p><form data-form="revise-proposal" data-project="${p.id}" data-revision="${p.proposalRevision}"><label>Project title<input name="title" value="${esc(p.title)}" required maxlength="500"></label><label>Project description<textarea name="description" maxlength="10000">${esc(p.description||'')}</textarea></label><button class="primary">Save draft revision</button></form></details>`:''}
     ${p.proposalHistory?.length?`<details><summary>Proposal revision history</summary>${p.proposalHistory.map(h=>`<article><p>${displayDate(h.created_at)}</p><p>${esc(h.before_state.title)} → ${esc(h.after_state.title)}</p><p>${esc(h.after_state.description)}</p></article>`).join('')}</details>`:''}
-    ${direct?`<section class="section-spacer"><h3>Published overall-result correction</h3>
+    ${state.role==='Faculty'&&p.overallFinalPublished&&state.guideCorrectionError?`<p role="alert">Published corrections could not be loaded: ${esc(state.guideCorrectionError)}</p>`:''}${direct?`<section class="section-spacer"><h3>Published overall-result correction</h3>
     <p>The assigned Guide proposes a specific corrected overall mark. The responsible Coordinator approves or declines it. Recorded review marks do not change.</p>
     <details><summary>Request correction</summary>
     <form data-form="guide-final-correction" data-offering="${esc(direct.offeringId)}" data-project="${esc(direct.projectId)}" data-version="${esc(direct.version)}">
@@ -60,7 +60,12 @@ export function documentsUI({state,esc,displayDate,localDate,embedded=false}) {
     <form data-form="guide-stage-evidence-correction" data-offering="${esc(direct.offeringId)}" data-project="${esc(direct.projectId)}" data-version="${esc(direct.version)}">
     <label>Reason for revised release<textarea name="reason" maxlength="500" required></textarea></label>
     <button class="secondary">Request updated overall result</button></form></details>
-    ${direct.requests.map(q=>`<p>${esc(q.changes?.[0]?.from||"—")} → ${esc(q.changes?.[0]?.to||"—")} · ${q.applied?"Approved and published":q.approved===false?"Declined":"Awaiting Coordinator decision"} · ${esc(q.reason)}</p>`).join("")}
+    ${(state.guideFinalCorrections.requests||[]).map(q=>`<p>${q.type==='STAGE_EVIDENCE_OVERALL_CORRECTION'?'Already-corrected stage evidence':'Direct overall mark'} · ${(q.changes||[]).length?q.changes.map(x=>`${esc(x.studentId||'Student')}: ${esc(x.from??'—')} → ${esc(x.to??'—')}`).join('; '):'Updated source evidence (overall marks unchanged)'} · ${q.applied?'Approved and published':q.approved===false?'Declined':'Awaiting Coordinator decision'} · ${esc(q.reason)}</p>`).join("")}
+    <nav class="actions" aria-label="Your published correction request pages">
+      <button class="secondary" data-action="guide-correction-page" data-page="${state.guideFinalCorrections.page-1}" ${state.guideFinalCorrections.page===1?'disabled':''}>Previous requests</button>
+      <span role="status">${state.guideFinalCorrections.total} requests · page ${state.guideFinalCorrections.page}</span>
+      <button class="secondary" data-action="guide-correction-page" data-page="${state.guideFinalCorrections.page+1}" ${state.guideFinalCorrections.page*state.guideFinalCorrections.pageSize>=state.guideFinalCorrections.total?'disabled':''}>Next requests</button>
+    </nav>
     </section>`:""}
     ${guideForm(p,state,esc)}${p.overallResults?.length?`<section><h3>Overall final result history</h3>${p.overallResults.map(r=>`<p>Version ${r.version} · ${displayDate(r.createdAt)} · ${Object.values(r.results).filter(v=>v!==null).map(esc).join(', ')||'No mark in this historical roster'}</p>`).join('')}</section>`:''}
     ${w.manager?`<form data-form="assign-document-reviewer" data-project="${p.id}" class="section-spacer"><label for="faculty-${p.id}">Additional synopsis reviewer (optional)</label><select id="faculty-${p.id}" name="facultyId" required><option value="">Choose an additional authorized reviewer</option>${options(w.options.faculty,r=>r.display_name)}</select><p class="hint">Guide allocation records synopsis-review responsibility. Add another faculty reviewer only when authorized.</p><button class="secondary" type="submit">Assign additional reviewer</button></form>`:''}

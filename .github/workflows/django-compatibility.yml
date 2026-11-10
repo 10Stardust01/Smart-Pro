@@ -1,7 +1,15 @@
 name: Django PostgreSQL compatibility
-on: [push, pull_request, workflow_dispatch]
+on:
+  push:
+    branches: ['main']
+  pull_request:
+  workflow_dispatch:
 permissions:
   contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 jobs:
   django-compatibility:
     runs-on: ubuntu-latest
@@ -33,6 +41,8 @@ jobs:
       - run: pip install -r backend/requirements.txt
       - run: python -m unittest discover -s backend -p 'test_*.py'
       - run: python backend/verify_compatibility.py
+      - name: Offline private PDF recovery contract
+        run: python -m unittest discover -s scripts -p 'test_verify_hosted_pdf_recovery.py'
       - uses: actions/upload-artifact@v4
         if: always()
         with:

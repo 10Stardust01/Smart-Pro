@@ -1,5 +1,17 @@
 # Direct overall-result correction — finalized product direction
 
+> **Updated 10 November 2026:** reviewed GitHub main includes candidates
+> **059–063**; the signed-HTTPS Guide → Coordinator → Student correction flow
+> passed on disposable PostgreSQL. Neon **main** has 059/060 only, whereas
+> the existing Neon **validation branch** successfully installed 061 → 062 →
+> 063 without changing published releases, audit rows or file metadata.
+> Render reviewer staging remains at `319e3ebc` (Free, auto-deploy off).
+> Earlier 059/060 upgrade descriptions below are **historical**, not current
+> execution instructions. **Never reapply 059/060** on these installed targets;
+> hosted migration must first pass paired private-PDF/database recovery.
+> See [validation evidence](NEON_061_063_VALIDATION_20261110.md) and
+> [release gate #4](https://github.com/10Stardust01/Smart-Pro/issues/4).
+
 SMART-PRO remains a project lifecycle and academic evaluation platform, not a
 faculty HR application.
 
@@ -72,3 +84,16 @@ function body (same signature and privileges). Run it first on the existing
 validation branch; verify original result versions, audit history, the mode
 marker and deployed code compatibility. Recheck free-tier and service identity
 before updating the live main branch. A failed preflight must stop release.
+
+## 061 read-model alignment for stage-evidence requests
+
+The real HTTPS staging-auth browser regression uncovered that 060 successfully
+created an authorized stage-evidence request but the old 059 read projections
+only included DIRECT_AUTHORIZED_OVERALL_CORRECTION, leaving the Guide unaware
+of the pending request and the Coordinator without the decision row. Forward-
+only candidate 061 changes **only** the two scoped read functions to include
+both exceptional types and the exact request mode; it does not change academic
+policy, decision authority, released marks, or original stage evidence. This
+is covered by a PostgreSQL API visibility regression and an actual HTTPS,
+signed-session, Chromium Guide → Coordinator → Student acceptance test against
+a disposable synthetic database.

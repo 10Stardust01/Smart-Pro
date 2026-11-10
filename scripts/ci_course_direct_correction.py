@@ -84,6 +84,8 @@ def main():
         'test_direct_correction_does_not_reopen_stage_evidence',
         'test_release_previously_corrected_stage_evidence_on_guide_request',
         'test_guide_coordinator_same_person_can_propose_and_approve',
+        'test_paged_published_corrections_over_125_and_authority',
+        'test_non_hod_faculty_details_and_access_term_history',
         'test_decline_and_stale_direct_correction_do_not_change_previous_release',
         'test_finalized_correction_requires_specific_independent_authorization',
         'test_coordinator_corrects_own_finalized_marks_before_overall_release',

@@ -1,3 +1,85 @@
+## 10 November 2026 — forward-only 061–063 Neon Free validation completed
+
+The existing Neon validation branch now contains candidates 059–063. Only
+061, 062 and 063 were added, in separate atomic transactions; Neon main and
+Render remained unchanged at 059/060. Published overall/stage versions, audit
+rows and READY file metadata were unchanged, and scoped Coordinator/Admin reads
+succeeded. Function ownership, fixed search paths and grants were inspected.
+This does **not** prove recoverability of the three underlying private PDFs.
+[Detailed evidence and remaining hosted release gates](NEON_061_063_VALIDATION_20261110.md).
+
+## Candidate 063: non-HOD Faculty role and departmental details (10 Nov 2026)
+
+Candidate 063 (PR #7) introduces only Department Admin authority over other
+non-HOD Faculty records, with departmental display name/designation/contact
+email metadata independent of global account identity, an audited Faculty term
+amend/end/reinstate action, stale-revision conflicts and retry-safe receipts.
+This does **not** alter historic project evaluations, published result versions,
+student records, global logins or HOD/independent authority. An appointment with
+active project/Coordinator responsibilities is not ended until existing
+assignment workflows resolve those responsibilities; reinstatement does not
+silently restore them. Isolated SQL/API validation is not hosted acceptance.
+At the PR #7 merge checkpoint, Neon main and validation had 059/060 only.
+The later validation rehearsal added 061–063 **only to validation**. **PR #7 is merged**
+into main at `57881021` after six passing CI checks. No deployment, migration
+or institutional activation was authorized.
+
+## Correction pagination candidate 062 (10 November 2026)
+
+The new 062 source adds two role-scoped read functions: one selected Guide
+project and one offering's exceptional correction request pages, 25 per page.
+An anchor timestamp keeps newly submitted requests from shifting existing
+pages. Existing Guide project-work listing was already paginated, so the
+correction form no longer depends on the legacy 100-project correction list.
+The old 061 API shape remains for compatibility but the new UI uses 062.
+Isolated PostgreSQL contracts exercised 126 correction requests, 126 additional
+Guide projects, role restrictions, and original release preservation.
+[PR #6](https://github.com/10Stardust01/Smart-Pro/pull/6) contains the tested
+code; 062 is now installed on the **isolated validation branch only**, not on
+Neon main or Render. Main still has 059/060 and requires 061 before 062 through
+a controlled forward-only migration with paired database/PDF recovery checks.
+
+# Source consolidation and hosted state (10 November 2026)
+
+[Consolidated development checkpoint](CONSOLIDATED_DEVELOPMENT_CHECKPOINT.md)
+is the current summary of the reviewed 059–061 source, accepted product decisions,
+Milestones A–E and remaining gaps. Render Free reviewer staging is live at
+`319e3ebc`. **At this earlier source-consolidation checkpoint**, Neon main and
+validation had 059/060 only. Later validation rehearsal added 061–063 on the
+validation branch, while Neon main remains at 059/060.
+Historical deployment SHAs and old 'not deployed' claims below remain dated
+provenance, **not current hosted-state assertions**. No hosted migration or academic
+record mutation is implied by source consolidation.
+
+## 10 November 2026 — non-destructive correction CI audit
+
+The preserved review branch `review/live-staging-audit-20261109` at
+`de623bc2` completed both real Django/PostgreSQL browser corrections:
+the direct-overall-mark flow and the signed HTTPS reviewer
+Guide → Coordinator → Student stage-evidence re-release flow. The
+PostgreSQL, Django compatibility, curriculum and student API workflows
+also passed. The direct-correction GitHub Actions job nevertheless finished
+red because its **last, separately scoped read-only hosted smoke** failed
+while comparing an HTTP 302 redirect: converting Python's case-insensitive
+`HTTPMessage` to a regular dictionary made `headers.get('Location')`
+return `None` when the header used different capitalization.
+
+The isolated fix is on `fix/hosted-smoke-register-20261110`: keep the
+original `HTTPMessage` for case-insensitive header access and add a
+no-network regression in `scripts/test_hosted_public_smoke.py`.
+The regression test has been added but has not yet been independently
+executed in GitHub CI. Do not infer that the rest of the live hosted smoke
+passed: its later CSRF, anonymous-authority and frontend-asset checks
+were not reached in the failed run.
+
+**No academic SQL/migration code, correction policies, actor assignments,
+staging database rows, hosted deployment or PDF artifacts were changed by
+this audit.** The review branch remains ahead of the deployment branch.
+Candidates 060 then 061 must be preflighted in the existing Neon validation
+environment, and explicitly authorized separately before live migration
+or deployment. Preserve 059, original releases, recovery branches and the
+current Render staging service.
+
 ## 9 November 2026 — safe live schema alignment
 
 The current Neon staging branch has the already-applied direct correction

@@ -121,10 +121,42 @@ function recordDetails(record,esc){
  const evidence='<label>Verification evidence reference<input name="evidence" required maxlength="500"></label>';
  const review=(link,operation,label)=>`<form data-form="faculty-identity" data-operation="${operation}" class="form-grid">
    <input type="hidden" name="linkId" value="${esc(link.id)}">${evidence}<button class="secondary">${label}</button></form>`;
+ const faculty=record.facultyAdmin,terms=faculty?.terms||[],current=terms.find(t=>t.active),detail=faculty?.details;
+ const reasonForm=`<label>Reason for change<textarea name='reason' maxlength='500' required></textarea></label>`;
+ const detailsForm=faculty?.canManage?`<form data-form='faculty-account' data-operation='EDIT_DETAILS' class='form-grid'>
+   <input type='hidden' name='expectedRevision' value='${detail.revision}'>
+   <label>Department display name<input name='displayName' required minlength='2' maxlength='120' value='${esc(detail.displayName)}'></label>
+   <label>Designation<input name='designation' maxlength='120' value='${esc(detail.designation)}'></label>
+   <label>Contact email (not sign-in)<input name='contactEmail' type='email' maxlength='254' value='${esc(detail.contactEmail)}'></label>
+   ${reasonForm}<button class='secondary'>Save departmental details</button></form>`:'';
+ const appointmentForm=faculty?.canManage&&current?`<details><summary>Amend or end Faculty appointment</summary>
+   <p>Existing Guide, evaluator and Coordinator duties must be reassigned first. Academic history remains retained.</p>
+   <form data-form='faculty-account' data-operation='AMEND_TERM' class='form-grid'>
+     <input type='hidden' name='termId' value='${esc(current.id)}'>
+     <input type='hidden' name='expectedAuthorityRevision' value='${esc(current.staff_authority_revision)}'>
+     <label>New term end<input type='datetime-local' name='validUntil' required></label>
+     ${reasonForm}<button class='secondary'>Amend Faculty term</button></form>
+   <form data-form='faculty-account' data-operation='TERMINATE' class='form-grid'>
+     <input type='hidden' name='termId' value='${esc(current.id)}'>
+     <input type='hidden' name='expectedAuthorityRevision' value='${esc(current.staff_authority_revision)}'>
+     ${reasonForm}<label class='check'><input type='checkbox' name='confirmed' required> End this Faculty term and retain history</label>
+     <button class='danger'>End Faculty access</button></form></details>`:'';
+ const reinstateForm=faculty?.canManage&&!current?`<form data-form='faculty-account' data-operation='REINSTATE' class='form-grid'>
+   <p>Reinstatement starts a fresh Faculty term; historic project/Coordinator appointments are not restored.</p>
+   ${reasonForm}<button class='primary'>Reinstate Faculty access</button></form>`:'';
+ const facultyPanel=faculty?`<section class='panel'><h2>Department faculty management</h2>
+    <p>Department details never alter global identity/credentials. Faculty terms and published results remain separate.</p>
+    <p>Faculty access: ${current?'Effective':'Inactive'} · Global identity: ${esc(faculty.accountStatus)}</p>
+    ${detailsForm}${appointmentForm}${reinstateForm}
+    ${!faculty.canManage?'<p>Admin self-management and HOD edits are not permitted.</p>':''}
+    <details><summary>Faculty appointment history</summary>
+      ${terms.map(t=>`<p>${esc(new Date(t.valid_from).toLocaleString())} to ${t.valid_until?esc(new Date(t.valid_until).toLocaleString()):'open-ended'} · ${t.active?'Current':'Historical'}</p>`).join('')}</details>
+    </section>`:'';
  return `${back}<section class="panel"><h1>${esc(record.name)}</h1>
  <p>Account status · ${esc(record.status)}</p>
  ${record.student?`<p>Student · ${esc(record.student.usn)} · ${esc(record.student.semester)} · Section ${esc(record.student.section)}</p>`:''}
  ${record.faculty?'<p>Department faculty record</p>':''}</section>
+ ${facultyPanel}
  <section class="panel"><h2>Import history</h2>${renderHistory(record.imports,b=>`${esc(b.reference)} · ${esc(b.source)} · ${esc(b.actor)} · ${date(b.created_at)}`,'No linked imports recorded.')}</section>
  <section class="panel"><h2>Reconciliation history</h2>${renderHistory(record.history,e=>`${esc(e.action.replaceAll('_',' ').toLowerCase())} · ${esc(e.actor||'Recorded by system')} · ${date(e.occurred_at)}${e.evidence?' · '+esc(e.evidence):''}`,'No reconciliation recorded.')}</section>
  ${record.faculty?`<section class="panel"><h2>Faculty identity evidence</h2>
