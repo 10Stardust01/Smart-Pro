@@ -1,0 +1,23 @@
+name: SMART-PRO hosted write harness static safety checks
+on:
+  pull_request:
+    paths:
+      - 'scripts/hosted_synthetic_https_writes.py'
+      - 'scripts/generate_reviewer_test_accounts.py'
+      - '.github/workflows/hosted-academic-writes.yml'
+      - '.github/workflows/hosted-write-harness-check.yml'
+permissions:
+  contents: read
+jobs:
+  lint-and-pdf-preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install httpx==0.28.1
+      - run: |
+          python -m py_compile scripts/hosted_synthetic_https_writes.py scripts/generate_reviewer_test_accounts.py
+          python scripts/hosted_synthetic_https_writes.py --self-test
