@@ -12,7 +12,6 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 import json
 import os
-import statistics
 import sys
 import threading
 import time
@@ -32,7 +31,6 @@ ALLOWED = {
     "/reviewer/login": 200,
     "/api/v1/workspace": 401,
 }
-NO_REDIRECT = None
 
 
 class NoRedirect(HTTPRedirectHandler):
