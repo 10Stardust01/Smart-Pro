@@ -757,6 +757,10 @@ def main(test_name=None):
    self.assertGreaterEqual(shown['facultyAccessHandoverCount'],3)
    self.assertTrue({'GUIDE','REVIEWER','EVALUATOR','COORDINATOR'}<=
        {h['assignment_kind'] for h in handovers})
+   with self.assertRaises(psycopg.Error):
+    self.db.execute("""UPDATE faculty_academic_access_handoffs
+      SET effective_at=clock_timestamp() WHERE faculty_term_id=%s""",
+      (current_term['id'],))
    self.assertTrue(self.db.execute("""SELECT valid_until FROM faculty_assignments
        WHERE project_id=%s AND faculty_user_id=%s AND assignment_type='GUIDE'""",
        (assigned_project,person)).fetchone()['valid_until'])
