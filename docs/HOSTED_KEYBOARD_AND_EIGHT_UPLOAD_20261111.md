@@ -1,5 +1,9 @@
 # SMART-PRO — 11 November 2026 live reviewer keyboard and write-load evidence
 
+## Follow-up distinction: eight separate project uploads PASSED
+
+[Actual signed HTTPS one-time run #43067876600](https://github.com/10Stardust01/Smart-Pro/actions/runs/43067876600) created eight new synthetic-only projects under the existing synthetic Student's approved team, assigned the existing synthetic Guide, and then simultaneously uploaded one approximately 256 KiB PDF to **each different project**. This preserves one-project-one-upload independence rather than contending over a shared synopsis case. **8/8 HTTP 200**, **p95/max 2.903 s**, **8/8 subsequent authenticated downloads matched original bytes by SHA-256**, and zero retries. The original historical overall published result remained unchanged; the eight test projects remain as audit evidence. Sessions shared one Student login, so this does not prove eight different accounts or an institution-wide mixed-write peak. The earlier same-project 6×409 behavior remains a factual result of a different workload, not a general eight-client outage.
+
 ## Five-role keyboard smoke: PASSED within a bounded scope
 
 [GitHub Actions run #43066865472](https://github.com/10Stardust01/Smart-Pro/actions/runs/43066865472) used signed Chromium sessions in the actual Render Free reviewer site as Student, Faculty, Coordinator, HOD and Admin.
