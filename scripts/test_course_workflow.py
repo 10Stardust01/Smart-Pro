@@ -28,7 +28,7 @@ def main(test_name=None):
   @classmethod
   def setUpClass(cls):
    cls.db=psycopg.connect(**dict(owner,dbname=name),autocommit=True,row_factory=dict_row);install_documents(cls.db)
-   for candidate in ['037_course_coordination.sql','038_course_assessment_lifecycle.sql','039_course_deadlines_notifications.sql','040_course_integration.sql','041_course_scope_guards.sql','042_course_authorized_operations.sql','043_runtime_function_grants.sql','044_coordinator_own_corrections.sql','045_admin_course_appointments.sql','046_department_leadership.sql','047_department_intake.sql','048_course_evaluation_queue.sql','049_paginated_evaluation_queue.sql','050_document_project_pages.sql','051_department_intake_pages.sql','052_department_directory.sql','053_department_import_outcomes.sql','054_department_offering_pages.sql','055_leadership_history_pages.sql','056_coordinator_catalog_scope_prefilter.sql','057_department_identity_navigation.sql','058_course_command_lock_order.sql','059_published_correction_authority.sql','060_published_stage_evidence_rerelease.sql','061_published_correction_read_visibility.sql','062_paged_published_correction_reads.sql','063_department_faculty_management.sql','064_academic_access_handover.sql']:execute_file(cls.db,ROOT/'proposals/curriculum'/candidate)
+   for candidate in ['037_course_coordination.sql','038_course_assessment_lifecycle.sql','039_course_deadlines_notifications.sql','040_course_integration.sql','041_course_scope_guards.sql','042_course_authorized_operations.sql','043_runtime_function_grants.sql','044_coordinator_own_corrections.sql','045_admin_course_appointments.sql','046_department_leadership.sql','047_department_intake.sql','048_course_evaluation_queue.sql','049_paginated_evaluation_queue.sql','050_document_project_pages.sql','051_department_intake_pages.sql','052_department_directory.sql','053_department_import_outcomes.sql','054_department_offering_pages.sql','055_leadership_history_pages.sql','056_coordinator_catalog_scope_prefilter.sql','057_department_identity_navigation.sql','058_course_command_lock_order.sql','059_published_correction_authority.sql','060_published_stage_evidence_rerelease.sql','061_published_correction_read_visibility.sql','062_paged_published_correction_reads.sql','063_department_faculty_management.sql','064_academic_access_handover.sql','065_exceptional_overall_correction_policy_alignment.sql']:execute_file(cls.db,ROOT/'proposals/curriculum'/candidate)
   @classmethod
   def tearDownClass(cls):cls.db.close();connection.close()
   def client(self,who='staff-policy',role=None):
@@ -58,11 +58,11 @@ def main(test_name=None):
    pid=self.ok(self.post('/api/v1/projects',dict(offeringId=oid,teamId=team,title='Course verification project',description='Synthetic assessment evidence'),who='student-a'),201)['id']
    self.ok(self.post(f'/api/v1/staff/departments/{CSE}/projects/{pid}/guide',dict(facultyId=guide_id,expectedGuideId=None)))
    return pid
-  def framework(self,oid,n=1,scheme=None):
+  def framework(self,oid,n=1,scheme=None,allow_final_corrections=True):
    cat=scheme or self.db.execute('SELECT * FROM demo_catalog WHERE department_id=%s',(CSE,)).fetchone()
    policy=str(self.db.execute('SELECT id FROM academic_evaluation_policies WHERE department_id=%s ORDER BY version_no DESC LIMIT 1',(CSE,)).fetchone()['id'])
    stages=[dict(key='stage-'+str(i),name='Authorized assessment '+str(i),schemeVersionId=str(cat['scheme_id']),schemeModeId=str(cat['mode_id']),policyId=policy,weight='100' if n==1 else '25' if i==1 else '75',required=True,opensAt='2026-01-01T00:00:00Z',deadline='2027-06-01T00:00:00Z') for i in range(1,n+1)]
-   cfg=dict(stages=stages,method='SINGLE_RAW' if n==1 else 'WEIGHTED_NORMALIZED',rounding='HALF_UP',decimalPlaces=2,scale='100',allowFinalCorrections=True,outsidePanelAuthorizer=True,maxExtensionDays=10,publicationRoles=['Coordinator','HOD'])
+   cfg=dict(stages=stages,method='SINGLE_RAW' if n==1 else 'WEIGHTED_NORMALIZED',rounding='HALF_UP',decimalPlaces=2,scale='100',allowFinalCorrections=allow_final_corrections,outsidePanelAuthorizer=True,maxExtensionDays=10,publicationRoles=['Coordinator','HOD'])
    fid=self.ok(self.command(oid,'FRAMEWORK',dict(expectedVersion=0,configuration=cfg,authority=None)))['id']
    self.ok(self.command(oid,'PLAN',dict(expectedVersion=0,frameworkId=fid,schedules={x['key']:'2026-12-01T09:00:00Z' for x in stages}),who='coordinator'))
    return cfg
@@ -1129,7 +1129,7 @@ def main(test_name=None):
 
   def test_guide_coordinator_same_person_can_propose_and_approve(self):
    oid=self.offering();self.ok(self.appoint(oid,uid='00000000-0000-4000-8000-000000000008'))
-   pid=self.project(oid);self.framework(oid);self.stage(oid,pid,'stage-1',20)
+   pid=self.project(oid);self.framework(oid,allow_final_corrections=False);self.stage(oid,pid,'stage-1',20)
    self.ok(self.appoint(oid,uid=FACULTY,permissions=['CORRECTIONS']))
    self.ok(self.command(oid,'PUBLISH_FINAL',dict(projectId=pid,expectedVersion=0)))
    req=self.ok(self.command(oid,'REQUEST_FINAL_REVISION',dict(projectId=pid,expectedVersion=1,
