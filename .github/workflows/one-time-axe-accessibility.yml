@@ -5,6 +5,7 @@ on:
       - acceptance/one-time-axe-accessibility-20261111
     paths:
       - .github/workflows/one-time-axe-accessibility.yml
+      - scripts/one_time_hosted_axe_audit.py
 permissions:
   contents: read
 concurrency:
