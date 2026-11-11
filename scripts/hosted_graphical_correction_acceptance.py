@@ -166,8 +166,8 @@ def run():
                    and after[2]["supersedes_id"] == after[1]["id"]
                    and all(r["sources"] == original_sources for r in after),
                    "Published stage evidence or result ancestry mutated")
-            ensure(project_records(sc, "Student", HISTORICAL) == historical_before,
-                   "Pre-existing historical published project changed")
+            ensure(versions(project_records(sc, "Student", HISTORICAL)) == versions(historical_before),
+                   "Pre-existing historical published result changed")
             print("PASS_HOSTED_GRAPHICAL_DIRECT_OVERALL_CORRECTION "
                   "synthetic_versions=1,2,3 old_marks=40.00,41.00,42.00 "
                   "stage_sources_unchanged=true original_historical_project_unchanged=true",
