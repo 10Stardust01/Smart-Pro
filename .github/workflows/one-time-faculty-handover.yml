@@ -1,0 +1,29 @@
+name: SMART-PRO one-time signed Faculty handover (synthetic, free)
+on:
+  push:
+    branches:
+      - acceptance/one-time-faculty-handover-20261111
+    paths:
+      - .github/workflows/one-time-faculty-handover.yml
+permissions:
+  contents: read
+concurrency:
+  group: smartpro-hosted-academic-writes-single-run
+  cancel-in-progress: false
+jobs:
+  faculty-handover:
+    if: github.repository == '10Stardust01/Smart-Pro' && github.ref == 'refs/heads/acceptance/one-time-faculty-handover-20261111'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      SMARTPRO_FACULTY_HANDOVER_APPROVAL: RUN_SYNTHETIC_FACULTY_HANDOVER_ON_EXISTING_FREE_STAGING
+      SMARTPRO_HOSTED_TEST_ACCOUNTS: ${{ secrets.SMARTPRO_HOSTED_TEST_ACCOUNTS }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m py_compile scripts/one_time_faculty_handover_acceptance.py
+      - run: python -m pip install httpx==0.28.1
+      - name: One signed Admin revocation and explicit Coordinator handover (synthetic only)
+        run: python scripts/one_time_faculty_handover_acceptance.py
