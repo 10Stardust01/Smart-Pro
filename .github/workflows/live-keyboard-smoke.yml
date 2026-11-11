@@ -5,6 +5,7 @@ on:
       - acceptance/live-keyboard-smoke-20261111
     paths:
       - .github/workflows/live-keyboard-smoke.yml
+      - scripts/one_time_hosted_keyboard_smoke.py
 permissions:
   contents: read
 concurrency:
