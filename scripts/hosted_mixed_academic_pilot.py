@@ -127,11 +127,9 @@ async def run():
             batch = await asyncio.gather(*(probe(person) for person in readers))
             readings.extend(batch)
             if any(code != 200 for _, code, _ in batch):
-                print("PILOT_READ_HALT unexpected signed workspace HTTP response", flush=True)
-                break
+                raise RuntimeError("PILOT_READ_HALT unexpected signed workspace response; stopping writer")
             if all(duration > READ_HALT_SECONDS for _, _, duration in batch):
-                print("PILOT_READ_HALT all signed readers exceeded 5s", flush=True)
-                break
+                raise RuntimeError("PILOT_READ_HALT all signed readers exceeded 5s; stopping writer")
             if round_id + 1 < MAX_ROUNDS:
                 await asyncio.sleep(.5)
         await asyncio.wait_for(output_task, timeout=300)
