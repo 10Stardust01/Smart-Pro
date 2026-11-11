@@ -1,0 +1,21 @@
+name: SMART-PRO targeted WCAG overview metric contrast regression (free)
+on:
+  push:
+    branches:
+      - fix/overview-metric-label-contrast-20261111
+    paths:
+      - .github/workflows/one-time-contrast-validation.yml
+permissions:
+  contents: read
+jobs:
+  contrast:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m py_compile scripts/test_accessibility_basics.py
+      - run: python scripts/test_accessibility_basics.py
+      - run: git diff --check HEAD~2 HEAD
