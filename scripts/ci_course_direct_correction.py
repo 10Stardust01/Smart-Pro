@@ -81,6 +81,7 @@ def main():
     # Each contract gets its own ephemeral clone; older full-suite tests may
     # intentionally mutate role/leadership records and require PDF binaries.
     checks=(
+        'test_exceptional_overall_correction_not_blocked_by_stage_policy',
         'test_direct_correction_does_not_reopen_stage_evidence',
         'test_release_previously_corrected_stage_evidence_on_guide_request',
         'test_guide_coordinator_same_person_can_propose_and_approve',
