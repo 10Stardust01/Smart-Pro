@@ -1,6 +1,13 @@
 # SMART-PRO — Project lifecycle and academic evaluation platform
 
-> **Latest hosted reviewer checkpoint — 10 November 2026 (not institutional production):**
+> **Current reviewer-staging acceptance — 11 November 2026 (not institutional production):**
+> The approved exceptional post-publication Guide → Coordinator correction is now fixed, independently verified, and live. [PR #27](https://github.com/10Stardust01/Smart-Pro/pull/27) introduced forward-only **065** after existing 059–064, removing the unintended `allowFinalCorrections` veto from the **overall-result** correction write and Guide read paths. The original pinned framework keeps `allowFinalCorrections=false` for finalized **stage-mark** corrections, while the exceptional Guide request → responsible Coordinator decision remains available. Seven PR checks passed; Render Free reviewer staging deploy `dep-dbq78obrjlhs73cvo5gg` reached **Live** at source `f315bd2`, with Neon Free reviewer-staging main migration 065 installed. No existing academic policies, old published marks, stage scores, audit history or original private files were edited.
+>
+> **Actual hosted HTTPS workflow PASSED:** [GitHub Actions run #43034757343](https://github.com/10Stardust01/Smart-Pro/actions/runs/43034757343) exercised all **five signed-in synthetic roles** on the live reviewer service, creating a separate synthetic offering/project with a *pinned false stage-correction flag*. Assigned Guide requested a specific correction, Coordinator approved, unauthorized Student decision was rejected, and the Student saw preserved original overall mark **40.00** and successor **41.00** as versions **1 → 2**. Independent read-only Neon verification found exactly **one** request, **one** approved decision, **one** application, **two** correction audit events, and identical underlying published stage sources. The pre-existing historical project remains version **1** with its original result fingerprint unchanged. This acceptance execution used a **one-time push-triggered workflow on a separate test branch**, not a new workflow merged into `main`.
+>
+> **Still not institutional acceptance:** The hosted **stage-evidence re-release variant** has isolated-regression evidence but was not included in this direct-overall correction run; signed-in Admin faculty handover, independent paired database+private-PDF fresh-destination restore, sustained authenticated capacity, accessibility and institutional production sign-off remain open. Details: [requirements register](docs/REQUIREMENTS_COMPLETION_REGISTER.md) and [release gate #4](https://github.com/10Stardust01/Smart-Pro/issues/4). Historical snapshots elsewhere in this README describe the state on **10 November** and must not be used as current deployment instructions.
+
+> **Historical checkpoint only — 10 November 2026 (superseded by the 11 November acceptance above):**
 > Neon Free staging **main** now contains migrations **059–063**, with 061 → 062 → 063 installed as separate atomic transactions. Existing Render Free reviewer service manually deployed source commit **`0419358dc5a3c87d5ef5290909b7cbc00e59fb40`** ([PR #12](https://github.com/10Stardust01/Smart-Pro/pull/12)). All published-result, stage-result, audit and READY-file metadata digests remained unchanged. Permissioned Coordinator/Admin reads succeeded and unauthorized Student/Faculty reads were denied. The original pre-059 and new pre-061 recovery branches remain.
 >
 > **Still outstanding:** actual private PDF byte/hash restoration, independently verified paired database+file recovery, full authenticated hosted Guide → Coordinator → Student/Faculty browser acceptance, peak-load tests and institutional approval. PR #12 passed **five** checks; its sixth correction-browser check was **cancelled during Chromium installation at the 12-minute timeout**, so do not claim 6/6. No paid feature/trial was used. [Release evidence and open gates](https://github.com/10Stardust01/Smart-Pro/issues/4).
@@ -20,7 +27,7 @@ HOD, and Admin.
 - **Hosting:** Render **Free** web service (Docker, Singapore).
 - **Database:** existing SMART-PRO PostgreSQL 16 project on Neon **Free**.
 - **Source:** `deployment/reviewer-staging`; deployment verified at
-  commit `0419358dc5a3c87d5ef5290909b7cbc00e59fb40` (connected Render live deployment verified 10 November 2026).
+  commit `f315bd2abcf45e8412d50b02692893c5046317f6` (reviewer deployment `dep-dbq78obrjlhs73cvo5gg` verified **Live** 11 November 2026).
   Automatic Render deployment remains off; this is reviewer staging, not institutional production.
 - **Access:** staging-only authenticated reviewer sessions, backed by effective
   database roles. Use **synthetic academic identities and records only**; do not
@@ -39,14 +46,7 @@ trial credits, or add charge-incurring services. Verify the relevant plan and
 limits before every infrastructure change. Keep the existing live service,
 database, and immutable academic history intact.
 
-**Correction alignment:** reviewed source includes 059, 060, 061, forward-only 062 correction paging and
-candidate 063 Admin-scoped non-HOD Faculty management (PR #7), but Neon
-**main** staging still has **059/060 only**, while the existing Neon validation
-branch has successfully installed **061–063** in an isolated rehearsal.
-The **hosted** request-visibility change remains unapplied on Neon main.
-Do not re-run 059 or 060, or mistake a code merge for a hosted release. See
-[post-publication correction alignment](docs/POST_PUBLICATION_CORRECTION_ALIGNMENT.md)
-and [release gate #4](https://github.com/10Stardust01/Smart-Pro/issues/4).
+**Correction alignment:** Neon reviewer-staging main now has sequentially installed candidates **059–065**, including approved Faculty handover 063–064 and the scoped exceptional overall-result defect fix **065**. This is not a new academic policy: assigned Guide requests an exact post-publication correction and the offering Coordinator approves or rejects it, including when the same person performs both roles. Ordinary finalized-stage mark correction restrictions remain separate. The signed HTTPS direct-overall correction journey **passed** [run #43034757343](https://github.com/10Stardust01/Smart-Pro/actions/runs/43034757343), and the new synthetic history was verified independently in Neon. Never re-run installed candidates 059–065; use forward-only controlled migrations for future changes. See [post-publication correction alignment](docs/POST_PUBLICATION_CORRECTION_ALIGNMENT.md) and [release gate #4](https://github.com/10Stardust01/Smart-Pro/issues/4).
 
 ## Historic PostgreSQL prototype reproduction
 
