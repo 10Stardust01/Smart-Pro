@@ -13,7 +13,7 @@ from decimal import Decimal
 import httpx
 
 from hosted_synthetic_https_writes import (
-    BASE, PHRASE, TIMEOUT, AcceptanceFailure, Reviewer, json_success,
+    PHRASE, TIMEOUT, AcceptanceFailure, Reviewer, json_success,
     require, ready, score_rows,
 )
 
