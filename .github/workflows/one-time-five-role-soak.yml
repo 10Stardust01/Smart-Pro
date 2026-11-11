@@ -1,0 +1,29 @@
+name: SMART-PRO one-time five-role authenticated read-only soak (free, bounded)
+on:
+  push:
+    branches:
+      - acceptance/one-time-authenticated-soak-20261111
+    paths:
+      - .github/workflows/one-time-five-role-soak.yml
+permissions:
+  contents: read
+concurrency:
+  group: smartpro-hosted-academic-writes-single-run
+  cancel-in-progress: false
+jobs:
+  five-role-read-soak:
+    if: github.repository == '10Stardust01/Smart-Pro' && github.ref == 'refs/heads/acceptance/one-time-authenticated-soak-20261111'
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    env:
+      SMARTPRO_SOAK_APPROVAL: RUN_FIVE_ROLE_BOUNDED_READ_SOAK
+      SMARTPRO_HOSTED_TEST_ACCOUNTS: ${{ secrets.SMARTPRO_HOSTED_TEST_ACCOUNTS }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m py_compile scripts/one_time_five_role_soak.py
+      - run: python -m pip install httpx==0.28.1
+      - name: Five signed identities; 300 total authenticated GETs over 120 seconds
+        run: python scripts/one_time_five_role_soak.py
