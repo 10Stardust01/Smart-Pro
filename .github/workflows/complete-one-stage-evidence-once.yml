@@ -1,0 +1,29 @@
+name: SMART-PRO one-time complete audited pending synthetic stage evidence request
+on:
+  push:
+    branches:
+      - acceptance/hosted-stage-evidence-real-20261111
+    paths:
+      - .github/workflows/complete-one-stage-evidence-once.yml
+permissions:
+  contents: read
+concurrency:
+  group: smartpro-hosted-academic-writes-single-run
+  cancel-in-progress: false
+jobs:
+  exact-pending:
+    if: github.repository == '10Stardust01/Smart-Pro' && github.ref == 'refs/heads/acceptance/hosted-stage-evidence-real-20261111'
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    env:
+      SMARTPRO_STAGE_COMPLETE_APPROVAL: COMPLETE_PENDING_STAGE_EVIDENCE_656ABA35
+      SMARTPRO_HOSTED_TEST_ACCOUNTS: ${{ secrets.SMARTPRO_HOSTED_TEST_ACCOUNTS }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install httpx==0.28.1
+      - run: python -m py_compile scripts/complete_one_pending_stage_evidence.py
+      - name: Preflight exact pending stage evidence then authorize once and verify Student history
+        run: python scripts/complete_one_pending_stage_evidence.py
