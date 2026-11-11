@@ -1,12 +1,12 @@
 # SMART-PRO — hosted published-result correction acceptance
 
-**Status:** harness implemented, awaiting an explicitly dispatched and verified real
+**Status:** harness updated to verify the approved exceptional overall correction even with a pinned `allowFinalCorrections=false` framework; awaiting an explicitly dispatched and verified real
 HTTPS run. Passing static CI alone is NOT hosted workflow acceptance.
 
 ## Why a separate fixture
 
 The one pre-existing reviewer offering `8b40a6e1-419d-43c8-b625-279f82713b02`
-has a version-1 academic framework with `allowFinalCorrections=false`.
+has a version-1 academic framework with `allowFinalCorrections=false` (which still governs exceptional edits to finalized **stage marks**, not the separate overall-result revision).
 The original already published project
 `67b0acd3-914f-4063-97db-8b8a75359104` pins that historical
 framework and must retain its original result and stage evidence.
@@ -26,9 +26,7 @@ The runner preflights the original published project first, then
 creates a **separate, uniquely named synthetic curriculum type and offering**,
 records a clearly labeled synthetic-only instruction using the existing
 synthetic Admin account, appoints the current synthetic Coordinator, and
-activates the new offering. The synthetic HOD records a **new approved
-versioned framework** enabling exceptional final corrections, and the
-Coordinator pins a plan to it. The existing framework remains unchanged.
+activates the new offering. The synthetic HOD records a **separate versioned framework preserving** the original `allowFinalCorrections=false` stage-mark restriction, and the Coordinator pins a plan to it. This specifically tests that the approved Guide-to-Coordinator **overall-result** exception operates independently of the ordinary stage-mark toggle after candidate 065. The existing framework remains unchanged.
 
 It then creates **one** synthetic team and project, assigns the synthetic
 Guide, creates and finalizes an evaluation stage, publishes that stage
