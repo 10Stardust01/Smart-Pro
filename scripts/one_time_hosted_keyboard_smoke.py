@@ -5,7 +5,7 @@ accessibility. No passwords, student record text, or screenshots are logged.
 """
 import json,os
 from playwright.sync_api import sync_playwright
-from hosted_synthetic_https_writes import BASE
+BASE="https://smartpro-reviewer-25775915.onrender.com"
 def must(ok,msg):
     if not ok: raise AssertionError(msg)
 
