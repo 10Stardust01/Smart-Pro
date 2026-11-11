@@ -4,6 +4,8 @@ on:
     paths:
       - 'scripts/hosted_synthetic_https_writes.py'
       - 'scripts/hosted_upload_latency_diagnostic.py'
+      - 'scripts/hosted_published_correction_journey.py'
+      - '.github/workflows/hosted-published-correction.yml'
       - 'backend/smartpro/document_views.py'
       - '.github/workflows/hosted-upload-latency.yml'
       - 'scripts/generate_reviewer_test_accounts.py'
@@ -22,6 +24,7 @@ jobs:
           python-version: '3.12'
       - run: python -m pip install httpx==0.28.1
       - run: |
-          python -m py_compile scripts/hosted_synthetic_https_writes.py scripts/hosted_upload_latency_diagnostic.py scripts/generate_reviewer_test_accounts.py backend/smartpro/document_views.py
+          python -m py_compile scripts/hosted_synthetic_https_writes.py scripts/hosted_upload_latency_diagnostic.py scripts/generate_reviewer_test_accounts.py backend/smartpro/document_views.py scripts/hosted_published_correction_journey.py
           python scripts/hosted_synthetic_https_writes.py --self-test
           python scripts/hosted_upload_latency_diagnostic.py --self-test
+          python scripts/hosted_published_correction_journey.py --self-test
