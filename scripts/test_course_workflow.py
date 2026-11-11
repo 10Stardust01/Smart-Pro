@@ -992,6 +992,58 @@ def main(test_name=None):
    self.assertFalse(any(a['project_id']==pid for a in alerts('coordinator') if a['kind']=='EVALUATION'))
    history=self.db.execute('SELECT count(*) n FROM course_notification_history').fetchone()['n'];self.assertGreater(history,0)
    self.assertEqual(self.command(oid,'DEADLINE',dict(body,dueAt='2027-12-01T00:00:00Z',expectedVersion=d['version']),who='coordinator').status_code,400)
+  def test_exceptional_overall_correction_not_blocked_by_stage_policy(self):
+   """The approved Guide->Coordinator overall release works on a pinned
+   stage-correction-disabled plan without reopening finalized stage marks."""
+   oid=self.offering();self.ok(self.appoint(oid,uid='00000000-0000-4000-8000-000000000008'))
+   pid=self.project(oid);self.framework(oid,allow_final_corrections=False)
+   rid,aid,scores=self.stage(oid,pid,'stage-1',20)
+   original=self.ok(self.command(oid,'PUBLISH_FINAL',dict(projectId=pid,expectedVersion=0)))['id']
+   flag=self.db.execute("""SELECT (fw.configuration->>'allowFinalCorrections')::boolean AS enabled
+     FROM course_final_results r JOIN course_plan_versions cp ON cp.id=r.plan_id
+     JOIN course_framework_versions fw ON fw.id=cp.framework_id
+     WHERE r.project_id=%s ORDER BY r.version DESC LIMIT 1""",(pid,)).fetchone()
+   self.assertFalse(flag['enabled'])
+   before=self.db.execute('SELECT to_jsonb(r) AS data FROM course_final_results r WHERE r.id=%s',(original,)).fetchone()['data']
+   stage_before=self.db.execute('SELECT to_jsonb(r) AS data FROM academic_result_versions r WHERE r.review_id=%s ORDER BY version_no',(rid,)).fetchall()
+   # Stage-mark change remains denied, regardless of exceptional overall workflow.
+   rev=self.db.execute('SELECT revision FROM academic_review_bindings WHERE review_id=%s',(rid,)).fetchone()['revision']
+   ordinary=dict(reviewId=rid,assessmentId=aid,expectedReviewRevision=rev,
+                 scores=[dict(score,marks='21') for score in scores])
+   self.assertEqual(self.command(oid,'REQUEST_CORRECTION',ordinary,who='faculty-a').status_code,403)
+   # The assigned Guide sees the project through BOTH supported read paths.
+   legacy=self.ok(self.client('faculty-a').get('/api/v1/me/published-corrections'))
+   self.assertIn(pid,[row['projectId'] for row in legacy['projects']])
+   scoped=self.ok(self.client('faculty-a').get('/api/v1/me/published-corrections?projectId='+pid))
+   self.assertEqual(scoped['project']['projectId'],pid)
+   self.assertEqual(self.client('student-a').get('/api/v1/me/published-corrections?projectId='+pid).status_code,403)
+   proposal=dict(projectId=pid,expectedVersion=1,
+     studentId='00000000-0000-4000-8000-000000000001',marks='42.00',
+     reason='Specific exceptional published overall correction')
+   self.assertEqual(self.command(oid,'REQUEST_FINAL_REVISION',proposal,who='coordinator').status_code,403)
+   key=uuid4().hex
+   req=self.ok(self.command(oid,'REQUEST_FINAL_REVISION',proposal,who='faculty-a',key=key))
+   self.assertEqual(req,self.ok(self.command(oid,'REQUEST_FINAL_REVISION',proposal,who='faculty-a',key=key)))
+   self.assertEqual(self.command(oid,'REQUEST_FINAL_REVISION',dict(proposal,marks='43.00'),who='faculty-a',key=key).status_code,409)
+   queue=self.ok(self.client('coordinator').get(f'/api/v1/courses/offerings/{oid}/final-revisions?page=1'))
+   self.assertIn(req['id'],[row['id'] for row in queue['requests']])
+   self.assertEqual(self.command(oid,'AUTHORIZE_FINAL_REVISION',dict(requestId=req['id'],approved=True),who='student-a').status_code,403)
+   decision=dict(requestId=req['id'],approved=True)
+   approved=self.ok(self.command(oid,'AUTHORIZE_FINAL_REVISION',decision,who='coordinator'))
+   self.assertEqual(approved['newVersion'],2)
+   rows=self.db.execute('SELECT * FROM course_final_results WHERE project_id=%s ORDER BY version',(pid,)).fetchall()
+   self.assertEqual([r['version'] for r in rows],[1,2])
+   self.assertEqual(str(rows[1]['supersedes_id']),original)
+   self.assertEqual(rows[0]['sources'],rows[1]['sources'])
+   self.assertEqual([r['results']['00000000-0000-4000-8000-000000000001'] for r in rows],['40.00','42.00'])
+   self.assertEqual(self.db.execute('SELECT to_jsonb(r) AS data FROM course_final_results r WHERE r.id=%s',(original,)).fetchone()['data'],before)
+   self.assertEqual(self.db.execute('SELECT to_jsonb(r) AS data FROM academic_result_versions r WHERE r.review_id=%s ORDER BY version_no',(rid,)).fetchall(),stage_before)
+   student=self.ok(self.client('student-a').get(f'/api/v1/documents/departments/{CSE}?project={pid}'))
+   item=next(p for p in student['projects'] if p['id']==pid)
+   self.assertEqual([r['version'] for r in item['overallResults']],[1,2])
+   self.assertEqual(self.command(oid,'AUTHORIZE_FINAL_REVISION',decision,who='coordinator').status_code,409)
+   self.assertEqual(self.db.execute('SELECT count(*) n FROM course_final_revision_authorizations WHERE request_id=%s',(req['id'],)).fetchone()['n'],1)
+
   def test_direct_correction_does_not_reopen_stage_evidence(self):
    oid=self.offering();self.ok(self.appoint(oid,uid='00000000-0000-4000-8000-000000000008'))
    pid=self.project(oid);self.framework(oid)
