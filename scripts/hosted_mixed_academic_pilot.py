@@ -18,10 +18,13 @@ from math import ceil
 import httpx
 
 from hosted_synthetic_https_writes import (
-    PHRASE, Reviewer, get_config, ready, require,
+    BASE, PHRASE, Reviewer, get_config, require,
 )
 
 APPROVAL = "RUN_ONE_BOUNDED_MIXED_PILOT"
+MAX_COLD_START_ATTEMPTS = 3
+COLD_START_TIMEOUT_SECONDS = 30
+COLD_START_RETRY_DELAY_SECONDS = 5
 MAX_ROUNDS = 15
 ROLES = ("Student", "Faculty", "Coordinator")
 READ_TARGET_SECONDS = 1.5
@@ -54,6 +57,36 @@ def parse_waves(output):
     return waves
 
 
+async def wait_for_free_staging_readiness():
+    """Allow a few bounded read-only checks for the Render Free cold start.
+
+    This is *only* before academic testing, never an SLA grace period for writes.
+    3 attempts x 30 seconds + at most 2 x 5 seconds between attempts.
+    """
+    timeout = httpx.Timeout(float(COLD_START_TIMEOUT_SECONDS), connect=10.0)
+    async with httpx.AsyncClient(base_url=BASE, timeout=timeout,
+                                 follow_redirects=False, verify=True) as public:
+        for attempt in range(1, MAX_COLD_START_ATTEMPTS + 1):
+            try:
+                response = await public.get("/health/ready")
+            except (httpx.ConnectTimeout, httpx.ReadTimeout):
+                print(f"PILOT_COLD_START attempt={attempt}/3 ready=timeout", flush=True)
+            else:
+                if response.status_code == 200:
+                    require(response.json() == {"status": "ok"},
+                            "Readiness returned an unexpected response body")
+                    print(f"PILOT_READINESS_PASS attempts={attempt} "
+                          "cold_start_excluded_from_write_latency=true", flush=True)
+                    return
+                require(response.status_code in (502, 503, 504),
+                        f"Unexpected readiness HTTP {response.status_code}; fail closed")
+                print(f"PILOT_COLD_START attempt={attempt}/3 "
+                      f"ready_http={response.status_code}", flush=True)
+            if attempt < MAX_COLD_START_ATTEMPTS:
+                await asyncio.sleep(COLD_START_RETRY_DELAY_SECONDS)
+    raise RuntimeError("Render Free readiness unavailable after three bounded cold-start probes")
+
+
 async def probe(person):
     start = time.monotonic()
     try:
@@ -82,8 +115,7 @@ async def run():
     output_task = None
     readings = []
     try:
-        async with httpx.AsyncClient(timeout=10.0, verify=True) as public:
-            await ready(public)
+        await wait_for_free_staging_readiness()
         # Do not stress the reviewer login: establish the three readers sequentially.
         for person in readers:
             await person.login()
@@ -187,6 +219,9 @@ def self_test():
     waves = parse_waves(lines)
     require(len(waves) == 5 and waves[STAGE_NAMES[0]]["p95_s"] == 1.1,
             "Write-metric parsing")
+    require(MAX_COLD_START_ATTEMPTS == 3 and COLD_START_TIMEOUT_SECONDS == 30 and
+            COLD_START_RETRY_DELAY_SECONDS == 5,
+            "Cold-start cap changed without review")
     require(MAX_ROUNDS == 15 and len(ROLES) == 3 and MAX_ROUNDS * len(ROLES) == 45,
             "Read cap changed without review")
     print("PASS_BOUNDED_MIXED_PILOT_OFFLINE_PREFLIGHT no_HTTPS no_writes")

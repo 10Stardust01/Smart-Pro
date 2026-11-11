@@ -1,6 +1,8 @@
 # Bounded real-hosted mixed-role academic pilot (manual only)
 
-**Status: PREPARED, NOT YET RUN.** There is no claim of a measured result until a real GitHub Actions run is explicitly started and its logs are examined.
+**Status: FIRST MANUAL RUN HALTED BEFORE WRITES; FIXED COLD-START PROBE PENDING RE-EXECUTION.** [GitHub Actions run #43089522963](https://github.com/10Stardust01/Smart-Pro/actions/runs/43089522963) completed with failure on 12 November 2026: offline preflight passed, then the first 10-second `/health/ready` probe raised `ReadTimeout`. Render's own Gunicorn startup logs show the server starting at 19:41:42 UTC, two seconds after the timeout at 19:41:40 UTC. Neon readback after that run matched its pre-run 124 projects, 8 overall-result versions, 39 READY file records and 412 audit events. **No synthetic project or academic write was created by this failed run**, and no performance result may be inferred from it.
+
+The updated harness makes up to **three** read-only startup probes, each with a **30-second** maximum and **two** possible five-second delays; expected temporary 502/503/504 statuses are retried only during startup. An unexpected HTTP status fails closed. The startup allowance is **not included in academic write/read latency metrics**, and existing 1.5s/3s/5s provisional goals, two-writer wave caps, 45 observer GET cap and stop-on-error rules are unchanged. **Only a new manual run can verify this code**; no automatic replay is scheduled.
 
 ## Scope and safeguards
 
