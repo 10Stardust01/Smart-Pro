@@ -42,7 +42,14 @@ def login(browser, role, creds):
 
 def inspect(page, label):
     page.wait_for_function("() => document.querySelector('main#main') && document.querySelector('main#main').getAttribute('aria-busy')==='false'", timeout=60000)
-    page.add_script_tag(path=str(AXE_PATH))
+    # CSP script-src 'self' blocks inline injection. Route a virtual test-only
+    # same-origin asset inside this isolated browser context without changing
+    # deployed headers, CSP policy, repository assets or network resources.
+    url = BASE + "/demo-assets/__axe_audit_one_time__.js"
+    page.route("**/demo-assets/__axe_audit_one_time__.js",
+               lambda route: route.fulfill(status=200, content_type="application/javascript",
+                                           body=AXE_PATH.read_bytes()))
+    page.add_script_tag(url=url)
     results = page.evaluate("""async tags => {
       const a = await axe.run(document, {runOnly:{type:'tag',values:tags}});
       return a.violations.map(v=>({id:v.id, impact:v.impact, count:v.nodes.length}));
