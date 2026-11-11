@@ -71,7 +71,7 @@ def main():
     assert ratio(definitions["focus"], definitions["white"]) >= 3.0
     # A real signed-in axe WCAG audit found 3:1 helper text on both Student
     # and Faculty overview metric cards; explicitly protect ordinary-text AA.
-    metric_small = re.search(r"\\.metric small\\s*\\{[^}]*color:\\s*(#[0-9a-fA-F]{6})", CSS)
+    metric_small = re.search(r"\.metric small\s*\{[^}]*color:\s*(#[0-9a-fA-F]{6})", CSS)
     assert metric_small, "Overview metric helper foreground missing"
     for metric_background in ("#fffefa", "#f8faf8"):
         assert ratio(metric_small.group(1), metric_background) >= 4.5, (
