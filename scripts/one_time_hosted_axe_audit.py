@@ -33,6 +33,9 @@ def login(browser, role, creds):
     page.get_by_role("button", name="Sign in").click()
     page.wait_for_url(BASE + "/", timeout=60000)
     page.locator('button[data-action="login"][data-alias="' + creds["alias"] + '"]').click()
+    # Wait for either the post-login role picker or the signed workspace;
+    # otherwise a fast Playwright count() may race a slower Render response.
+    page.wait_for_function("() => !!document.querySelector('button[data-action=choose-role]') || !!document.querySelector('aside.sidebar nav')", timeout=60000)
     choice = page.locator('button[data-action="choose-role"][data-role="' + role + '"]')
     if choice.count(): choice.click()
     elif page.locator("#activeRole").count(): page.locator("#activeRole").select_option(role)
@@ -52,10 +55,20 @@ def inspect(page, label):
     page.add_script_tag(url=url)
     results = page.evaluate("""async tags => {
       const a = await axe.run(document, {runOnly:{type:'tag',values:tags}});
-      return a.violations.map(v=>({id:v.id, impact:v.impact, count:v.nodes.length}));
+      return a.violations.map(v=>({id:v.id, impact:v.impact, count:v.nodes.length,
+        targets:v.nodes.slice(0,8).map(n=>({
+          selector:n.target.join(' '),
+          contrast:n.any.filter(check=>check.data && check.data.contrastRatio != null).map(check=>({
+            fg:check.data.fgColor, bg:check.data.bgColor, ratio:check.data.contrastRatio,
+            required:check.data.expectedContrastRatio
+          }))
+        }))
+      }));
     }""", TAGS)
     summaries = [f"{x['id']}:{x['impact']}:{x['count']}" for x in results]
     print(f"AXE_SCREEN {label}: rules_violated={len(results)} ids_impacts_counts={','.join(summaries) or 'none'}", flush=True)
+    for issue in results:
+        print("AXE_RULE_TARGETS " + label + " " + issue["id"] + " " + json.dumps(issue["targets"], separators=(",",":")), flush=True)
     return (label, results)
 
 
