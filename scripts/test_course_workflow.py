@@ -1302,6 +1302,17 @@ def main(test_name=None):
      errors=[]
      page.on('pageerror',lambda error:errors.append(str(error)))
      page.goto(url,wait_until='domcontentloaded')
+     # The running local server must expose explicitly synthetic demo roles;
+     # fail with a precise config/JS diagnosis instead of an opaque click wait.
+     context_reply=page.request.get(url+'/api/v1/ui/context')
+     self.assertEqual(context_reply.status,200)
+     ctx=context_reply.json()
+     self.assertTrue(ctx.get('demo') and 'faculty-a' in ctx.get('identities',[]),
+                     'Synthetic localhost browser persona unavailable; check fixture demo setup')
+     try:
+      page.locator('button[data-action="login"][data-alias="faculty-a"]').wait_for(state='visible',timeout=20000)
+     except Exception:
+      self.fail('Local frontend login not rendered; JS errors: '+repr(errors[:3]))
      page.locator('button[data-action="login"][data-alias="faculty-a"]').click()
      page.locator('button[data-action="choose-role"][data-role="Faculty"]').wait_for(state='visible',timeout=15000)
      page.locator('button[data-action="choose-role"][data-role="Faculty"]').click()
