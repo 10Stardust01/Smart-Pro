@@ -53,6 +53,13 @@ def inspect(page, label):
                lambda route: route.fulfill(status=200, content_type="application/javascript",
                                            body=AXE_PATH.read_bytes()))
     page.add_script_tag(url=url)
+    # Test-only preview of the single proposed CSS fix; the actual hosted
+    # application remains UNCHANGED until a separately approved promotion.
+    css_url = BASE + "/demo-assets/__axe_audit_contrast_preview__.css"
+    page.route("**/demo-assets/__axe_audit_contrast_preview__.css",
+               lambda route: route.fulfill(status=200, content_type="text/css",
+                                           body=".metric small { color: #586b70 !important; }"))
+    page.add_style_tag(url=css_url)
     results = page.evaluate("""async tags => {
       const a = await axe.run(document, {runOnly:{type:'tag',values:tags}});
       return a.violations.map(v=>({id:v.id, impact:v.impact, count:v.nodes.length,
