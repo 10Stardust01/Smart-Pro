@@ -6,7 +6,25 @@ accessibility. No passwords, student record text, or screenshots are logged.
 import json,os
 from playwright.sync_api import sync_playwright
 from hosted_synthetic_https_writes import BASE
-from postdeploy_real_axe_audit import login,must
+def must(ok,msg):
+    if not ok: raise AssertionError(msg)
+
+def login(browser,role,creds):
+    context=browser.new_context(ignore_https_errors=False,viewport={"width":1280,"height":900})
+    page=context.new_page()
+    page.set_default_timeout(35000)
+    page.goto(BASE+"/reviewer/login",wait_until="domcontentloaded",timeout=90000)
+    page.locator('input[name="username"]').fill(creds["alias"])
+    page.locator('input[name="password"]').fill(creds["password"])
+    page.get_by_role("button",name="Sign in").click()
+    page.wait_for_url(BASE+"/",timeout=60000)
+    page.locator('button[data-action="login"][data-alias="'+creds["alias"]+'"]').click()
+    page.wait_for_function("() => !!document.querySelector('button[data-action=choose-role]') || !!document.querySelector('aside.sidebar nav')",timeout=60000)
+    choice=page.locator('button[data-action="choose-role"][data-role="'+role+'"]')
+    if choice.count(): choice.click()
+    elif page.locator("#activeRole").count(): page.locator("#activeRole").select_option(role)
+    page.locator("aside.sidebar nav").wait_for(state="visible",timeout=60000)
+    return context,page
 ROLES=("Student","Faculty","Coordinator","HOD","Admin")
 
 def run():
