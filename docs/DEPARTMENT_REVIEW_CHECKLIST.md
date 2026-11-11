@@ -5,7 +5,7 @@ Use the department's approved test accounts and sample records for the walkthrou
 - [ ] **HOD and course coordinator.** Check that each offering has the correct
   coordinator, review stages, marking rules, submission deadlines and result
   publishers. Confirm that each coordinator sees the offerings assigned to them.
-- [ ] **Department Admin.** Test edits to supported non-HOD faculty details, appointment amendment, termination and reinstatement under the product owner's 9 November 2026 decisions. Verify Admin **cannot edit HOD details**. Confirm effective access and preserved marks/appointment history; no second-person approval. Automatic restoration of past project assignments is not yet specified.
+- [ ] **Department Admin.** Test edits to supported non-HOD faculty details, appointment amendment, termination and reinstatement under the product owner's 9 November 2026 decisions. Verify Admin **cannot edit HOD details**. Confirm effective access and preserved marks/appointment history; no second-person approval. Under the approved academic-access handover rule, reinstatement **never automatically restores past Guide, Evaluator or Coordinator duties**; authorized staff must explicitly reassign them.
 - [ ] **HOD and Registrar.** Confirm account provisioning and institutional identity evidence; do not re-open the already decided Admin amendment/termination authority.
 - [ ] **HOD and Admin.** Review the Admin replacement and ordinary HOD handover
   using test accounts. Name the institutional approver for exceptional succession
