@@ -19,4 +19,4 @@ jobs:
           python-version: '3.12'
       - run: python -m py_compile scripts/test_accessibility_basics.py
       - run: python scripts/test_accessibility_basics.py
-      - run: git diff --check HEAD~2 HEAD
+      - run: git diff --check
