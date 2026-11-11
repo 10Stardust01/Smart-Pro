@@ -141,7 +141,7 @@ export function stageCorrectionPanel(state,stage,review,esc){
   const pending=c.approved===null&&!c.applied&&!c.direct_coordinator_version_id;
   const rightProcedure=stage?.exceptionalAllowed?Boolean(c.exceptional_result_id):
     !c.exceptional_result_id&&!state.documents?.projects.find(p=>p.id===review.projectId)?.overallFinalPublished;
-  const canDecide=pending&&rightProcedure&&stage?.canAuthorizeCorrection&&!c.exceptional_result_id&&c.requester_id!==state.workspace.actor.id;
+  const canDecide=pending&&rightProcedure&&stage?.canAuthorizeCorrection&&c.requester_id!==state.workspace.actor.id;
   return `<article class="project-card"><h3>${esc(c.display_name)}${c.exceptional_result_id?' · Exceptional stage evidence':''}</h3>
     <p>${c.applied?'Applied':c.approved===true?'Authorized · awaiting evaluator':c.approved===false?'Declined':pending?'Awaiting authorization':'Coordinator-owned correction'}</p>
     ${correctionScores(c,review,esc)}
