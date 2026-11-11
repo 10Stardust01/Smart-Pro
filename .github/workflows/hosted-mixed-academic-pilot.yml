@@ -1,0 +1,43 @@
+name: SMART-PRO bounded mixed-role academic pilot (manual, Free)
+on:
+  workflow_dispatch:
+    inputs:
+      approval:
+        description: 'Type RUN_ONE_BOUNDED_MIXED_PILOT to create one permanent synthetic audit project'
+        required: true
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: smartpro-hosted-academic-writes-single-run
+  cancel-in-progress: false
+jobs:
+  actual-hosted-mixed-pilot:
+    if: inputs.approval == 'RUN_ONE_BOUNDED_MIXED_PILOT'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      SMARTPRO_HOSTED_TEST_ACCOUNTS: ${{ secrets.SMARTPRO_HOSTED_TEST_ACCOUNTS }}
+      SMARTPRO_MIXED_PILOT_APPROVAL: ${{ inputs.approval }}
+      SMARTPRO_HOSTED_WRITE_APPROVAL: RUN_SYNTHETIC_HOSTED_WRITES
+      SMARTPRO_WRITE_DEPARTMENT_ID: '10000000-0000-4000-8000-000000000001'
+      SMARTPRO_WRITE_OFFERING_ID: '8b40a6e1-419d-43c8-b625-279f82713b02'
+      SMARTPRO_WRITE_TEAM_ID: '04da071d-f86b-415d-a580-123ba8f2236b'
+      SMARTPRO_WRITE_GUIDE_USER_ID: '00000000-0000-4000-8000-000000000003'
+      SMARTPRO_WRITE_STAGE_KEY: evidence
+      SMARTPRO_WRITE_UPLOAD_CLIENTS: '2'
+      SMARTPRO_WRITE_PDF_SIZE_KIB: '256'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install only the existing free HTTP client dependency
+        run: python -m pip install httpx==0.28.1
+      - name: Preflight offline safety and syntax before touching staging
+        run: |
+          python -m py_compile scripts/hosted_synthetic_https_writes.py scripts/hosted_mixed_academic_pilot.py
+          python scripts/hosted_synthetic_https_writes.py --self-test
+          python scripts/hosted_mixed_academic_pilot.py --self-test
+      - name: One bounded mixed-role live HTTPS pilot (no retry or ramp)
+        run: python -u scripts/hosted_mixed_academic_pilot.py

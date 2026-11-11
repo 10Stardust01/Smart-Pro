@@ -253,7 +253,11 @@ async def run():
         async with httpx.AsyncClient(timeout=TIMEOUT, verify=True) as public:
             await ready(public)
         # Genuine HTTPS multipart uploads; each Student session uses a distinct client and key.
-        pdfs = [pdf_bytes(f"SMARTPRO ACCEPTANCE {nonce} PDF {i}") for i in range(uploads)]
+        pdf_size_kib = os.getenv("SMARTPRO_WRITE_PDF_SIZE_KIB", "0")
+        require(pdf_size_kib in ("0", "256"), "Only default tiny PDFs or one 256 KiB pilot size permitted")
+        pdf_padding = 256 * 1024 - 1024 if pdf_size_kib == "256" else 0
+        pdfs = [pdf_bytes(f"SMARTPRO ACCEPTANCE {nonce} PDF {i}",
+                          padding_bytes=pdf_padding) for i in range(uploads)]
         url = f"/api/v1/documents/departments/{dept}/projects/{synthetic_project}/uploads"
         uploading = await simultaneous([
             (lambda i=i: clients[i].post(url, None, key=f"accept-{nonce}-pdf-{i}",
