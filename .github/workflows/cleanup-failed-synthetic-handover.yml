@@ -1,0 +1,28 @@
+name: SMART-PRO exact failed synthetic Faculty grant cleanup (one-time)
+on:
+  push:
+    branches:
+      - acceptance/one-time-faculty-handover-20261111
+    paths:
+      - .github/workflows/cleanup-failed-synthetic-handover.yml
+permissions:
+  contents: read
+concurrency:
+  group: smartpro-hosted-academic-writes-single-run
+  cancel-in-progress: false
+jobs:
+  exact-safety-cleanup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    env:
+      SMARTPRO_CLEANUP_APPROVAL: CLEANUP_EXACT_FAILED_SYNTHETIC_FACULTY_TERM_20261111
+      SMARTPRO_HOSTED_TEST_ACCOUNTS: ${{ secrets.SMARTPRO_HOSTED_TEST_ACCOUNTS }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install httpx==0.28.1
+      - run: python -m py_compile scripts/cleanup_failed_synthetic_handover.py
+      - name: Revoke ONLY exact temporary Faculty grant; retain Student identity
+        run: python scripts/cleanup_failed_synthetic_handover.py
