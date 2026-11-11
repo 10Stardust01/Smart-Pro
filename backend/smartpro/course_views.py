@@ -79,7 +79,19 @@ def command(request,offering_id):
     optional = {'completionRole','completionScope'} & request.data.keys() if action=='DEADLINE' else set()
     if action=='REQUEST_FINAL_REVISION' and request.data.get('mode')=='STAGE_EVIDENCE':
         fields[action]={'projectId','expectedVersion','mode','reason'}
+    # An exceptional stage-mark request is still the *existing* correction
+    # protocol, not one of the retired exceptional API action names. Its
+    # declaration must match the current publication state and the pinned
+    # framework's allowFinalCorrections switch (both checked again by SQL).
+    correction_actions={'REQUEST_CORRECTION','AUTHORIZE_CORRECTION','APPLY_CORRECTION'}
+    if action in correction_actions:
+        fields[action]=fields[action]|{'exceptional'}
     body=command_body({k:v for k,v in request.data.items() if k!='action'},fields[action] | optional)
+    if action in correction_actions:
+        exceptional=body.pop('exceptional',False)
+        if type(exceptional) is not bool:
+            raise ValidationError('Choose the current stage-correction procedure')
+        body['_exceptional']=exceptional
     for key in {'projectId','frameworkId','reviewId','assessmentId','requestId','studentId','policyId','expectedPolicyId','deadlineId'} & body.keys():
         serializers.UUIDField(allow_null=key=='expectedPolicyId' or (action=='DEADLINE' and key=='projectId')).run_validation(body[key])
     for key in {'expectedVersion','expectedCaseVersion','expectedReviewRevision'}&body.keys():body[key]=serializers.IntegerField(min_value=0).run_validation(body[key])
