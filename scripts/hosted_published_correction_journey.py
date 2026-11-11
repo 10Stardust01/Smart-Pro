@@ -132,7 +132,7 @@ async def run():
         offering_created = await send(admin, setup_path, {
             "action": "RECORD", "kind": "OFFERING",
             "configuration": config, "authority": authority,
-            "reason": "Dedicated synthetic correction-enabled reviewer offering"
+            "reason": "Dedicated synthetic reviewer overall correction offering"
         }, "Create separate synthetic offering", "corr-" + nonce + "-offering")
         offering_id = str(uuid.UUID(offering_created.get("offeringId") or offering_created["id"]))
         created["offering"] = offering_id
@@ -159,15 +159,17 @@ async def run():
                 "availability": "ACTIVE", "authority": authority,
                 "reason": "Activate synthetic reviewer correction offering"
             }, "Activate separate synthetic offering", "corr-" + nonce + "-active")
-        # HOD establishes a NEW versioned policy; never flip the original
-        # framework's correction flag in place.
-        cfg = dict(source_framework["configuration"], allowFinalCorrections=True)
+        # HOD pins a separate, unchanged stage-correction-disabled framework.
+        # The already approved exceptional overall correction must work with it.
+        cfg = dict(source_framework["configuration"])
+        require(cfg["allowFinalCorrections"] is False,
+                "Synthetic project must prove exceptional overall correction with disabled stage corrections")
         cmd = f"/api/v1/courses/offerings/{offering_id}/commands"
         framework = await send(hod, cmd, {
             "action": "FRAMEWORK", "expectedVersion": 0,
             "configuration": cfg, "authority": None,
-            "reason": "Synthetic correction-enabled acceptance scheme"
-        }, "HOD creates versioned correction-enabled framework",
+            "reason": "Synthetic unchanged stage restrictions; exceptional overall correction acceptance"
+        }, "HOD creates separately pinned stage-restricted framework",
            "corr-" + nonce + "-framework")
         framework_id = str(uuid.UUID(framework["id"]))
         require(framework_id != original_framework_id, "Original framework cannot be reused")
