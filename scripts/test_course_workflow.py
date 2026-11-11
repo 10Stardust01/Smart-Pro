@@ -1079,6 +1079,60 @@ def main(test_name=None):
    self.assertEqual(self.command(oid,'AUTHORIZE_FINAL_REVISION',decision,who='coordinator').status_code,409)
    self.assertEqual(self.command(oid,'REQUEST_EXCEPTIONAL_STAGE_CORRECTION',dict(reviewId=rid,assessmentId=aid,expectedReviewRevision=0,scores=scores),who='faculty-a').status_code,400)
 
+  def test_real_authorized_stage_evidence_rerelease_via_http_correction_commands(self):
+   """No owner-seeded result version: evaluator, Coordinator and Guide use the
+   actual existing HTTP correction workflow under an isolated pinned true flag."""
+   oid=self.offering()
+   self.ok(self.appoint(oid,uid='00000000-0000-4000-8000-000000000008'))
+   pid=self.project(oid)
+   self.framework(oid,allow_final_corrections=True)
+   rid,aid,scores=self.stage(oid,pid,'stage-1',20)
+   initial=self.ok(self.command(oid,'PUBLISH_FINAL',
+       dict(projectId=pid,expectedVersion=0),who='coordinator'))['id']
+   revision=self.db.execute(
+       'SELECT revision FROM academic_review_bindings WHERE review_id=%s',(rid,)
+   ).fetchone()['revision']
+   updated=[dict(s,marks='21') for s in scores]
+   body=dict(reviewId=rid,assessmentId=aid,expectedReviewRevision=revision,
+             scores=updated,reason='Correct specific synthetic stage criterion')
+   self.assertEqual(self.command(oid,'REQUEST_CORRECTION',dict(body,exceptional=False),
+       who='faculty-a').status_code,403)
+   self.assertEqual(self.command(oid,'REQUEST_CORRECTION',dict(body,exceptional='true'),
+       who='faculty-a').status_code,400)
+   request=self.ok(self.command(oid,'REQUEST_CORRECTION',
+       dict(body,exceptional=True),who='faculty-a'))['id']
+   self.assertEqual(self.command(oid,'AUTHORIZE_CORRECTION',
+       dict(requestId=request,approved=True,exceptional=False),
+       who='coordinator').status_code,403)
+   self.assertEqual(self.command(oid,'AUTHORIZE_CORRECTION',
+       dict(requestId=request,approved=True,exceptional=True),
+       who='student-a').status_code,403)
+   self.ok(self.command(oid,'AUTHORIZE_CORRECTION',
+       dict(requestId=request,approved=True,exceptional=True),who='coordinator'))
+   self.ok(self.command(oid,'APPLY_CORRECTION',
+       dict(requestId=request,exceptional=True),who='faculty-a'))
+   stage=self.db.execute('SELECT version_no,results,supersedes_id FROM academic_result_versions WHERE review_id=%s ORDER BY version_no',(rid,)).fetchall()
+   self.assertEqual([row['version_no'] for row in stage],[1,2])
+   self.assertEqual([row['results']['00000000-0000-4000-8000-000000000001'] for row in stage],['40.00','42.00'])
+   self.assertIsNotNone(stage[1]['supersedes_id'])
+   self.assertEqual(self.db.execute('SELECT COUNT(*) n FROM course_final_results WHERE project_id=%s',(pid,)).fetchone()['n'],1)
+   reissue=self.ok(self.command(oid,'REQUEST_FINAL_REVISION',
+       dict(projectId=pid,expectedVersion=1,mode='STAGE_EVIDENCE',
+            reason='Release independently corrected stage evidence'),
+       who='faculty-a'))['id']
+   self.assertEqual(self.command(oid,'AUTHORIZE_FINAL_REVISION',
+       dict(requestId=reissue,approved=True),who='student-a').status_code,403)
+   self.ok(self.command(oid,'AUTHORIZE_FINAL_REVISION',
+       dict(requestId=reissue,approved=True),who='coordinator'))
+   totals=self.db.execute('SELECT id,version,supersedes_id,results,sources FROM course_final_results WHERE project_id=%s ORDER BY version',(pid,)).fetchall()
+   self.assertEqual([r['version'] for r in totals],[1,2])
+   self.assertEqual(str(totals[1]['supersedes_id']),initial)
+   self.assertNotEqual(totals[0]['sources'],totals[1]['sources'])
+   self.assertEqual([r['results']['00000000-0000-4000-8000-000000000001'] for r in totals],['40.00','42.00'])
+   student=self.ok(self.client('student-a').get(f'/api/v1/documents/departments/{CSE}?project={pid}'))
+   item=next(x for x in student['projects'] if x['id']==pid)
+   self.assertEqual([r['version'] for r in item['overallResults']],[1,2])
+
   def test_release_previously_corrected_stage_evidence_on_guide_request(self):
    """An isolated stage result-version fixture represents evidence already
    corrected by the approved evaluation workflow; no stage-edit API is added."""
