@@ -84,8 +84,8 @@ def command(request,offering_id):
     # declaration must match the current publication state and the pinned
     # framework's allowFinalCorrections switch (both checked again by SQL).
     correction_actions={'REQUEST_CORRECTION','AUTHORIZE_CORRECTION','APPLY_CORRECTION'}
-    if action in correction_actions:
-        fields[action]=fields[action]|{'exceptional'}
+    if action in correction_actions and 'exceptional' in request.data:
+        optional|={'exceptional'}
     body=command_body({k:v for k,v in request.data.items() if k!='action'},fields[action] | optional)
     if action in correction_actions:
         exceptional=body.pop('exceptional',False)
