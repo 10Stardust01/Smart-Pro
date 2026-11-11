@@ -90,10 +90,37 @@ async def run():
         print("PILOT_START one_synthetic_project=true uploaded_pdfs=2 each_kib=256 "
               "write_clients=2 read_clients=3 max_read_gets=45 no_retries=true", flush=True)
         child = await asyncio.create_subprocess_exec(
-            sys.executable, "scripts/hosted_synthetic_https_writes.py",
+            sys.executable, "-u", "scripts/hosted_synthetic_https_writes.py",
             stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.STDOUT,
         )
-        output_task = asyncio.create_task(child.communicate())
+        # Start observers only after the audited writer has created its one
+        # synthetic project. Unbuffered output avoids measuring login setup.
+        output_lines = []
+        project_created = asyncio.Event()
+
+        async def collect_output():
+            while True:
+                line = await child.stdout.readline()
+                if not line:
+                    break
+                decoded = line.decode("utf-8", errors="replace")
+                output_lines.append(decoded)
+                if decoded.startswith("CREATED_SYNTHETIC_PROJECT "):
+                    project_created.set()
+            await child.wait()
+
+        output_task = asyncio.create_task(collect_output())
+        created_task = asyncio.create_task(project_created.wait())
+        try:
+            done, _ = await asyncio.wait(
+                (created_task, output_task), timeout=150,
+                return_when=asyncio.FIRST_COMPLETED,
+            )
+            require(created_task in done and project_created.is_set(),
+                    "Child ended or timed out before the synthetic fixture existed")
+        finally:
+            created_task.cancel()
+        print("PILOT_READ_WINDOW after_synthetic_project_created=true", flush=True)
         for round_id in range(MAX_ROUNDS):
             if output_task.done():
                 break
@@ -107,8 +134,8 @@ async def run():
                 break
             if round_id + 1 < MAX_ROUNDS:
                 await asyncio.sleep(.5)
-        output_bytes, _ = await asyncio.wait_for(output_task, timeout=300)
-        output = output_bytes.decode("utf-8", errors="replace")
+        await asyncio.wait_for(output_task, timeout=300)
+        output = "".join(output_lines)
         # Child uses audited, sanitized logging: no response bodies or credentials.
         print(output, end="" if output.endswith("\n") else "\n", flush=True)
         statuses = {role: [duration for r, code, duration in readings if r == role and code == 200]
