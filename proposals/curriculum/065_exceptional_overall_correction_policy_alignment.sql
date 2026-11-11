@@ -41,7 +41,7 @@ BEGIN
      OR length(original)-length(replace(original,obsolete_filter,''))<>length(obsolete_filter)
      OR strpos(original,'smartpro_current_project_guide')=0
   THEN RAISE EXCEPTION 'Scoped Guide correction reader differs; verify candidate 065 manually'; END IF;
-  revised:=replace(original,obsolete_filter,'TRUE /* overall revisions independent of stage correction toggle */');
+  revised:=replace(original,obsolete_filter,'AND TRUE /* overall revisions independent of stage correction toggle */');
   EXECUTE revised;
 
   SELECT pg_get_functiondef(guide_legacy) INTO original;
@@ -49,7 +49,7 @@ BEGIN
      OR length(original)-length(replace(original,obsolete_filter,''))<>length(obsolete_filter)
      OR strpos(original,'smartpro_current_project_guide')=0
   THEN RAISE EXCEPTION 'Legacy Guide correction reader differs; verify candidate 065 manually'; END IF;
-  revised:=replace(original,obsolete_filter,'TRUE /* overall revisions independent of stage correction toggle */');
+  revised:=replace(original,obsolete_filter,'AND TRUE /* overall revisions independent of stage correction toggle */');
   EXECUTE revised;
 
   -- Fail closed if the original ordinary-stage correction enforcement has
