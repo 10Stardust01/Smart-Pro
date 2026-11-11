@@ -89,10 +89,14 @@ async def run():
         assigned=await write(coordinator,f"/api/v1/staff/departments/{DEPT}/projects/{project_id}/guide",
             {"facultyId":STUDENT,"expectedGuideId":None},"assign-temp-guide",nonce)
         guide_id=str(uuid.UUID(assigned["id"]))
-        visible=await read(temp_faculty,"/api/v1/workspace","Active temporary guide")
-        require(any(p.get("id")==project_id for p in visible.get("projects",[]))
-                or any(r.get("projectId")==project_id for r in visible.get("reviews",[])),
-                "Temporary Faculty does not see assigned synthetic project")
+        # The Faculty workspace returns reviews, not a project directory.
+        # A Guide's project visibility is authoritatively scoped through the
+        # documents endpoint even when the project has no review stage yet.
+        visible=await read(temp_faculty,
+            f"/api/v1/documents/departments/{DEPT}?project={project_id}",
+            "Authorized temporary Guide project evidence")
+        require(any(p.get("id")==project_id for p in visible.get("projects",[])),
+                "Temporary Faculty cannot read assigned synthetic project")
         rec=await read(admin,recordpath,"Admin faculty term history")
         terms=rec.get("facultyAdmin",{}).get("terms",[])
         effective=[x for x in terms if x.get("active")]
