@@ -84,6 +84,7 @@ def main():
         'test_exceptional_overall_correction_not_blocked_by_stage_policy',
         'test_direct_correction_does_not_reopen_stage_evidence',
         'test_release_previously_corrected_stage_evidence_on_guide_request',
+        'test_real_authorized_stage_evidence_rerelease_via_http_correction_commands',
         'test_guide_coordinator_same_person_can_propose_and_approve',
         'test_paged_published_corrections_over_125_and_authority',
         'test_non_hod_faculty_details_and_access_term_history',
