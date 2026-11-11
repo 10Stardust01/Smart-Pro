@@ -1,0 +1,26 @@
+name: SMART-PRO one-time read-only post-recovery live route audit
+on:
+  push:
+    branches: [acceptance/post-recovery-routing-readonly-20261111]
+    paths: [.github/workflows/post-recovery-routing.yml]
+permissions:
+  contents: read
+concurrency:
+  group: smartpro-hosted-academic-writes-single-run
+  cancel-in-progress: false
+jobs:
+  live-route-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    env:
+      SMARTPRO_READ_ONLY_ROUTE_AUDIT: VERIFY_ORIGINAL_RESTORED_NEON_ROUTING
+      SMARTPRO_HOSTED_TEST_ACCOUNTS: ${{ secrets.SMARTPRO_HOSTED_TEST_ACCOUNTS }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m py_compile scripts/verify_post_recovery_live_route.py
+      - run: python -m pip install httpx==0.28.1
+      - name: Signed live read-only check of latest original DB evidence
+        run: python scripts/verify_post_recovery_live_route.py
