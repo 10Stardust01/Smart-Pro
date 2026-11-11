@@ -23,7 +23,8 @@ APPROVAL="RUN_SYNTHETIC_FACULTY_HANDOVER_ON_EXISTING_FREE_STAGING"
 async def read(person,path,where):
     return json_success(await person.get(path),where)
 async def write(person,path,body,label,nonce):
-    return json_success(await person.post(path,body,key="handover-"+nonce+"-"+label),label)
+    response=await person.post(path,body,key="handover-"+nonce+"-"+label)
+    return json_success(response,label,(200,201))
 async def run():
     require(os.getenv("SMARTPRO_FACULTY_HANDOVER_APPROVAL")==APPROVAL,
             "Explicit one-time isolated synthetic handover authority missing")
@@ -56,19 +57,25 @@ async def run():
                     and not x.get("scheduledEndAt") and "synthetic" in str(x.get("teamName","")).lower()
                     for x in memberships.get("results",[])),
                 "Existing explicitly synthetic team membership missing")
-        setup=await read(admin,f"/api/v1/staff/departments/{DEPT}/setup","Admin authority setup")
-        sources=setup["instructionSources"]
-        authority={"hodMandateId":sources["hods"][0]["id"],"source":"EXTERNAL_INSTRUCTION",
-                   "confirmed":True,"reference":"SYNTHETIC-ONLY-HANDOVER-"+nonce}
-        # Create a first-access Faculty term only for existing synthetic Student actor;
-        # no other Faculty identity, term or assignment is touched.
-        grant=await write(admin,f"/api/v1/staff/departments/{DEPT}/setup",
-            {"action":"RECORD","kind":"FACULTY_ACCESS",
-             "configuration":{"userId":STUDENT,"validUntil":"2027-06-01T00:00:00Z"},
-             "authority":authority,"reason":"One-time synthetic academic handover acceptance"},
-            "faculty-first-access",nonce)
+        # A prior fail-closed cleanup ended this specifically synthetic
+        # temporary Faculty term. Returning access must use the already approved
+        # Admin REINSTATE operation; never circumvent its historical guard.
+        before=await read(admin,recordpath,"Synthetic Faculty history before handover")
+        require(not any(t.get("active") for t in before.get("facultyAdmin",{}).get("terms",[])),
+                "Unexpected live Faculty term; refuse to alter it")
+        require(any(t.get("id")=="4ce8ebeb-80f8-48b2-9b34-d83ae86b0dae"
+                    for t in before.get("facultyAdmin",{}).get("terms",[])),
+                "Exactly the prior cleaned synthetic Faculty history required")
+        grant=await write(admin,recordpath,
+            {"action":"REINSTATE","reason":"Reinstating the test-only Faculty term for bounded handover verification"},
+            "faculty-reinstate",nonce)
         grant_done=True
-        print("PASS_TEMP_SYNTHETIC_FACULTY_ACCESS_GRANTED",flush=True)
+        rec=await read(admin,recordpath,"New temporary Faculty term")
+        current=[t for t in rec.get("facultyAdmin",{}).get("terms",[]) if t.get("active")]
+        require(len(current)==1 and current[0]["id"]!="4ce8ebeb-80f8-48b2-9b34-d83ae86b0dae",
+                "Expected exactly one NEW temporary Faculty term")
+        term=current[0]
+        print("PASS_TEMP_SYNTHETIC_FACULTY_ACCESS_REINSTATED",flush=True)
         signed=await temp_faculty.login()
         require(signed["actor"]["id"]==STUDENT, "Temporary Faculty sign-in identity mismatch")
         assert "Faculty" in signed.get("roleChoices",[])
@@ -126,11 +133,15 @@ async def run():
             "faculty_login_revoked=true",
             "coordinator_reassigned_explicitly=true",flush=True)
     finally:
-        if grant_done and not terminated and term:
+        if grant_done and not terminated:
             try:
+                latest=await read(admin,recordpath,"Safety check current synthetic Faculty term")
+                active=[t for t in latest.get("facultyAdmin",{}).get("terms",[]) if t.get("active")]
+                require(len(active)==1 and term and active[0]["id"]==term["id"],
+                        "Unexpected live term, refuse unsafe cleanup")
                 await write(admin,recordpath,
-                  {"action":"TERMINATE","termId":str(uuid.UUID(term["id"])),
-                   "expectedAuthorityRevision":term["staff_authority_revision"],
+                  {"action":"TERMINATE","termId":term["id"],
+                   "expectedAuthorityRevision":active[0]["staff_authority_revision"],
                    "reason":"Safety cleanup: terminate test-only temporary Faculty term"},
                   "safety-cleanup",nonce)
                 print("PASS_SAFETY_CLEANUP_TEMP_FACULTY_TERM",flush=True)
