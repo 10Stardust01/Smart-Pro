@@ -348,7 +348,7 @@ body { font-family:"Segoe UI","Helvetica Neue",Arial,sans-serif; }
 .metric-label { display:block; color:#607479; font-size:.77rem; font-weight:610; margin-bottom:8px; }
 .metric-value { display:block; color:#1e3235; font-size:1.85rem; font-weight:720; font-variant-numeric:tabular-nums; letter-spacing:-.05em; }
 .metric-word { font-size:1.34rem; letter-spacing:-.02em; }
-.metric small { display:block; color:#819094; font-size:.71rem; margin-top:7px; }
+.metric small { display:block; color:#586b70; font-size:.71rem; margin-top:7px; }
 .dashboard-grid { display:grid; grid-template-columns:minmax(0,1.65fr) minmax(260px,.82fr); gap:19px; align-items:start; }
 .course-header { background:#fffefa; padding:24px 23px 12px; }
 .course-header h2 { font-size:1.3rem; margin-bottom:16px; }
