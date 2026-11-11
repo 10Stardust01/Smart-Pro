@@ -1,7 +1,6 @@
 # SMART-PRO — hosted published-result correction acceptance
 
-**Status:** harness updated to verify the approved exceptional overall correction even with a pinned `allowFinalCorrections=false` framework; awaiting an explicitly dispatched and verified real
-HTTPS run. Passing static CI alone is NOT hosted workflow acceptance.
+**Current acceptance — PASSED for the bounded synthetic direct-overall path (11 November 2026):** [one-time signed HTTPS run #43034757343](https://github.com/10Stardust01/Smart-Pro/actions/runs/43034757343) completed successfully on the actual Render reviewer service; independent read-only Neon evidence found one Guide request, Coordinator decision/application, two overall result versions (40.00 → 41.00), identical stage sources and unchanged original historical project. Candidate 065 aligns the exceptional overall correction independently of the pinned `allowFinalCorrections=false` stage-mark restriction. This run does **not** close the stage-evidence re-release variant, human graphical click-through, academic faculty handover, paired database/private-PDF restoration, sustained load, accessibility or institutional approval. Historical manual-run instructions below describe how the bounded test was authorized, not an instruction to repeat it.
 
 ## Why a separate fixture
 
