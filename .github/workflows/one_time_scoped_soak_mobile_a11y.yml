@@ -1,4 +1,6 @@
 name: SMART-PRO one-shot scoped HTTPS soak and mobile accessibility (Free)
+# Second reviewed launch: account for Render Free cold start and Coordinator's
+# authorized catalog route; first launch stopped during preflight, no load.
 on:
   push:
     branches: [main]
