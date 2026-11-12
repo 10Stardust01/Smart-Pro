@@ -289,6 +289,80 @@ def test_concurrent_registrations_are_idempotent_without_inventing_team_limits(p
         assert results[0][1] == results[1][1]
 
 
+def test_sixteen_distinct_students_in_isolated_concurrent_registration_waves(project_api):
+    """Distinct real actor UUIDs, real PostgreSQL 16, no live reviewer mutation.
+
+    16 independent synthetic student identities, each with separate membership,
+    race four waves of 16 operations (three writes and one identical retry).
+    Tests capacity/integrity of the DB logic, NOT hosted campus load or login.
+    """
+    from math import ceil
+    from proposals.curriculum.test_contracts import new_student
+    from psycopg.rows import dict_row
+
+    _, state = project_api
+    db = state['db']
+    actors = []
+    for index in range(16):
+        actor = new_student(db)
+        db.execute("INSERT INTO department_role_assignments "
+                   "(user_id,department_id,role_code) VALUES(%s,%s,'STUDENT')",
+                   (actor, DEPT))
+        owned_team = team(db, state['societal'])
+        db.execute("INSERT INTO team_memberships "
+                   "(team_id,user_id,curriculum_offering_id) VALUES(%s,%s,%s)",
+                   (owned_team, actor, state['societal']))
+        actors.append((str(actor), owned_team))
+    assert len({actor for actor, _ in actors}) == 16
+    before = db.execute("SELECT count(*) AS n FROM student_project_registrations").fetchone()['n']
+
+    def wave(number):
+        barrier = threading.Barrier(len(actors))
+        def attempt(index):
+            actor, owned_team = actors[index]
+            code = f"ACTOR-{index}-WAVE-{number}"
+            request_key = f"isolated-{index}-wave-{number}"
+            digest = hashlib.sha256(f"{actor}:{code}:{request_key}".encode()).hexdigest()
+            with psycopg.connect(os.environ['DATABASE_URL'], autocommit=True, row_factory=dict_row) as conn:
+                conn.execute("SET statement_timeout='15s'")
+                barrier.wait(timeout=20)
+                start = time.monotonic()
+                response = conn.execute(
+                    'SELECT public.smartpro_register_student_project(%s,%s,%s,%s,%s,%s,%s) AS result',
+                    (actor, owned_team, 'MAJOR', code,
+                     f'Isolated distinct student {index} wave {number}', request_key, digest),
+                ).fetchone()['result']
+                return index, response, time.monotonic()-start
+        with ThreadPoolExecutor(max_workers=len(actors)) as pool:
+            return list(pool.map(attempt, range(len(actors))))
+
+    first = wave(0)
+    replay = wave(0)
+    later = wave(1)
+    last = wave(2)
+    def ids(rows):
+        return {i: result['project']['id'] for i, result, _ in rows}
+    assert all(r['replayed'] is False for _,r,_ in first + later + last)
+    assert all(r['replayed'] is True for _,r,_ in replay)
+    assert ids(first) == ids(replay)
+    project_ids = list(ids(first).values()) + list(ids(later).values()) + list(ids(last).values())
+    assert len(project_ids) == len(set(project_ids)) == 48
+    actor_ids = [actor for actor,_ in actors]
+    receipts = db.execute(
+        'SELECT count(*) AS n FROM student_project_registrations WHERE actor_id=ANY(%s)',
+        (actor_ids,)).fetchone()['n']
+    audit = db.execute(
+        "SELECT count(*) AS n FROM audit_events WHERE actor_id=ANY(%s) AND action='PROJECT_REGISTERED'",
+        (actor_ids,)).fetchone()['n']
+    assert receipts == audit == 48
+    assert db.execute('SELECT count(*) AS n FROM student_project_registrations').fetchone()['n'] == before+48
+    for label,rows in [('initial',first),('replay',replay),('later',later),('last',last)]:
+        durations=sorted(t for _,_,t in rows)
+        p95=durations[ceil(len(durations)*.95)-1]
+        print(f"DISTINCT_STUDENT_DB_WAVE kind={label} actors=16 requests=16 "
+              f"p95_s={p95:.3f} result_integrity=PASS", flush=True)
+
+
 def test_stale_repeatable_read_membership_snapshot_aborts_and_reauthorizes(project_api):
     client, state = project_api
     with psycopg.connect(os.environ['DATABASE_URL'], autocommit=True) as stale:

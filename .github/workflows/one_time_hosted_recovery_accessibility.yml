@@ -1,0 +1,41 @@
+name: SMART-PRO one-time real PDF recovery and expanded accessibility (Free)
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/one_time_hosted_recovery_accessibility.yml'
+permissions:
+  contents: read
+concurrency:
+  group: smartpro-once-recovery-and-a11y-20261112
+  cancel-in-progress: false
+jobs:
+  private-pdf-and-a11y-read-only:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    env:
+      SMARTPRO_HOSTED_TEST_ACCOUNTS: ${{ secrets.SMARTPRO_HOSTED_TEST_ACCOUNTS }}
+      SMARTPRO_PDF_RESTORE_CHECK: READ_ONLY_PRIVATE_PDF_RESTORE
+      SMARTPRO_EXTENDED_A11Y: READ_ONLY_EXTENDED_A11Y
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install pinned free open-source HTTPS, PDF, browser and WCAG checkers
+        run: |
+          python -m pip install httpx==0.28.1 pypdf==5.7.0 playwright==1.64.1
+          python -m playwright install --with-deps chromium
+          npm --prefix /tmp/smartpro-audit-node install --no-save --no-package-lock --ignore-scripts axe-core@4.10.3
+      - name: Check offline syntax, recovery verifier and hard request caps
+        run: |
+          python -m py_compile scripts/hosted_private_pdf_restore_check.py scripts/hosted_extended_accessibility.py
+          python scripts/hosted_private_pdf_restore_check.py --self-test
+          python scripts/hosted_extended_accessibility.py --self-test
+          python scripts/test_verify_hosted_pdf_recovery.py
+      - name: Retrieve original private PDFs using authorized HOD and verify private fresh local copy
+        run: python -u scripts/hosted_private_pdf_restore_check.py
+      - name: Scan five hosted signed roles and keyboard/form/navigation focus
+        if: success() || failure()
+        run: python -u scripts/hosted_extended_accessibility.py
