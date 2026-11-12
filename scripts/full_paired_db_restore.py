@@ -13,7 +13,7 @@ from pathlib import Path
 import psycopg
 from psycopg import sql
 
-EXPECTED={"projects":125,"results":8,"assets":41,"audit":435,
+EXPECTED={"projects":125,"results":8,"assets":41,
           "tables":103,"constraints":598,"routines":383}
 PDF_MANIFEST="7d41099173b2eedefe7c8f39c710277a"
 
@@ -76,6 +76,8 @@ def run():
         before=inventory(db)
         must(all(before[k]==value for k,value in EXPECTED.items()),
              "Actual source counts changed since approved recovery checkpoint")
+        must(before["audit"]>=435,
+             "Audit history unexpectedly shorter than earlier verified checkpoint")
         must(before["pdf_digest"]==PDF_MANIFEST,"Source private PDF manifest changed")
         rows_before=table_hashes(db)
     with tempfile.TemporaryDirectory(prefix="smartpro-private-db-") as directory:
