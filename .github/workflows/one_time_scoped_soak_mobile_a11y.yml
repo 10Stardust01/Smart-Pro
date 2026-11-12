@@ -1,0 +1,39 @@
+name: SMART-PRO one-shot scoped HTTPS soak and mobile accessibility (Free)
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/one_time_scoped_soak_mobile_a11y.yml'
+permissions:
+  contents: read
+concurrency:
+  group: smartpro-once-scoped-soak-mobile-20261112
+  cancel-in-progress: false
+jobs:
+  actual-reviewer-nondestructive:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      SMARTPRO_HOSTED_TEST_ACCOUNTS: ${{ secrets.SMARTPRO_HOSTED_TEST_ACCOUNTS }}
+      SMARTPRO_SCOPED_READ_APPROVAL: ONE_SHOT_READ_ONLY_SCOPED_SOAK
+      SMARTPRO_MOBILE_ACCESSIBILITY: ONE_SHOT_MOBILE_AUDIT
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install free pinned browser and HTTPS client
+        run: |
+          python -m pip install httpx==0.28.1 playwright==1.64.1
+          python -m playwright install --with-deps chromium
+      - name: Verify syntax and fixed ceilings offline
+        run: |
+          python -m py_compile scripts/hosted_scoped_read_soak.py scripts/hosted_mobile_accessibility.py
+          python scripts/hosted_scoped_read_soak.py --self-test
+          python scripts/hosted_mobile_accessibility.py --self-test
+      - name: Test mobile reflow and form focus with five signed-in actual reviewer roles
+        run: python -u scripts/hosted_mobile_accessibility.py
+      - name: One bounded 300-request role-scoped read-only sustained HTTPS profile
+        if: success() || failure()
+        run: python -u scripts/hosted_scoped_read_soak.py
