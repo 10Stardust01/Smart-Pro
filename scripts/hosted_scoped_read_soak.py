@@ -27,7 +27,7 @@ PATHS = {
  "Faculty": (f"/api/v1/documents/departments/{DEPT}?listing=1&page=1", "/api/v1/workspace"),
  "Coordinator": (f"/api/v1/courses/departments/{DEPT}",f"/api/v1/courses/offerings/{OFFERING}/evaluation-queue?page=1"),
  "HOD": (f"/api/v1/documents/departments/{DEPT}?listing=1&page=1", "/api/v1/workspace"),
- "Admin": ("/api/v1/workspace",f"/api/v1/staff/departments/{DEPT}/leadership"),
+ "Admin": ("/api/v1/workspace",f"/api/v1/staff/departments/{DEPT}/setup"),
 }
 
 def percentile(xs,p):
