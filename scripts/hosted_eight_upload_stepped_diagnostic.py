@@ -2,7 +2,7 @@
 
 Eight signed synthetic Student actor UUIDs + existing Coordinator (and Faculty).
 Uses eight existing audit-labeled projects via an authorized Guide request for changes,
-verifies private PDF bytes,
+verifies private PDF bytes for a third properly authorized document version,
 eight independent submissions, then 480 bounded, paced read probes over ~2m.
 Synthetic-only audited Guide revision decisions, no retry or paid resources.
 """
@@ -23,6 +23,7 @@ DEPT="10000000-0000-4000-8000-000000000001"
 OFFERING="8b40a6e1-419d-43c8-b625-279f82713b02"
 GUIDE="00000000-0000-4000-8000-000000000003"
 COUNT=8
+EXPECTED_PRIOR_ATTEMPTS=2
 EXISTING_SYNTHETIC_PROJECTS=["279b6649-e628-4041-9061-79f886ed5fca","dac806c5-a598-4839-8f37-336873306ce7","3cdb87a4-1888-43a1-b1ec-bba5341b0aae","55aca111-f0fa-4f2f-95f9-c6294297e40f","22370b5c-c1d7-49f1-a341-923a007ac495","0ae642ab-db4f-4f2d-bba7-ae46ba8d579d","32bc9040-a159-44fc-89ea-3883abf7408f","ca69295e-04a8-429b-914d-6d35f76b2fe9"]
 WAVES=30
 SPACING_S=2.0
@@ -103,8 +104,10 @@ async def run():
                                "Own existing synthetic project scope")
             case=case_from(owned,pid)
             require(case and case.get("state")=="AWAITING_REVIEW" and
-                    len(case.get("attempts",[]))==1 and case["attempts"][0]["state"]=="SUBMITTED" and
-                    len(case.get("versions",[]))==1,
+                    len(case.get("attempts",[]))==EXPECTED_PRIOR_ATTEMPTS and
+                    case["attempts"][-1]["number"]==EXPECTED_PRIOR_ATTEMPTS and
+                    case["attempts"][-1]["state"]=="SUBMITTED" and
+                    len(case.get("versions",[]))==EXPECTED_PRIOR_ATTEMPTS,
                     f"Synthetic project {n}: expected one awaiting-review submission")
             reviewed=json_success(await faculty.get(f"/api/v1/documents/departments/{DEPT}?project={pid}"),
                                   "Assigned Guide scoped project")
@@ -115,7 +118,7 @@ async def run():
                     f"Synthetic project {n}: assigned Guide authority missing")
             require(case.get("version")==projects[0].get("case",{}).get("version"),
                     f"Synthetic project {n}: case revisions inconsistent")
-            decisions.append((pid,case["attempts"][0]["id"],case["version"]))
+            decisions.append((pid,case["attempts"][-1]["id"],case["version"]))
             created.append((user,pid))
         require(len({pid for pid,_,_ in decisions})==COUNT,
                 "Distinct historical synthetic projects must not overlap")
@@ -137,7 +140,7 @@ async def run():
                                  "Student new revision authorization")
             case=case_from(current,pid)
             require(case and case.get("state")=="CHANGES_REQUESTED" and
-                    case.get("attempts",[])[0]["state"]=="CHANGES_REQUESTED",
+                    case.get("attempts",[])[-1]["state"]=="CHANGES_REQUESTED",
                     f"Synthetic project {n}: revision not available")
         print("DIAGNOSTIC_GUIDE_REVISION_PASS projects=8 "
               "prior_submission_history_retained=true",flush=True)
@@ -251,6 +254,7 @@ async def run():
 def self_test():
     require(COUNT==8 and WAVES==30 and MAX_READS==480 and SPACING_S>=2 and READER_SESSIONS_PER_STUDENT==3,
             "Load safety bound modified without review")
+    require(EXPECTED_PRIOR_ATTEMPTS==2,"Third-version acceptance scope changed")
     require(len(EXISTING_SYNTHETIC_PROJECTS)==COUNT and len(set(EXISTING_SYNTHETIC_PROJECTS))==COUNT,
             "Historical synthetic project fixture changed")
     require(len({expected_actor(i) for i in range(1,COUNT+1)})==COUNT,
