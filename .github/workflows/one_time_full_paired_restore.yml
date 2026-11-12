@@ -1,0 +1,58 @@
+name: SMART-PRO one-time independent PostgreSQL plus private PDF restore (manual, Free)
+on:
+  workflow_dispatch:
+    inputs:
+      approval:
+        description: 'Enter RESTORE_TO_LOCAL_POSTGRES_ONLY; encrypted Neon URL secret required'
+        required: true
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: smartpro-private-disaster-recovery-single-run
+  cancel-in-progress: false
+jobs:
+  independent-paired-local-restore:
+    if: inputs.approval == 'RESTORE_TO_LOCAL_POSTGRES_ONLY'
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: smartpro-ephemeral-restoration-only
+          POSTGRES_DB: smartpro_recovery
+        ports:
+          - 55432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d smartpro_recovery"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      SMARTPRO_RECOVERY_DATABASE_URL: ${{ secrets.SMARTPRO_RECOVERY_DATABASE_URL }}
+      SMARTPRO_HOSTED_TEST_ACCOUNTS: ${{ secrets.SMARTPRO_HOSTED_TEST_ACCOUNTS }}
+      SMARTPRO_PAIRED_RESTORE_APPROVAL: ${{ inputs.approval }}
+      SMARTPRO_PDF_RESTORE_CHECK: READ_ONLY_PRIVATE_PDF_RESTORE
+      SMARTPRO_RECOVERY_LOCAL_URL: postgresql://postgres:smartpro-ephemeral-restoration-only@127.0.0.1:55432/smartpro_recovery
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install free local PostgreSQL client and pinned Python libraries
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client-16
+          python -m pip install 'psycopg[binary]==3.2.10' httpx==0.28.1 pypdf==5.7.0
+      - name: Offline safety and syntax checks, no external writes
+        run: |
+          python -m py_compile scripts/full_paired_db_restore.py scripts/hosted_private_pdf_restore_check.py
+          python scripts/full_paired_db_restore.py --self-test
+          python scripts/hosted_private_pdf_restore_check.py --self-test
+          python scripts/test_verify_hosted_pdf_recovery.py
+      - name: Dump actual Neon read-only and restore all public table contents to disposable PostgreSQL 16
+        run: python -u scripts/full_paired_db_restore.py
+      - name: Retrieve real authorized private PDF bytes and verify fresh local copy against same DB manifest
+        run: python -u scripts/hosted_private_pdf_restore_check.py
