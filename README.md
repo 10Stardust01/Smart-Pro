@@ -1,183 +1,173 @@
-> **12 November 2026 authoritative status (read before older dated checkpoints):** Source `main` was `74338310` when this review began; the actual Render Free reviewer deployment is **LIVE** at `915a6546` (PR #37), with automatic deployment OFF. Six compared application source files have identical Git blobs on `main` and `deployment/reviewer-staging`; Git branch history still diverges and must not be blindly fast-forwarded or force-merged. The genuine hosted direct overall correction, subsequent graphical correction, corrected stage-evidence overall re-release, signed Faculty-access handover, live CSS contrast fix, five-role keyboard smoke and bounded read-soak are **already PASSED within their recorded synthetic scopes**. See hosted runs [43034757343](https://github.com/10Stardust01/Smart-Pro/actions/runs/43034757343), [43043955485](https://github.com/10Stardust01/Smart-Pro/actions/runs/43043955485), [43065220997](https://github.com/10Stardust01/Smart-Pro/actions/runs/43065220997), [43055424143](https://github.com/10Stardust01/Smart-Pro/actions/runs/43055424143), [43050757492](https://github.com/10Stardust01/Smart-Pro/actions/runs/43050757492) and [43066865472](https://github.com/10Stardust01/Smart-Pro/actions/runs/43066865472). Older statements that any of those checks is pending are **historical, not current release gates**.
->
-> **Actual-system recovery rehearsal — partial, NOT a recovery pass:** Read-only inventory of original Neon `main` found **124 projects, 8 overall-result rows, 412 audit events and 39 READY private PDF metadata records**, whose **39 distinct bucket keys and sizes matched 39 objects (8,701,217 bytes)**. An isolated `smartpro-realdata-paired-recovery-audit-20261112` branch was created from actual main at its then-current LSN, without changing the original default branch or Render service. Its **124 / 8 / 412** counts, all 39 SHA-256 database manifest values, and the 39 bucket keys/sizes matched source. This demonstrates *branch-copy/inherited object metadata*, **not** an independent external database dump plus original private-PDF-byte backup/restore, byte-by-byte SHA-256 comparison, or application download at a separate destination. A presigned storage GET was issued, but this execution environment could not resolve the private Neon storage hostname, so **no original PDF bytes were retrieved**. Preserve both branches; do not repeat live snapshot restore. Paired independent recovery remains **OPEN**.
->
-> **Capacity and accessibility boundaries:** On isolated real-data branch, sampled `EXPLAIN ANALYZE` calls of the authorized HOD correction page and Guide selected-project correction function took **67.88 ms** and **12.585 ms**, respectively, with only **4 correction requests across 3 projects** in the copied database. This does **not** validate hosted 126+ correction pagination or simultaneous writers. Earlier 8-of-8 **distinct-project** hosted uploads passed (p95 **2.903s**), but an **eight-session same-project** burst failed its **10s stopping gate** (p95 **10.972s**, 2×200/6×409). Ten seconds is **not** an acceptable normal UX target; provisional p95 engineering targets for review are ~1s routine reads, ~2s common writes, and ~3–5s small PDFs, to be validated with realistic hardware, identities and load before adoption. Existing 10-screen automated axe zero-violation and five-role keyboard skip-link passes **do not constitute** screen-reader, all-form keyboard or PDF-accessibility acceptance. Real institutional authentication/mapping is explicitly **DEFERRED to approved onboarding**, not a broken synthetic-staging feature. Human assistive-technology testing, accessible private PDFs, sustained realistic mixed-role writes, live large-dataset correction browsing, paired recovery and institutional sign-off remain **OPEN**.
->
-# SMART-PRO — Project lifecycle and academic evaluation platform
+<div align="center">
 
-> **11 November 2026 — eight distinct synthetic project uploads PASSED:** To distinguish same-project contention from broader upload capacity, [one-time actual Render HTTPS run #43067876600](https://github.com/10Stardust01/Smart-Pro/actions/runs/43067876600) used **eight separate synthetic projects**, one ~256 KiB PDF per project, eight concurrent signed sessions of the same synthetic Student. All **8/8 returned HTTP 200**, p95/max **2.903 s**, all **8/8 private downloaded PDF SHA-256 hashes matched**, zero retries, and the original historical overall result remained unchanged. This **contrasts with** the earlier 8-session **same-project** wave (2×200, 6×409, p95 10.972 s) and supports the inference that per-project serialization/contended writes contributed to the earlier outcome. It does **not** establish eight distinct identities, sustained real deadline load, mixed submissions/marking at scale, an institutional SLA or independent paired PDF/database recovery; those remain OPEN.
->
-> **11 November 2026 — five-role hosted keyboard smoke passed; eight-upload peak gate failed:** [Signed Chromium keyboard #43066865472](https://github.com/10Stardust01/Smart-Pro/actions/runs/43066865472) **PASSED for all five roles** on skip-link focus, visible outline, main anchor and continued Tab navigation; this is not a human screen-reader or PDF audit. A bounded real HTTPS eight-session/same-synthetic-Student 256 KiB private PDF upload burst [#43066015323](https://github.com/10Stardust01/Smart-Pro/actions/runs/43066015323) **FAILED its p95 ≤10s gate at 10.972s**, with **2 HTTP 200 / 6 HTTP 409** uploads in independently checked Render app logs. The test stopped before submission/marking/publication races. The 409s are explicit conflicts, not evidence of lost marks; this is not eight independent students/projects. Original historical result remained one version. **Representative sustained mixed-write/deadline load remains OPEN.** A direct private Neon presigned GET from this runtime failed to resolve the storage host, so no independent paired original-PDF-byte/database restore is claimed. [Detailed evidence](docs/HOSTED_KEYBOARD_AND_EIGHT_UPLOAD_20261111.md).
->
-> **11 November 2026 — genuine stage-evidence correction and overall re-release PASSED on hosted HTTPS:** In a new synthetic-only correction-enabled offering, the assigned evaluator used the actual signed HTTP `REQUEST_CORRECTION` → Coordinator `AUTHORIZE_CORRECTION` → evaluator `APPLY_CORRECTION` path to publish changed stage evidence. A Guide then submitted `REQUEST_FINAL_REVISION` with `mode=STAGE_EVIDENCE`; the signed Coordinator approved the exact pending request, and the Student saw overall **v1 40.00 → v2 42.00** while both source hashes changed. [One-time completion run #43065220997](https://github.com/10Stardust01/Smart-Pro/actions/runs/43065220997) **PASSED**, with independent read-only Neon verification of both overall versions and the distinct stage-source digests. The original historical project remains v1 40.00 unchanged. The first workflow [#43064828444](https://github.com/10Stardust01/Smart-Pro/actions/runs/43064828444) stopped after successfully creating genuine corrected stage evidence and the pending Guide request because its test incorrectly expected a top-level `type` field in the Coordinator queue; **the same pending request was completed once**, without duplicating the correction or creating another project. All tests used the existing Render/Neon Free reviewer staging and synthetic identities, without changing historical academic policy. **This closes the bounded genuine hosted stage-evidence re-release gate**, not institutional policy ratification or recovery/peak-write/assistive-technology acceptance.
->
-> **11 November 2026 — independently verified faculty handover and recovery-incident findings (latest status):** On real Render Free reviewer HTTPS, [one-time signed synthetic handover #43055424143](https://github.com/10Stardust01/Smart-Pro/actions/runs/43055424143) **PASSED**: Admin terminated an isolated temporary Faculty term on the existing synthetic Student identity; same signed session lost Faculty access but retained Student access; Coordinator explicitly appointed a different Faculty Guide to a *new synthetic project*. Independent Neon readback confirmed **2 append-only handover records, 2 successive Guide assignments, inactive temporary Faculty role, active Student role and zero published results** for that project. No established Faculty term was revoked. Two aborted earlier attempts had safely terminated temporary access; the final run passed. **Close the bounded hosted faculty access/Guide handover check**, not institutional staff authority approval.
+# 🎓 SMART-PRO
 
-> **Recovery warning — not an acceptance pass:** A Neon manual database snapshot restored through the connector unexpectedly swapped default branch and moved the application compute onto older snapshot state. The original branch and records were preserved; the original `br-solitary-cherry-b3lygsgt` was restored as default `main`, original compute hostname `ep-delicate-tooth-b3x8g5uu` remapped to it, and the snapshot left as a separate inspection branch. Verified original current **113 projects, 4 overall-result versions, 4 handover records and 29 READY file assets / 29 stored objects**. Independent [signed Render HTTPS routing audit #43056746567](https://github.com/10Stardust01/Smart-Pro/actions/runs/43056746567) **PASSED**: newly created post-snapshot synthetic project accessible, original historical final result v1 intact, terminated temporary Faculty not reactivated. Brief routing disruption *may* have occurred during the swap; its duration/impact was not measured. Crucially, **the older snapshot branch showed 0 private bucket objects versus 29 on the original**, proving that this database snapshot alone does NOT recover private PDFs. **Paired independent DB + original private PDF byte restore remains OPEN**, and snapshot restore must not be repeated against live staging. No policy/academic marks/payments/trials changed.
+### Academic projects, from registration to results.
 
-> **Hosted accessibility contrast fix LIVE and independently verified — 11 November 2026:** [Reviewer-staging PR #32](https://github.com/10Stardust01/Smart-Pro/pull/32) merged the one-line `frontend/styles.css` change (`.metric small` `#819094` → `#586b70`) to deployment branch commit **`ced07d6`**, leaving all academic policies, results and migrations unchanged. On the existing Render **Free** `Smart-Pro` workspace, manually triggered deploy **`dep-dbq8oe6gekts73eoqjdg`** reached **Live**; automatic deployments remain OFF. [Independent signed-in real-site Chromium/axe scan #43050757492](https://github.com/10Stardust01/Smart-Pro/actions/runs/43050757492) **PASSED without any CSS preview/override**: retrieved the actual served stylesheet, verified computed corrected foreground on Student/Faculty overview, and scanned **10 screens across five signed roles with zero automated WCAG 2.0/2.1 A/AA violations**. This closes the *specific hosted overview metric contrast remediation* gate. It **does not** establish complete WCAG conformance: manual assistive-technology/keyboard checks, accessible private PDFs, and institutional sign-off remain open. Earlier notes about unpromoted staging PR #32 below are historical snapshots.
->
-> **Accessibility correction — source merged, hosted promotion pending (11 November 2026):** Baseline real signed-in reviewer [axe audit #43047014955](https://github.com/10Stardust01/Smart-Pro/actions/runs/43047014955) completed 10 screens for five roles and identified **six low-contrast helper text nodes** (three Student and three Faculty overview cards), with `#819094` on `#fffefa` at **3.27:1** rather than required **4.5:1**. The eight other audited screens had zero automated WCAG 2.0/2.1 A/AA violations. [PR #31](https://github.com/10Stardust01/Smart-Pro/pull/31) merged a narrowly scoped **source-only** CSS fix (`.metric small` → `#586b70`, approximately **5.55:1**) plus a static contrast regression at GitHub `main` **`40be1d5`**, with five current PR CI checks passing. [Browser-local preview #43047559954](https://github.com/10Stardust01/Smart-Pro/actions/runs/43047559954) passed **10/10 automated screens only with that exact CSS preview injected**; it is **not proof the hosted reviewer currently serves the fix**. [Draft reviewer-staging PR #32](https://github.com/10Stardust01/Smart-Pro/pull/32) is ready but **not merged or deployed** pending explicit owner confirmation of the Render `Smart-Pro` workspace and controlled promotion. Fresh real-hosted scan *without CSS injection*, assistive-technology/manual testing and accessible PDF review remain OPEN; no WCAG conformance certification is claimed.
->
-> **Bounded actual hosted authenticated read-soak PASSED:** [run #43044346237](https://github.com/10Stardust01/Smart-Pro/actions/runs/43044346237) signed in all five synthetic roles and completed **300/300 read-only `/api/v1/workspace` responses** across **120 seconds** at an intended **2.5 GET/s**. Client timings: **p50 0.546s, p95 0.824s, p99 0.904s, max 1.000s**; no retries, file/mark/policy writes, paid browsers, upgrades or trials. This closes only the **bounded five-role authenticated read-soak check**. Sustained mixed academic writes at realistic deadlines, larger user loads, institutional throughput/SLA and sign-off remain **OPEN**.
->
-> **New independent graphical browser acceptance — 11 November 2026:** [GitHub Actions run #43043955485](https://github.com/10Stardust01/Smart-Pro/actions/runs/43043955485) **PASSED** with actual signed-in Chromium Guide, Coordinator and Student screens on the existing correction-only synthetic project. The Guide requested overall **42.00**, Coordinator approved, and Student saw **40.00 v1 → 41.00 v2 → 42.00 v3**. Follow-up independent read-only Neon verification found **2** exact correction requests, **2** decisions, **2** applications, **4** correction audit events and identical stage-source digests across all three releases; the original historical project remains unchanged at version 1. This **closes the separate graphical direct-overall correction check**. The first attempt [#43042080326](https://github.com/10Stardust01/Smart-Pro/actions/runs/43042080326) failed in GitHub runner OS font installation before academic writes; the successful rerun avoided the inaccessible Ubuntu apt mirror. Both runners are isolated on their one-time test branch, not merged into `main`. Hosted stage-evidence re-release, signed Admin Faculty access handover, paired DB + original PDF restore, representative sustained mixed-write load, assistive-technology/accessibility and institutional approval remain open.
->
-> **Current reviewer-staging acceptance — 11 November 2026 (not institutional production):**
-> The approved exceptional post-publication Guide → Coordinator correction is now fixed, independently verified, and live. [PR #27](https://github.com/10Stardust01/Smart-Pro/pull/27) introduced forward-only **065** after existing 059–064, removing the unintended `allowFinalCorrections` veto from the **overall-result** correction write and Guide read paths. The original pinned framework keeps `allowFinalCorrections=false` for finalized **stage-mark** corrections, while the exceptional Guide request → responsible Coordinator decision remains available. Seven PR checks passed; Render Free reviewer staging deploy `dep-dbq78obrjlhs73cvo5gg` reached **Live** at source `f315bd2`, with Neon Free reviewer-staging main migration 065 installed. No existing academic policies, old published marks, stage scores, audit history or original private files were edited.
->
-> **Actual hosted HTTPS workflow PASSED:** [GitHub Actions run #43034757343](https://github.com/10Stardust01/Smart-Pro/actions/runs/43034757343) exercised all **five signed-in synthetic roles** on the live reviewer service, creating a separate synthetic offering/project with a *pinned false stage-correction flag*. Assigned Guide requested a specific correction, Coordinator approved, unauthorized Student decision was rejected, and the Student saw preserved original overall mark **40.00** and successor **41.00** as versions **1 → 2**. Independent read-only Neon verification found exactly **one** request, **one** approved decision, **one** application, **two** correction audit events, and identical underlying published stage sources. The pre-existing historical project remains version **1** with its original result fingerprint unchanged. This acceptance execution used a **one-time push-triggered workflow on a separate test branch**, not a new workflow merged into `main`.
->
-> **Still not institutional acceptance:** The hosted **stage-evidence re-release variant** has isolated-regression evidence but was not included in this direct-overall correction run; signed-in Admin faculty handover, independent paired database+private-PDF fresh-destination restore, sustained authenticated capacity, accessibility and institutional production sign-off remain open. Details: [requirements register](docs/REQUIREMENTS_COMPLETION_REGISTER.md) and [release gate #4](https://github.com/10Stardust01/Smart-Pro/issues/4). Historical snapshots elsewhere in this README describe the state on **10 November** and must not be used as current deployment instructions.
+**A role-based departmental platform for student projects, faculty guidance, document reviews, assessments, and accountable academic decisions.**
 
-> **Historical checkpoint only — 10 November 2026 (superseded by the 11 November acceptance above):**
-> Neon Free staging **main** now contains migrations **059–063**, with 061 → 062 → 063 installed as separate atomic transactions. Existing Render Free reviewer service manually deployed source commit **`0419358dc5a3c87d5ef5290909b7cbc00e59fb40`** ([PR #12](https://github.com/10Stardust01/Smart-Pro/pull/12)). All published-result, stage-result, audit and READY-file metadata digests remained unchanged. Permissioned Coordinator/Admin reads succeeded and unauthorized Student/Faculty reads were denied. The original pre-059 and new pre-061 recovery branches remain.
->
-> **Still outstanding:** actual private PDF byte/hash restoration, independently verified paired database+file recovery, full authenticated hosted Guide → Coordinator → Student/Faculty browser acceptance, peak-load tests and institutional approval. PR #12 passed **five** checks; its sixth correction-browser check was **cancelled during Chromium installation at the 12-minute timeout**, so do not claim 6/6. No paid feature/trial was used. [Release evidence and open gates](https://github.com/10Stardust01/Smart-Pro/issues/4).
+[![Python](https://img.shields.io/badge/Python-3.12-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
+[![Django](https://img.shields.io/badge/Django%20%2B%20DRF-Backend-0C4B33?style=flat-square&logo=django&logoColor=white)](https://www.djangoproject.com/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?style=flat-square&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+![Stage](https://img.shields.io/badge/Stage-Reviewer%20pilot-007F86?style=flat-square)
 
+**[Open reviewer website](https://smartpro-reviewer-25775915.onrender.com)** · **[Current evidence](docs/REQUIREMENTS_COMPLETION_REGISTER.md)** · **[Institutional readiness](docs/INSTITUTIONAL_READINESS.md)**
 
-SMART-PRO is a Django / Django REST Framework and PostgreSQL application for
-departmental project registration, teams, guide assignments, document revision
-and approval, configurable evaluation, results, and academic history. The
-frontend contains role-specific workspaces for Student, Faculty, Coordinator,
-HOD, and Admin.
+</div>
 
-**Current source and decisions:** [Consolidated development checkpoint](docs/CONSOLIDATED_DEVELOPMENT_CHECKPOINT.md). GitHub integration and live Render/Neon deployment are different steps.
+> [!IMPORTANT]
+> **Current status — 12 November 2026:** SMART-PRO has a functioning, substantially tested academic project-management foundation. The online site is a **synthetic reviewer environment, not institutional production**. Faculty-proposed PRC/panel/final-report workflows are **not yet fully implemented**, and the concurrent PDF-upload latency target is still open. Do not use staging to approve real students, marks, or appointments.
 
-## Existing reviewer staging deployment
+---
 
-- **Application:** [SMART-PRO reviewer staging](https://smartpro-reviewer-25775915.onrender.com)
-- **Hosting:** Render **Free** web service (Docker, Singapore).
-- **Database:** existing SMART-PRO PostgreSQL 16 project on Neon **Free**.
-- **Source:** `deployment/reviewer-staging`; deployment verified at
-  commit `f315bd2abcf45e8412d50b02692893c5046317f6` (reviewer deployment `dep-dbq78obrjlhs73cvo5gg` verified **Live** 11 November 2026).
-  Automatic Render deployment remains off; this is reviewer staging, not institutional production.
-- **Access:** staging-only authenticated reviewer sessions, backed by effective
-  database roles. Use **synthetic academic identities and records only**; do not
-  use the site for live institutional approvals or marks.
+## ✨ What SMART-PRO already does
 
-The application is **already deployed**, but a live web service is not the same
-as production/institutional sign-off. See
-[repository status](docs/REPOSITORY_STATUS.md),
-[department review checklist](docs/DEPARTMENT_REVIEW_CHECKLIST.md), and
-[deployment and recovery](docs/DEPLOYMENT_AND_RECOVERY.md) for verification and
-remaining requirements.
+| Area | Implemented and verified within the recorded test scope |
+| --- | --- |
+| **Student projects** | Team formation, project registration, project visibility, and scoped histories |
+| **Guidance & documents** | Guide assignments, synopsis and configurable PDF submissions, reviewer feedback, revision/resubmission, immutable file versions |
+| **Academic evaluation** | Configurable review stages and rubrics, evaluator assignment, individual/combined marking, stage and overall result publication |
+| **Corrections & history** | Authorized corrections, preserved original releases, audit trails, and historically traceable assignments |
+| **Department operations** | Admin/HOD/Coordinator authority workflows, offerings, faculty appointments, intake, search, and pagination |
+| **Visibility & reminders** | Submission/evaluation summaries; approved, configurable academic deadlines and in-app reminder machinery |
+| **Safety** | Role-based authorization, protected private documents, integrity checks, and independently tested local database + PDF-byte recovery |
 
-**Hosting restriction:** continue only with genuine ongoing free plans. Do not
-upgrade to paid resources, activate free trials or trial credits, consume Railway
-trial credits, or add charge-incurring services. Verify the relevant plan and
-limits before every infrastructure change. Keep the existing live service,
-database, and immutable academic history intact.
+SMART-PRO has **five core workspaces**: **Student, Faculty (Guide/Evaluator), Coordinator, HOD, and Admin**. Roles and project-specific responsibilities are not the same thing: a faculty member may be assigned to a particular project or assessment without gaining department-wide access.
 
-**Correction alignment:** Neon reviewer-staging main now has sequentially installed candidates **059–065**, including approved Faculty handover 063–064 and the scoped exceptional overall-result defect fix **065**. This is not a new academic policy: assigned Guide requests an exact post-publication correction and the offering Coordinator approves or rejects it, including when the same person performs both roles. Ordinary finalized-stage mark correction restrictions remain separate. The signed HTTPS direct-overall correction journey **passed** [run #43034757343](https://github.com/10Stardust01/Smart-Pro/actions/runs/43034757343), and the new synthetic history was verified independently in Neon. Never re-run installed candidates 059–065; use forward-only controlled migrations for future changes. See [post-publication correction alignment](docs/POST_PUBLICATION_CORRECTION_ALIGNMENT.md) and [release gate #4](https://github.com/10Stardust01/Smart-Pro/issues/4).
+### Current workflow foundation
 
-## Historic PostgreSQL prototype reproduction
-
-The commands and inventory below are preserved as **historical validation
-context**, not instructions to configure, overwrite or redeploy the current
-Render/Neon staging service. Never run `--recreate` against a live database.
-The original local synopsis harness remains available for regression testing;
-use isolated synthetic test databases and private test files only.
-
-## Reproduce with PostgreSQL 16
-
-Python 3.12 is the tested interpreter. From this package root:
-
-```powershell
-python -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -r requirements-lock.txt
-docker compose -f database-v1.5/compose.yaml up -d
-Get-Content .env.example | ForEach-Object {
-    if ($_ -match '^([^#=]+)=(.*)$') {
-        [Environment]::SetEnvironmentVariable($Matches[1], $Matches[2], 'Process')
-    }
-}
-.\.venv\Scripts\python.exe validate.py --recreate --label local
+```mermaid
+flowchart LR
+  A["Team & project registration"] --> B["Document submission"]
+  B --> C["Assigned faculty review"]
+  C -->|"Changes requested"| B
+  C --> D["Configured assessment stages"]
+  D --> E["Evaluation & publication"]
+  E --> F["Results & preserved history"]
 ```
 
-`--recreate` **destroys only the explicitly named isolated test database**.
-Both the affirmative test flag and a `smartpro_test*` / `smartpro_validation*`
-database name are required. Never point this runner at real academic records.
-The administrative DSN is used only for migrations/test fixtures; the API uses
-a separate non-superuser `smartpro_api` login and `smartpro_runtime` privileges.
+This is the **implemented foundation**, not a claim that the new faculty-proposed PRC entry gate or presentation-panel lifecycle is already enforced.
 
-On Bash/Linux, use `python3 -m venv .venv`, activate it, install the lock file,
-then `set -a; . ./.env.example; set +a` and `python validate.py --recreate`.
-The root GitHub workflow executes that Python validation runner. CI and Docker
-Compose were configured but **not executed in this Windows session**; the
-actual recorded server was portable PostgreSQL 16.15.
+---
 
-### Native Windows alternative (used for actual server execution)
+## 🧭 Faculty workflow alignment — what comes next
 
-Get PostgreSQL 16 Windows binary archives from the
-[official EDB binary download page](https://www.enterprisedb.com/download-postgresql-binaries).
-The exact tested download URL, size and SHA-256 are in
-`evidence/postgres-binary-source.json`. Extract `pgsql/bin`, `pgsql/lib` and
-`pgsql/share` together. No Windows service installation is necessary.
+Faculty supplied a broader flow covering **PRC, presentation panels, final report review, HOD final marks, and project closure**. Two follow-up product decisions clarify that **PRC acts before Guide allocation**, and a **PRC rejection requires a new synopsis submission**.
 
-```powershell
-$python = '.\.venv\Scripts\python.exe'
-& $python scripts/portable_postgres.py --bin-dir C:/path/to/pgsql/bin --data-dir C:/path/to/private-test/pgdata --action start
-$settings = Get-Content C:/path/to/private-test/pgdata.env.json -Raw | ConvertFrom-Json
-$settings.PSObject.Properties | ForEach-Object {
-    [Environment]::SetEnvironmentVariable($_.Name, [string]$_.Value, 'Process')
-}
-& $python validate.py --recreate --label native
-& $python scripts/portable_postgres.py --bin-dir C:/path/to/pgsql/bin --data-dir C:/path/to/private-test/pgdata --action stop
+| Priority | Faculty-aligned capability | Status |
+| --- | --- | --- |
+| **P1** | PRC review **before** Guide allocation; approve / request modification / reject; fresh synopsis after rejection; preserved decision history; backend entry gate | 🔴 **Not implemented end-to-end** |
+| **P2** | Coordinator-created presentation panels, Chair/members, project allocations, venue/time, panel-specific marking workspace | 🔴 **Not implemented** |
+| **P3** | Dedicated final-report reviewer workflow, section checklist, Minor/Major Corrections, approval and resubmission tracking | 🟠 **Generic document-review foundation exists** |
+| **P4** | Faculty-specified HOD final-marks step and explicit project closure | 🟠 **Result publication exists; specified gate/closure do not** |
+| **P5** | Milestone progress updates, completion indicators, broader event alerts and project-risk dashboard | 🟠 **Basic deadlines, summaries and reminders exist** |
+
+**Design boundaries:** Reuse current document/versioning and evaluation systems; do not rebuild them. Do not silently add PRC voting/quorum rules, panel approval layers, or new HOD restrictions. Existing HOD governance and the faculty document's narrower final-marks description need deliberate policy alignment before changing permissions. These changes are **proposed work, not shipped features**.
+
+For the full engineering/acceptance status, see the [requirements completion register](docs/REQUIREMENTS_COMPLETION_REGISTER.md).
+
+---
+
+## 🧪 Verification, not just screenshots
+
+Selected reproducible evidence from the **actual hosted reviewer** and isolated test environments:
+
+| Check | Measured outcome |
+| --- | --- |
+| **Eight distinct authenticated Student actors** | 8/8 private uploads, checksum checks and submissions functionally passed in bounded hosted runs |
+| **Authenticated reads (4-thread baseline)** | 480/480 successful; p95 **1.882 s** pooled across 8/16/24 sessions using the *same eight* Student identities |
+| **Eight simultaneous 128 KiB PDFs** | p95 **5.641 s**, **above** the fixed 5.000 s target |
+| **Eight-thread experiment** | Upload p95 worsened to **6.126 s**; read profile encountered a non-200 response; reverted to **4 threads** |
+| **Independent local recovery** | PostgreSQL data/constraints/routines verified after restore; **41/41** original private PDFs copied and SHA-256 checked |
+| **Accessibility sampling** | Ten signed-in mobile screens and bounded keyboard/automated checks passed; human screen-reader testing remains open |
+
+**What this does not prove:** campus-scale load capacity, a passing eight-upload performance target, full PDF accessibility, institutionally approved academic policy, or production readiness. Earlier successful functional tests do **not** turn a measured performance failure into a pass.
+
+**Evidence:** [four-thread run](https://github.com/10Stardust01/Smart-Pro/actions/runs/43195738956) · [eight-thread comparison](https://github.com/10Stardust01/Smart-Pro/actions/runs/43197635174) · [paired recovery](https://github.com/10Stardust01/Smart-Pro/actions/runs/43152921591) · [mobile/read checks](https://github.com/10Stardust01/Smart-Pro/actions/runs/43156630643)
+
+---
+
+## 👀 Reviewer website and sample data
+
+**[Launch SMART-PRO reviewer](https://smartpro-reviewer-25775915.onrender.com)**
+
+The reviewer website runs on **Render Free** with a **Neon Free PostgreSQL** database. Its deployment branch is `deployment/reviewer-staging`, deliberately separate from `main`; **Render auto-deploy is off**. The checked safe configuration uses **one Gunicorn worker with four threads**.
+
+**Why do records appear right after login?** The staging reviewer accounts map to existing synthetic database identities. The browser calls backend APIs, which retrieve **already-created testing records from PostgreSQL**. This is **prepopulated test data**, not proof that every displayed value is hardcoded in JavaScript—and it is **not real faculty/student input**.
+
+Reviewer passwords are **not** in the repository. Use your privately provided staging credentials; do not paste credentials, private PDFs, database URLs, or approval evidence into issues or commits.
+
+---
+
+## 🛠️ Built with
+
+| Layer | Technology |
+| --- | --- |
+| UI | HTML, CSS and native JavaScript ES modules; role-specific workspaces |
+| Application | Python 3.12, Django, Django REST Framework |
+| Data | PostgreSQL 16 with versioned SQL migrations and permissioned routines |
+| Documents | Private S3-compatible object storage; PDF validation and SHA-256 integrity |
+| Testing | Python/SQL contracts, frontend tests, bounded signed-in browser/HTTPS checks |
+| Reviewer deployment | Render Free + Neon Free; no paid resources or trials required |
+
+```text
+frontend/                 Role-specific browser UI
+backend/smartpro/         Django APIs, authorization and domain views
+proposals/curriculum/     Ordered academic schema and workflow changes
+scripts/                  Local launcher, test and verification helpers
+.github/workflows/        CI and controlled reviewer acceptance checks
+docs/                     Technical decisions, evidence and runbooks
 ```
 
-Choose a new private test directory **outside the source tree**. Random local
-credentials remain in its environment file. The server listens only on
-127.0.0.1, default port 55439, and uses SCRAM authentication. The archive does
-not bundle PostgreSQL binaries, data directories or local credentials.
+### Run a local development workspace
 
-## Manual API demonstration
+Start with the [deployment & recovery guide](docs/DEPLOYMENT_AND_RECOVERY.md). The local launcher requires the **existing provisioned loopback PostgreSQL 16 environment** and its private, ignored settings; it does not create PostgreSQL for you.
 
-After setting the test environment and provisioning PostgreSQL as above:
+From the repository root in Windows PowerShell:
 
 ```powershell
-.\.venv\Scripts\python.exe db_setup.py --seed api_seed.sql --create-test-login
-.\.venv\Scripts\python.exe workflow-poc/app.py
+# Only if the dedicated smartpro_dev workspace has NOT been initialized:
+& .venv/Scripts/python.exe scripts/application.py init-development
+
+# Regular startup — reuses existing local data:
+& .venv/Scripts/python.exe scripts/application.py serve-development --port 8021 --faculty-reference
 ```
 
-This resets the isolated test schema and creates the original synthetic
-workflow fixtures. The server binds only to 127.0.0.1:8765. Use `/docs` or the
-updated `workflow-poc/openapi.json`. `SMARTPRO_DEMO_AUTH=YES` explicitly enables
-insecure test-only `X-Demo-User` identities and aliases `case-1`, `synopsis-1`,
-etc. No production identity adapter is configured; with the flag off, protected
-routes reject requests. Never expose demo authentication to real users.
+Open **http://127.0.0.1:8021/**. Run `init-development` only once on an unused dedicated development database. Normal startup **does not** create academic records, seed test users, apply migrations or reset a database.
 
-The original upload → submit → request changes → upload revision → resubmit →
-approve sequence and response fields remain. History now includes exact
-document-version IDs. Upload verification is a bounded-size/PDF-signature
-**test verifier**, not a PDF security assessment or malware scan.
+For an isolated disposable browser test workspace:
 
-## Layout / validation scope
+```powershell
+& .venv/Scripts/python.exe scripts/application.py test-workspace --port 8003
+```
 
-- `database-v1.5/migrations/001`–`004`: original SQL, unchanged.
-- `005`–`009`: forward integrity, publication, upload/outbox, scoped runtime
-  authorization, temporal and historical guards; `btree_gist` is required.
-- `db_setup.py`: explicit isolated migration/seed runner and runtime grants.
-- `workflow-poc/domain.py`: framework-independent synopsis transactions.
-- `academic_services.py`: named single-evaluator **test policy** publication,
-  ownership-token outbox leases/retries, local notification deduplication.
-- `tests/` and `workflow-poc/tests/`: actual PostgreSQL, API and concurrency
-  tests. Four institutional-policy cases are explicitly skipped.
-- `validate.py`: clean-room runner, exit codes, JUnit XML and schema inventory.
-- `evidence/`: baseline failures and final executed results; source ZIP and
-  source hashes preserve the supplied implementation.
-- `.github/workflows/postgres-validation.yml`: root CI workflow, configured
-  but unverified on GitHub. The supplied nested workflow is historical.
+These launchers are **local-only**. Do not point any test reset/recreate command at the hosted Neon database, restore snapshots over staging, or treat a local synthetic persona as institutional authentication. Historical PostgreSQL prototype/test-reproduction material remains in the [deployment guide](docs/DEPLOYMENT_AND_RECOVERY.md) and source tree.
 
-The SQL-only legacy runner remains available as
-`bash database-v1.5/run-tests.sh` for an **empty** isolated PostgreSQL 16 database;
-it now discovers every ordered migration. The full Python runner also executes
-API/concurrency tests and lint and is authoritative for this validation.
+---
 
-Academic quorum, grade-amendment authority, retrospective membership exceptions
-and multi-evaluator aggregation are not invented. Publication reissue tests
-retain the same immutable source marks and append a release with a reason;
-they do not implement an institutional mark-amendment process. External
-notifications, production storage/authentication, backups, performance, RLS,
-and departmental deployment remain outside the verified prototype.
+## 🗺️ Collaboration and next steps
+
+1. **Align academic requirements:** PRC entry gate and rejection/resubmission, presentation panels, report reviewer and HOD-final/closure workflow—without inventing additional policy.
+2. **Extend proven components:** Prefer the existing assigned-reviewer, configurable documents and criteria-wise assessment mechanisms.
+3. **Finish operational acceptance:** Address hosted upload latency; then conduct representative campus workload, human accessibility, real-user usability and institutional approval checks.
+
+**Working agreement:** No paid services or free trials, no uncontrolled stress against Render Free, no destructive changes to retained academic history, and no changes to unrelated projects.
+
+### 📚 Documentation map
+
+- [Requirements & evidence register](docs/REQUIREMENTS_COMPLETION_REGISTER.md) — current pass/fail boundaries and outstanding gates.
+- [Course management](docs/COURSE_MANAGEMENT.md) — existing offering, stages, results and reminder model.
+- [Document submission APIs](docs/DOCUMENT_SUBMISSION_API.md) — synopsis and reviewer workflow contracts.
+- [Institutional readiness](docs/INSTITUTIONAL_READINESS.md) — authority, accessibility and sign-off boundaries.
+- [Deployment & recovery](docs/DEPLOYMENT_AND_RECOVERY.md) — local setup, staging limits and recovery.
+- [Architecture/stack review](docs/STACK_REVIEW.md) — design rationale and technical boundaries.
+
+---
+
+<div align="center">
+
+**SMART-PRO** · *Project management first. Faculty-aligned workflows next.*
+
+<sub>Reviewer pilot • Status checked 12 November 2026 • Not institutional production</sub>
+
+</div>
