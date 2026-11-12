@@ -1,6 +1,6 @@
 # One controlled eight-thread staging measurement — acceptance record
 
-**State: PREPARED, NOT EXECUTED.** Do not merge this marker until the reviewer staging deployment is Live with `SMARTPRO_GUNICORN_THREADS=8`, using the bounded 4/6/8 allowlist from PR #55 and reviewer-staging PR #56. There is still just one worker on Render Free. The test must use only the **eight existing independent synthetic Student actor IDs and projects**, exactly two prior documents/attempts per project; no duplicate teams or projects.
+**State: EXECUTED — FUNCTIONAL PASS, PERFORMANCE NONPASS, SAFE ROLLBACK COMPLETE.** This one-time run #43197635174 tested eight threads after reviewer staging deployed PR #56, and the original fixed 5.000-second upload target was missed (p95 6.126s versus four-thread 5.641s). Eight third-version synthetic PDF bytes and submissions were verified; session reads stopped on one non-200 at 16 concurrent sessions, so 480 reads did **not** complete. Four threads, disabled temporary aliases and disabled upload timing logs were restored in Live deployment `dep-dbqp1fbbc2fs73e1kbtg`. The 8-thread experiment is closed as worse; no retry merely to seek a pass. The original project policies and overall released results are unchanged. The bounded concurrency/throughput acceptance gap remains open. There is still just one worker on Render Free. The test must use only the **eight existing independent synthetic Student actor IDs and projects**, exactly two prior documents/attempts per project; no duplicate teams or projects.
 
 ## Baseline, four request threads
 
