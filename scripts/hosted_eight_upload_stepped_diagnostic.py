@@ -1,9 +1,10 @@
 """One diagnostic eight-distinct-Student HTTPS upload and stepped read-concurrency run.
 
 Eight signed synthetic Student actor UUIDs + existing Coordinator (and Faculty).
-Generates eight new audit-labeled projects/teams, verifies private PDF bytes,
+Uses eight existing audit-labeled projects via an authorized Guide request for changes,
+verifies private PDF bytes,
 eight independent submissions, then 480 bounded, paced read probes over ~2m.
-No academic history edits, no retry, no paid resources. Manual authorization only.
+Synthetic-only audited Guide revision decisions, no retry or paid resources.
 """
 import asyncio
 import hashlib
@@ -22,6 +23,7 @@ DEPT="10000000-0000-4000-8000-000000000001"
 OFFERING="8b40a6e1-419d-43c8-b625-279f82713b02"
 GUIDE="00000000-0000-4000-8000-000000000003"
 COUNT=8
+EXISTING_SYNTHETIC_PROJECTS=["279b6649-e628-4041-9061-79f886ed5fca","dac806c5-a598-4839-8f37-336873306ce7","3cdb87a4-1888-43a1-b1ec-bba5341b0aae","55aca111-f0fa-4f2f-95f9-c6294297e40f","22370b5c-c1d7-49f1-a341-923a007ac495","0ae642ab-db4f-4f2d-bba7-ae46ba8d579d","32bc9040-a159-44fc-89ea-3883abf7408f","ca69295e-04a8-429b-914d-6d35f76b2fe9"]
 WAVES=30
 SPACING_S=2.0
 MAX_READS=480
@@ -56,9 +58,9 @@ def validate_config():
     require(len(aliases)==COUNT and len({x["actor"] for x in students})==COUNT,
             "Student aliases or actors are not distinct")
     common=json.loads(os.getenv("SMARTPRO_HOSTED_TEST_ACCOUNTS") or "{}")
-    require(isinstance(common.get("Coordinator"),dict) and
-            isinstance(common["Coordinator"].get("password"),str),
-            "Existing authorized synthetic Coordinator credentials required")
+    require(isinstance(common.get("Faculty"),dict) and
+            isinstance(common["Faculty"].get("password"),str),
+            "Existing authorized synthetic Faculty/Guide credentials required")
     return students,common
 
 async def simultaneous(jobs):
@@ -76,46 +78,69 @@ async def run():
     students,common=validate_config()
     await wait_for_free_staging_readiness()
     users=[Reviewer("Student",x) for x in students]
-    coordinator=Reviewer("Coordinator",common["Coordinator"])
+    faculty=Reviewer("Faculty",common["Faculty"])
     nonce=uuid.uuid4().hex[:10]
     created=[]
     extras=[]
     try:
-        # Avoid hammering password hash login: authenticate 9 identities sequentially.
+        # Avoid hammering password hash login: authenticate nine identities sequentially.
         for n,person in enumerate(users,1):
             details=await person.login()
             require(details.get("actor",{}).get("id")==students[n-1]["actor"],
                     f"Distinct Student {n}: session bound to wrong underlying actor")
             require(details.get("access",{}).get("student") is True,
                     f"Distinct Student {n}: effective Student scope missing")
-        await coordinator.login()
+        await faculty.login()
         print("DISTINCT_LOGIN_PASS students=8 independent_actor_uuids=true "
-              "coordinator_existing=true no_credentials_logged=true",flush=True)
+              "guide_existing=true no_credentials_logged=true",flush=True)
+        # Reuse precisely the eight existing, audit-labeled synthetic projects.
+        # This avoids an invalid second team per Student within the same offering.
+        # Each project is AWAITING_REVIEW with one existing SUBMITTED attempt.
+        decisions=[]
         for n,user in enumerate(users,1):
-            offered=json_success(await user.get("/api/v1/me/curriculum-offerings"),
-                                 "Student eligible offering")
-            require(any(item.get("id")==OFFERING for item in offered.get("results",[])),
-                    "Chosen synthetic offering is not visible to a new student")
-            team=json_success(await user.post("/api/v1/teams",
-                {"offeringId":OFFERING,"name":f"Synthetic hosted load team {nonce} {n:02d}"},
-                key=f"distinct-{nonce}-{n}-team"),"Create isolated synthetic team",(201,))
-            tid=str(uuid.UUID(team["id"]))
-            project=json_success(await user.post("/api/v1/projects",
-                {"offeringId":OFFERING,"teamId":tid,
-                 "title":f"[SYNTHETIC-DISTINCT-LOAD] {nonce}-{n:02d}",
-                 "description":"Staging-only independent student HTTPS capacity evidence"},
-                key=f"distinct-{nonce}-{n}-project"),"Register isolated synthetic project",(201,))
-            pid=str(uuid.UUID(project["id"]))
-            require(project.get("teamId")==tid,"Student project not bound to owned synthetic team")
-            json_success(await coordinator.post(
-                f"/api/v1/staff/departments/{DEPT}/projects/{pid}/guide",
-                {"facultyId":GUIDE,"expectedGuideId":None},
-                key=f"distinct-{nonce}-{n}-guide"),"Assign guide for synthetic evidence")
+            pid=EXISTING_SYNTHETIC_PROJECTS[n-1]
+            owned=json_success(await user.get(f"/api/v1/documents/departments/{DEPT}?project={pid}"),
+                               "Own existing synthetic project scope")
+            case=case_from(owned,pid)
+            require(case and case.get("state")=="AWAITING_REVIEW" and
+                    len(case.get("attempts",[]))==1 and case["attempts"][0]["state"]=="SUBMITTED" and
+                    len(case.get("versions",[]))==1,
+                    f"Synthetic project {n}: expected one awaiting-review submission")
+            reviewed=json_success(await faculty.get(f"/api/v1/documents/departments/{DEPT}?project={pid}"),
+                                  "Assigned Guide scoped project")
+            projects=reviewed.get("projects") or []
+            require(len(projects)==1 and projects[0].get("id")==pid and
+                    projects[0].get("canReview") is True and
+                    (projects[0].get("guide") or {}).get("facultyId")==GUIDE,
+                    f"Synthetic project {n}: assigned Guide authority missing")
+            require(case.get("version")==projects[0].get("case",{}).get("version"),
+                    f"Synthetic project {n}: case revisions inconsistent")
+            decisions.append((pid,case["attempts"][0]["id"],case["version"]))
             created.append((user,pid))
-        require(len(created)==COUNT and len({pid for _,pid in created})==COUNT,
-                "Not all distinct Student projects were registered")
-        print(f"DISTINCT_FIXTURE_PASS projects={len(created)} each_owned_by_separate_student=true "
-              f"marker={nonce} retained_for_audit=true",flush=True)
+        require(len({pid for pid,_,_ in decisions})==COUNT,
+                "Distinct historical synthetic projects must not overlap")
+        print("DIAGNOSTIC_EXISTING_FIXTURE_PASS projects=8 "
+              "new_teams=0 new_projects=0 awaiting_guide_review=true",flush=True)
+        # Legitimate Guide REQUEST_CHANGES: this creates an audited new revision
+        # opportunity rather than bypassing the existing team/member policy.
+        for n,(pid,aid,case_version) in enumerate(decisions,1):
+            result=json_success(await faculty.post(f"/api/v1/documents/departments/{DEPT}",
+                {"action":"DECIDE","projectId":pid,"attemptId":aid,
+                 "expectedCaseVersion":case_version,"decision":"REQUEST_CHANGES",
+                 "comment":"Synthetic capacity diagnostic: please resubmit a new document version"},
+                key=f"diag-{nonce}-{n}-guide-request-changes"),
+                "Authorized Guide request changes")
+            require(result.get("status")=="CHANGES_REQUESTED",
+                    "Synthetic Guide did not request changes")
+        for n,(user,pid) in enumerate(created,1):
+            current=json_success(await user.get(f"/api/v1/documents/departments/{DEPT}?project={pid}"),
+                                 "Student new revision authorization")
+            case=case_from(current,pid)
+            require(case and case.get("state")=="CHANGES_REQUESTED" and
+                    case.get("attempts",[])[0]["state"]=="CHANGES_REQUESTED",
+                    f"Synthetic project {n}: revision not available")
+        print("DIAGNOSTIC_GUIDE_REVISION_PASS projects=8 "
+              "prior_submission_history_retained=true",flush=True)
 
         pdfs=[pdf_bytes(f"SYNTHETIC DISTINCT {nonce} FILE {n}",padding_bytes=UPLOAD_KIB*1024-1024)
               for n in range(1,COUNT+1)]
@@ -218,7 +243,7 @@ async def run():
         print("PASS_EIGHT_UPLOAD_AND_24_SESSION_READ_DIAGNOSTIC eight_signed_actors=true "
               "sessions_peak=24 campus_scale_not_proven=true",flush=True)
     finally:
-        for person in users+[coordinator]:
+        for person in users+[faculty]:
             await person.close()
         for person in extras:
             await person.close()
@@ -226,6 +251,8 @@ async def run():
 def self_test():
     require(COUNT==8 and WAVES==30 and MAX_READS==480 and SPACING_S>=2 and READER_SESSIONS_PER_STUDENT==3,
             "Load safety bound modified without review")
+    require(len(EXISTING_SYNTHETIC_PROJECTS)==COUNT and len(set(EXISTING_SYNTHETIC_PROJECTS))==COUNT,
+            "Historical synthetic project fixture changed")
     require(len({expected_actor(i) for i in range(1,COUNT+1)})==COUNT,
             "Distinct Student IDs are not independent")
     print("PASS_EIGHT_UPLOAD_STEPPED_READ_DIAGNOSTIC_PREFLIGHT",flush=True)
