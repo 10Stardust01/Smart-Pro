@@ -5,6 +5,7 @@ on:
     paths:
       - 'docs/.smartpro-eight-upload-stepped-profile-activation-20261112'
       - 'docs/.smartpro-eight-upload-revision-activation-20261112'
+      - 'docs/.smartpro-eight-thread-validation-20261112'
 permissions:
   contents: read
 concurrency:
