@@ -1,4 +1,5 @@
 name: SMART-PRO one-shot scoped HTTPS soak and mobile accessibility (Free)
+# Third reviewed launch: Admin leadership is POST-only; use Admin GET setup.
 # Second reviewed launch: account for Render Free cold start and Coordinator's
 # authorized catalog route; first launch stopped during preflight, no load.
 on:
