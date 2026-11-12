@@ -1,0 +1,35 @@
+name: SMART-PRO eight distinct signed synthetic Student academic writes (manual, Free)
+on:
+  workflow_dispatch:
+    inputs:
+      approval:
+        description: 'Type RUN_DISTINCT_SYNTHETIC_STUDENTS_ONCE (eight new synthetic team/projects and PDFs)'
+        required: true
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: smartpro-hosted-academic-writes-single-run
+  cancel-in-progress: false
+jobs:
+  distinct-student-actual-hosted:
+    if: github.ref == 'refs/heads/main' && inputs.approval == 'RUN_DISTINCT_SYNTHETIC_STUDENTS_ONCE'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      SMARTPRO_HOSTED_DISTINCT_STUDENTS: ${{ secrets.SMARTPRO_HOSTED_DISTINCT_STUDENTS }}
+      SMARTPRO_HOSTED_TEST_ACCOUNTS: ${{ secrets.SMARTPRO_HOSTED_TEST_ACCOUNTS }}
+      SMARTPRO_DISTINCT_LOAD_APPROVAL: ${{ inputs.approval }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install existing open-source HTTPS client only
+        run: python -m pip install httpx==0.28.1
+      - name: Offline hard caps and syntax preflight
+        run: |
+          python -m py_compile scripts/hosted_distinct_students.py
+          python scripts/hosted_distinct_students.py --self-test
+      - name: Eight distinct real signed Student academic writes and two-minute read window
+        run: python -u scripts/hosted_distinct_students.py
