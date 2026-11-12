@@ -25,7 +25,7 @@ STOP_AFTER_SECONDS = 5.0
 PATHS = {
  "Student": ("/api/v1/me/projects?page=1", f"/api/v1/documents/departments/{DEPT}?listing=1&page=1"),
  "Faculty": (f"/api/v1/documents/departments/{DEPT}?listing=1&page=1", "/api/v1/workspace"),
- "Coordinator": (f"/api/v1/courses/departments/{DEPT}?page=1",f"/api/v1/courses/offerings/{OFFERING}/evaluation-queue?page=1"),
+ "Coordinator": (f"/api/v1/courses/departments/{DEPT}",f"/api/v1/courses/offerings/{OFFERING}/evaluation-queue?page=1"),
  "HOD": (f"/api/v1/documents/departments/{DEPT}?listing=1&page=1", "/api/v1/workspace"),
  "Admin": ("/api/v1/workspace",f"/api/v1/staff/departments/{DEPT}/leadership"),
 }

@@ -3,12 +3,14 @@
 Runs on the actual signed-in HTTPS five-role reviewer with no academic writes.
 Automated browser semantics cannot certify human screen-reader announcement.
 """
+import asyncio
 import json
 import os
 import re
 import sys
 from playwright.sync_api import sync_playwright
 from hosted_extended_accessibility import BASE, DEST, ROLES, login, ready, must
+from hosted_mixed_academic_pilot import wait_for_free_staging_readiness
 
 MOBILE_WIDTH=320
 HEIGHT=680
@@ -64,6 +66,9 @@ def run():
     must(all(isinstance(accounts.get(r),dict) and
              re.fullmatch(r"[a-z][a-z0-9-]{1,39}",accounts[r].get("alias",""))
              for r in ROLES),"Five existing test accounts needed")
+    # Render Free can return a warming splash page before /reviewer/login exists.
+    # Read-only readiness probes are outside mobile accessibility measurements.
+    asyncio.run(wait_for_free_staging_readiness())
     with sync_playwright() as p:
         browser=p.chromium.launch(headless=True)
         try:
