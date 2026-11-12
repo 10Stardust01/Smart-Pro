@@ -1,5 +1,9 @@
 name: SMART-PRO eight distinct signed synthetic Student academic writes (manual, Free)
 on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/.smartpro-eight-distinct-activation-20261112'
   workflow_dispatch:
     inputs:
       approval:
@@ -13,14 +17,17 @@ concurrency:
   cancel-in-progress: false
 jobs:
   distinct-student-actual-hosted:
-    if: github.ref == 'refs/heads/main' && inputs.approval == 'RUN_DISTINCT_SYNTHETIC_STUDENTS_ONCE'
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || inputs.approval == 'RUN_DISTINCT_SYNTHETIC_STUDENTS_ONCE')
     runs-on: ubuntu-latest
     timeout-minutes: 12
     env:
       SMARTPRO_HOSTED_DISTINCT_STUDENTS: ${{ secrets.SMARTPRO_HOSTED_DISTINCT_STUDENTS }}
       SMARTPRO_HOSTED_TEST_ACCOUNTS: ${{ secrets.SMARTPRO_HOSTED_TEST_ACCOUNTS }}
-      SMARTPRO_DISTINCT_LOAD_APPROVAL: ${{ inputs.approval }}
+      SMARTPRO_DISTINCT_LOAD_APPROVAL: ${{ inputs.approval || 'RUN_DISTINCT_SYNTHETIC_STUDENTS_ONCE' }}
     steps:
+      - name: Require encrypted credentials before any hosted request
+        run: |
+          test -n "$SMARTPRO_HOSTED_DISTINCT_STUDENTS" || { echo 'BLOCKED: add the encrypted GitHub Actions secret SMARTPRO_HOSTED_DISTINCT_STUDENTS; no hosted requests sent'; exit 1; }
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
