@@ -15,4 +15,4 @@ COPY . .
 RUN useradd --system --home-dir /app --no-create-home smartpro
 USER smartpro
 EXPOSE 10000
-CMD ["sh", "-c", "exec gunicorn smartpro.wsgi:application --bind 0.0.0.0:$PORT --workers 1 --threads 4 --timeout 90 --access-logfile - --error-logfile -"]
+CMD ["sh", "-c", "THREADS=${SMARTPRO_GUNICORN_THREADS:-4}; case \"$THREADS\" in 4|6|8) ;; *) echo \"Invalid bounded SMARTPRO_GUNICORN_THREADS\" >&2; exit 1 ;; esac; exec gunicorn smartpro.wsgi:application --bind 0.0.0.0:$PORT --workers 1 --threads \"$THREADS\" --timeout 90 --access-logfile - --error-logfile -"]
