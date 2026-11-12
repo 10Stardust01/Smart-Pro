@@ -50,6 +50,29 @@ def _accounts():
         ):
             raise RuntimeError("Supplemental reviewer accounts must be unique test aliases")
         data = {**data, **extra}
+    # Optional STAGING-ONLY distinct-student pressure-test aliases. Each alias
+    # must map to a distinct synthetic actor, never to an existing reviewer.
+    # The existing five reviewer logins remain unchanged and retain precedence.
+    load_raw = os.environ.get("SMARTPRO_REVIEWER_LOAD_ACCOUNTS")
+    if load_raw:
+        try:
+            load = json.loads(load_raw)
+        except json.JSONDecodeError as exc:
+            raise RuntimeError("Invalid staging load-account configuration") from exc
+        allowed = {"test-load-" + f"{n:02d}" for n in range(1, 9)}
+        if not isinstance(load, dict) or set(load) != allowed or allowed & set(data):
+            raise RuntimeError("Eight separate non-overlapping staging load aliases required")
+        try:
+            existing_actors = {
+                str(UUID(item["actor"])) for item in data.values()
+                if isinstance(item, dict) and isinstance(item.get("actor"), str)
+            }
+            load_actors = [str(UUID(item["actor"])) for item in load.values()]
+        except (KeyError, TypeError, ValueError) as exc:
+            raise RuntimeError("Invalid staging load actor identity") from exc
+        if len(set(load_actors)) != 8 or existing_actors.intersection(load_actors):
+            raise RuntimeError("Staging load accounts must be eight different actors")
+        data = {**data, **load}
     accounts = {}
     for alias, entry in data.items():
         if not isinstance(alias, str) or not re.fullmatch(r"[a-z][a-z0-9-]{1,39}", alias):
