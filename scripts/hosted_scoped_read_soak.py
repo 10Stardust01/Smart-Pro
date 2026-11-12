@@ -10,7 +10,6 @@ import statistics
 import sys
 import time
 from math import ceil
-from urllib.parse import urlencode
 import httpx
 from hosted_synthetic_https_writes import Reviewer, require
 from hosted_mixed_academic_pilot import wait_for_free_staging_readiness
