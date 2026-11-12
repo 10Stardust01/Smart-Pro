@@ -4,7 +4,6 @@ Requires an encrypted GitHub Actions secret, never prints or artifacts the
 connection string, dump, or private data. Matches every public table's row-hash
 multiset, schema totals and PDF metadata with the original live checkpoint.
 """
-import hashlib
 import os
 import subprocess
 import sys
