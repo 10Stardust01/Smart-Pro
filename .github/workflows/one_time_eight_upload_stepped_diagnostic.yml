@@ -1,0 +1,37 @@
+name: SMART-PRO one-time eight-upload diagnosis and stepped 24-session read profile (Free)
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/.smartpro-eight-upload-stepped-profile-activation-20261112'
+permissions:
+  contents: read
+concurrency:
+  group: smartpro-hosted-academic-writes-single-run
+  cancel-in-progress: false
+jobs:
+  one-shot-diagnostic:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 14
+    env:
+      SMARTPRO_HOSTED_DISTINCT_STUDENTS: ${{ secrets.SMARTPRO_HOSTED_DISTINCT_STUDENTS }}
+      SMARTPRO_HOSTED_TEST_ACCOUNTS: ${{ secrets.SMARTPRO_HOSTED_TEST_ACCOUNTS }}
+      SMARTPRO_DISTINCT_LOAD_APPROVAL: RUN_DISTINCT_SYNTHETIC_STUDENTS_ONCE
+    steps:
+      - name: Require existing encrypted test credentials before external requests
+        run: |
+          test -n "$SMARTPRO_HOSTED_DISTINCT_STUDENTS" || { echo 'Missing encrypted eight-Student test secret: no test run'; exit 1; }
+          test -n "$SMARTPRO_HOSTED_TEST_ACCOUNTS" || { echo 'Missing base synthetic test accounts: no test run'; exit 1; }
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install existing open-source HTTP client
+        run: python -m pip install httpx==0.28.1
+      - name: Offline compile and hard-safety preflight
+        run: |
+          python -m py_compile scripts/hosted_eight_upload_stepped_diagnostic.py
+          python scripts/hosted_eight_upload_stepped_diagnostic.py --self-test
+      - name: One eight-upload wave and stepped eight/16/24-session read profile
+        run: python -u scripts/hosted_eight_upload_stepped_diagnostic.py
