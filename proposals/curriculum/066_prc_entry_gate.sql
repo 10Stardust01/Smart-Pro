@@ -144,6 +144,9 @@ BEGIN
    USING ERRCODE='23514'; END IF;
   INSERT INTO public.prc_offering_gates(offering_id,activated_by)
    VALUES(oid,actor) ON CONFLICT DO NOTHING;
+  INSERT INTO public.audit_events(actor_id,action,target_type,target_id,metadata)
+   VALUES(actor,'PRC_GATE_ACTIVATED','CURRICULUM_OFFERING',oid,
+     jsonb_build_object('offeringId',oid,'source','explicit coordinator activation'));
   result:=jsonb_build_object('status','PRC_ENABLED','offeringId',oid);
 
  ELSIF action='ASSIGN' THEN
@@ -169,13 +172,15 @@ BEGIN
   result:=jsonb_build_object('status','ASSIGNED','memberId',member.id,'projectId',pid);
 
  ELSIF action='END_MEMBER' THEN
-  SELECT m.* INTO member FROM public.prc_project_members m
+  SELECT p.id INTO pid FROM public.prc_project_members m
    JOIN public.projects p ON p.id=m.project_id JOIN public.teams t ON t.id=p.team_id
-   WHERE m.id=(input->>'memberId')::uuid AND t.curriculum_offering_id=oid FOR UPDATE OF m;
+   WHERE m.id=(input->>'memberId')::uuid AND t.curriculum_offering_id=oid;
+  IF pid IS NULL THEN RAISE EXCEPTION 'Scoped PRC member required' USING ERRCODE='23514'; END IF;
+  PERFORM 1 FROM public.projects WHERE id=pid FOR UPDATE;
+  SELECT * INTO member FROM public.prc_project_members
+   WHERE id=(input->>'memberId')::uuid FOR UPDATE;
   IF member.id IS NULL OR member.ended_at IS NOT NULL
   THEN RAISE EXCEPTION 'Active scoped PRC assignment required' USING ERRCODE='23514'; END IF;
-  pid:=member.project_id;
-  PERFORM 1 FROM public.projects WHERE id=pid FOR UPDATE;
   stamp:=clock_timestamp();
   UPDATE public.prc_project_members SET ended_at=stamp WHERE id=member.id;
   UPDATE public.faculty_assignments SET valid_until=stamp
@@ -279,10 +284,36 @@ BEGIN
      ORDER BY p.title LIMIT 200
    ) x));
 END $f$;
-REVOKE ALL ON FUNCTION public.smartpro_prc_required(uuid),public.smartpro_prc_approved(uuid),
+-- Student-facing, project-scoped PRC state: never exposes another team's work.
+CREATE FUNCTION public.smartpro_prc_student_status(actor uuid,pid uuid,acting_role text) RETURNS jsonb
+LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path=pg_catalog,public,pg_temp AS $f$
+DECLARE state jsonb;
+BEGIN
+ IF acting_role<>'Student' OR NOT public.smartpro_role_choices(actor) ? 'Student'
+    OR NOT public.smartpro_document_scope(actor,pid,'student')
+ THEN RAISE EXCEPTION 'Current project student required' USING ERRCODE='42501'; END IF;
+ SELECT jsonb_build_object(
+   'enabled',public.smartpro_prc_required(pid),
+   'approved',public.smartpro_prc_approved(pid),
+   'synopsisState',c.state,
+   'latestDecision',(SELECT d.decision FROM public.submission_attempts a
+      LEFT JOIN public.prc_synopsis_decisions d ON d.attempt_id=a.id
+      WHERE a.case_id=c.id ORDER BY a.attempt_no DESC LIMIT 1),
+   'history',(SELECT coalesce(jsonb_agg(jsonb_build_object(
+       'attemptNo',a.attempt_no,'decision',d.decision,'comment',d.comment,
+       'recordedAt',d.recorded_at) ORDER BY a.attempt_no),'[]'::jsonb)
+      FROM public.submission_attempts a JOIN public.prc_synopsis_decisions d ON d.attempt_id=a.id
+      WHERE a.case_id=c.id)
+ ) INTO state FROM public.projects p
+ LEFT JOIN public.submission_cases c ON c.project_id=p.id AND c.requirement_key='SYNOPSIS'
+ WHERE p.id=pid;
+ RETURN coalesce(state,'{}'::jsonb);
+END $f$;
+REVOKE ALL ON FUNCTION public.smartpro_prc_student_status(uuid,uuid,text),public.smartpro_prc_required(uuid),public.smartpro_prc_approved(uuid),
  public.smartpro_prc_guide_guard(),public.smartpro_prc_document_guard(),
  public.smartpro_prc_command(uuid,uuid,text,jsonb,text),public.smartpro_prc_overview(uuid,uuid,text)
  FROM PUBLIC,smartpro_runtime;
 GRANT EXECUTE ON FUNCTION public.smartpro_prc_command(uuid,uuid,text,jsonb,text),
- public.smartpro_prc_overview(uuid,uuid,text) TO smartpro_runtime;
+ public.smartpro_prc_overview(uuid,uuid,text),
+ public.smartpro_prc_student_status(uuid,uuid,text) TO smartpro_runtime;
 COMMIT;
