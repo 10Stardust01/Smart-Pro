@@ -5,6 +5,7 @@ import {proposalForm,projectLifecycle} from './proposal.js';
 import {setupUI,departmentOverview,departmentRecords} from './setup.js';
 import {natural,offeringProjects,pdfUploadResult,workspaceOpenError} from './workflow.js';
 import {documentsUI} from './documents.js';
+import {prcFacultySection,prcStudentSection} from './prc.js';
 import {facultyReferencePanel,openFacultyReference} from './faculty-reference.js';
 const $ = (q, root = document) => root.querySelector(q);
 let previewURL;
@@ -28,7 +29,7 @@ function reviewerHeaders(alias){
   return uiContext.reviewerAuth ? {'X-CSRFToken':csrfToken()} : {'X-Demo-User':alias};
 }
 const identities=uiContext.identities.map(alias=>[alias,uiContext.people?.[alias]||alias.replaceAll('-',' '),(uiContext.responsibilities?.[alias]?.join(' · ')||'Restricted access'),(uiContext.people?.[alias]||alias).split(' ').map(p=>p[0]).slice(0,2).join('')]);
-const courseSections = new Set(['overview','appointments','requirements','plan','evaluation','assignments','submissions','deadlines','results','history']);
+const courseSections = new Set(['overview','appointments','requirements','prc','plan','evaluation','assignments','submissions','deadlines','results','history']);
 const departmentRole=()=>['Admin','HOD'].includes(state.role);
 const departmentViews=new Set(['overview','documents','setup','records','courses','audit','notifications','projects','department','evaluations']);
 function readCourseLocation(){
@@ -202,7 +203,7 @@ async function load({reuseWorkspace=false}={}) {
   context.role=state.role;
   if(!previousRole&&personalRole()&&new URLSearchParams(location.search).has('work'))readWorkLocation();
   if(!previousRole&&(departmentRole()||state.role==='Coordinator'))readCourseLocation();
-  const next = {departmentRecord:null,appointmentCandidates:null,directoryListing:null,intakeListing:null,intakeTargets:null,courses:null,courseDetail:null,courseEvaluationQueue:null,courseEvaluationError:'',finalRevisionListing:null,guideCorrectionError:'',workListing:null,courseDocumentListing:null,courseNotifications:null,guideFinalCorrections:null,reviewManagement:null,requirementManagement:null,assignmentManagement:null,configurationManagement:null,management:null,proposalConfig:null,proposalError:'',documentError:'',setup:null,workspace:w,profile:null,offerings:[],memberships:[],projects:[],staff:null,academic:null,result:null,error:''};
+  const next = {departmentRecord:null,appointmentCandidates:null,directoryListing:null,intakeListing:null,intakeTargets:null,courses:null,courseDetail:null,courseEvaluationQueue:null,courseEvaluationError:'',finalRevisionListing:null,guideCorrectionError:'',workListing:null,courseDocumentListing:null,prcOverview:null,prcStudent:null,prcError:'',prcOffering:null,courseNotifications:null,guideFinalCorrections:null,reviewManagement:null,requirementManagement:null,assignmentManagement:null,configurationManagement:null,management:null,proposalConfig:null,proposalError:'',documentError:'',setup:null,workspace:w,profile:null,offerings:[],memberships:[],projects:[],staff:null,academic:null,result:null,error:''};
   // Resolve the role first, then load independent panels together.
   const staffCourse=['Coordinator','HOD'].includes(state.role)&&state.view==='courses';
   const workBrowser=personalRole()||state.role==='HOD'&&state.view==='documents';
@@ -339,6 +340,23 @@ async function load({reuseWorkspace=false}={}) {
     uiContext.courseManagement&&['overview','notifications'].includes(state.view)&&get('/api/v1/me/course-notifications').then(value=>{next.courseNotifications=value;}),
     uiContext.courseManagement&&state.role==='Faculty'&&state.view==='documents'&&state.projectId&&get('/api/v1/me/published-corrections?'+new URLSearchParams({projectId:state.projectId,page:state.guideCorrectionPage||1,...(state.guideCorrectionAnchor?{anchor:state.guideCorrectionAnchor}:{})})).then(value=>{next.guideFinalCorrections=value;next.guideCorrectionAnchor=value.anchor;}).catch(error=>{if(error.name==='AbortError')throw error;next.guideCorrectionError=error.message;})
   ]);
+  if(generation!==state.generation)return;
+  // No static PRC data: load only authorized, database-backed records.
+  if(state.role==='Coordinator'&&state.view==='courses'&&state.courseSection==='prc'&&state.courseId){
+    try{next.prcOverview=await get('/api/v1/prc/offerings/'+state.courseId);}
+    catch(error){if(error.name==='AbortError')throw error;next.prcError=error.message;}
+  }
+  if(state.role==='Faculty'&&state.view==='documents'&&state.projectId){
+    const p=next.documents?.projects?.find(p=>p.id===state.projectId);
+    if(p?.offeringId)try{
+      next.prcOverview=await get('/api/v1/prc/offerings/'+p.offeringId);
+      next.prcOffering=p.offeringId;
+    }catch(error){if(error.name==='AbortError')throw error;if(error.status!==403&&error.status!==503)next.prcError=error.message;}
+  }
+  if(state.role==='Student'&&state.view==='documents'&&state.projectId){
+    try{next.prcStudent=await get('/api/v1/prc/projects/'+state.projectId);}
+    catch(error){if(error.name==='AbortError')throw error;if(error.status!==503)next.prcError=error.message;}
+  }
   if(generation!==state.generation)return;
   if((w.access.faculty||w.access.admin)&&next.documents) next.projects=[...new Map([...next.projects,...next.documents.projects].map(p=>[p.id,p])).values()];
   if(next.documents && next.offeringId && w.access.student && !w.access.admin && !selectedEvidence && state.view!=='history' && !state.openFromHistory) next.documents={...next.documents,projects:offeringProjects(next.documents.projects,next.offeringId)};
@@ -593,7 +611,7 @@ function personalDocuments(){
       ${button('Open project','open-project',`data-project="${esc(p.id)}"`,'secondary')}</article>`).join('');
 }
 
-function content() { if(state.role==='Coordinator'&&state.view==='courses'&&state.courseReviewId)return courseAssessment(); return ({notifications:()=>notificationPanel(state,esc,displayDate),courses:()=>courseManagement(state,esc,displayDate,localDate),setup:()=>setupUI(state,esc),records:()=>departmentRecords(state,esc),documents:()=>personalRole()||state.role==='HOD'?personalDocuments():documentsUI({state,esc,displayDate,localDate}),overview, enrollment,teams:teamView,projects:projectsView,history:()=>heading('ACADEMIC RECORDS','Project history','Your authorized project records across offerings, including paused and archived offerings.')+`<section class="panel">${projectCards()}</section>`,department:departmentView,evaluations:() => evaluationView(),results:() => evaluationView(true),audit:auditView}[state.view] || overview)()+referencePanel(); }
+function content() { if(state.role==='Coordinator'&&state.view==='courses'&&state.courseReviewId)return courseAssessment(); return ({notifications:()=>notificationPanel(state,esc,displayDate),courses:()=>courseManagement(state,esc,displayDate,localDate),setup:()=>setupUI(state,esc),records:()=>departmentRecords(state,esc),documents:()=>{const base=personalRole()||state.role==='HOD'?personalDocuments():documentsUI({state,esc,displayDate,localDate});return base+(state.role==='Faculty'?prcFacultySection(state,esc):state.role==='Student'?prcStudentSection(state.prcStudent,esc):'');},overview, enrollment,teams:teamView,projects:projectsView,history:()=>heading('ACADEMIC RECORDS','Project history','Your authorized project records across offerings, including paused and archived offerings.')+`<section class="panel">${projectCards()}</section>`,department:departmentView,evaluations:() => evaluationView(),results:() => evaluationView(true),audit:auditView}[state.view] || overview)()+referencePanel(); }
 function instructionAuthority(values){return {source:'EXTERNAL_INSTRUCTION',hodMandateId:values.hodMandateId,reference:values.instructionReference||'',confirmed:values.instructionConfirmed==='on'};}
 async function recordConfiguration(kind,configuration,values){return api(staffBase()+'/setup','POST',{action:'RECORD',kind,configuration,reason:values.reason||'',authority:{source:'EXTERNAL_INSTRUCTION',hodMandateId:values.hodMandateId,reference:values.instructionReference||'',confirmed:values.instructionConfirmed==='on'}});}
 function updateSynopsisControls(form){if(!form)return;const required=form.elements.requiresSynopsis?.checked;form.querySelectorAll('[data-synopsis-field]').forEach(block=>{block.hidden=!required;block.querySelectorAll('input,select').forEach(control=>{control.disabled=!required;if(control.type!=='checkbox')control.required=required;});});}
@@ -951,6 +969,18 @@ document.addEventListener('submit', async event => {
     writeCourseLocation();
     await work(async()=>{},'');
     focusHeading('#queue-heading');
+    return;
+  }
+  if(type==='prc-activate'&&!await confirmChange('Enable the PRC synopsis gate for this offering? First Guide assignments will require official PRC approval.','Enable PRC gate'))return;
+  if(type==='prc-end-member'&&!await confirmChange('This Faculty member will no longer be able to record PRC decisions for this project.','End PRC assignment'))return;
+  if(type==='prc-decision'&&values.decision==='REJECT'&&!await confirmChange('Reject this synopsis? Students will need to submit another synopsis before PRC can review again.','Reject synopsis'))return;
+  if(type.startsWith('prc-')){
+    const offering=form.dataset.offering;
+    const payload=type==='prc-activate'?{action:'ACTIVATE',reason:values.reason||''}:
+      type==='prc-assign'?{action:'ASSIGN',projectId:form.dataset.project,facultyId:values.facultyId,reason:values.reason||''}:
+      type==='prc-end-member'?{action:'END_MEMBER',memberId:form.dataset.member,reason:values.reason||''}:
+      {action:'DECIDE',projectId:form.dataset.project,attemptId:form.dataset.attempt,expectedCaseVersion:Number(form.dataset.version),decision:values.decision,comment:values.comment.trim()};
+    await work(()=>api('/api/v1/prc/offerings/'+offering,'POST',payload),'PRC action recorded');
     return;
   }
   let outcome;
