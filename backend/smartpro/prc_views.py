@@ -52,3 +52,10 @@ def offering(request, offering_id):
     return private_response(staff_sql_command(
         'SELECT public.smartpro_prc_command(%s,%s,%s,%s,%s)',
         request.user.id, offering_id, action, body, request.headers.get('Idempotency-Key')))
+
+@api_view(['GET'])
+def student_project(request, project_id):
+    _available()
+    return private_response(_execute(
+        'SELECT public.smartpro_prc_student_status(%s,%s,%s)',
+        (request.user.id, project_id, request.user.role)))
