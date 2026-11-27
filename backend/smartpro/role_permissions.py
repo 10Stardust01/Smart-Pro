@@ -9,6 +9,10 @@ class ActiveRolePermission(BasePermission):
         user=request.user
         if not user or not getattr(user,'is_authenticated',False):return False
         role=getattr(user,'role',None)
+        if request.path.startswith('/api/v1/prc/'):
+            if request.method not in ('GET','HEAD','OPTIONS'):return False
+            if '/offerings/' in request.path:return role=='Coordinator'
+            return role in ('Student','Faculty','Coordinator','HOD')
         if request.path.startswith('/api/v1/faculty-reference/'):
             return role in ('Admin','HOD','Coordinator')
         if request.path=='/api/v1/workspace':return True

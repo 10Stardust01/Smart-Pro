@@ -27,7 +27,7 @@ def enabled():
 
 
 def asset(request,name='index.html'):
-    if not (enabled() or os.getenv('SMARTPRO_UI')=='YES') or name not in {'index.html','app.js','styles.css','documents.js','workflow.js','setup.js','proposal.js','setup-policy.js','coordination.js','offering-management.js','document-requirements.js','course-management.js','faculty-reference.js'}:
+    if not (enabled() or os.getenv('SMARTPRO_UI')=='YES') or name not in {'index.html','app.js','styles.css','documents.js','workflow.js','setup.js','proposal.js','setup-policy.js','coordination.js','offering-management.js','document-requirements.js','course-management.js','faculty-reference.js','prc.js'}:
         raise Http404
     if name == 'index.html' and reviewer_auth.active() and not reviewer_auth.reviewer_session(request):
         return redirect('/reviewer/login')

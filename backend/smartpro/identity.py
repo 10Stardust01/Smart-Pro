@@ -2,7 +2,7 @@
 import os
 from dataclasses import dataclass
 from rest_framework.authentication import BaseAuthentication, get_authorization_header
-from rest_framework.exceptions import AuthenticationFailed
+from rest_framework.exceptions import AuthenticationFailed, PermissionDenied
 
 DEMO_USERS = {
     'department-admin': '00000000-0000-4000-8000-000000000012',
@@ -53,15 +53,20 @@ class DemoAuthentication(BaseAuthentication):
         actor = DEMO_USERS.get(alias) if isolated or alias in DEVELOPMENT_ALIASES else None
         if not actor:
             raise AuthenticationFailed('Synthetic demo identity required')
-        from django.db import connection
-        with connection.cursor() as cursor:
-            cursor.execute("SELECT to_regprocedure('public.smartpro_role_choices(uuid)') IS NOT NULL")
-            if not cursor.fetchone()[0]:return Principal(actor),None
-            cursor.execute('SELECT public.smartpro_role_choices(%s)',(actor,))
-            choices=cursor.fetchone()[0]
-            if isinstance(choices,str):
-                import json
-                choices=json.loads(choices)
+        from django.db import DatabaseError, connection
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT to_regprocedure('public.smartpro_role_choices(uuid)') IS NOT NULL")
+                if not cursor.fetchone()[0]:return Principal(actor),None
+                cursor.execute('SELECT public.smartpro_role_choices(%s)',(actor,))
+                choices=cursor.fetchone()[0]
+        except DatabaseError as exc:
+            if getattr(exc.__cause__ or exc, 'sqlstate', None) == '42501':
+                raise PermissionDenied('No active academic responsibility is available') from None
+            raise
+        if isinstance(choices,str):
+            import json
+            choices=json.loads(choices)
         chosen=request.headers.get('X-Smartpro-Role')
         if chosen is not None and chosen not in choices:raise AuthenticationFailed('This responsibility is not assigned to your account')
         if chosen is None and len(choices)==1:chosen=choices[0]

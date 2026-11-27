@@ -1,5 +1,6 @@
 import {candidateSearch} from './offering-management.js';
 export function guideForm(project,state,esc){
+ if(project.prc?.enabled&&!project.prc.approved)return `<section class="guide-panel"><h3>Primary guide</h3><p>Guide allocation awaits PRC approval of the latest synopsis.</p></section>`;
  if(!state.workspace.access.admin||!state.setup?.coordination?.canGuide)return `<section class="guide-panel"><h3>Primary guide</h3><p>${esc(project.guide?.name||'Not assigned')}</p></section>`;
  return `<section class="guide-panel"><h3>Primary guide</h3><p>${project.guide?'Current guide: '+esc(project.guide.name):'No primary guide assigned.'} Allocating a guide also records synopsis-review responsibility. Approval and revision decisions follow the configured synopsis rules. Evaluator assignment remains separate.</p><form data-form="guide" data-project="${project.id}" data-current="${project.guide?.id||''}"><label for="guide-${project.id}">Faculty guide<select name="facultyId" id="guide-${project.id}" required><option value="">Choose an active faculty member</option>${state.workspace.faculty.map(f=>`<option value="${f.id}">${esc(f.name)}</option>`).join('')}</select></label><label>Note (optional)<input name="reason" maxlength="500"></label><button class="secondary">Assign primary guide</button></form></section>`;
 }

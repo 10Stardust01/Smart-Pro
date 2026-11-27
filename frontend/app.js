@@ -28,7 +28,7 @@ function reviewerHeaders(alias){
   return uiContext.reviewerAuth ? {'X-CSRFToken':csrfToken()} : {'X-Demo-User':alias};
 }
 const identities=uiContext.identities.map(alias=>[alias,uiContext.people?.[alias]||alias.replaceAll('-',' '),(uiContext.responsibilities?.[alias]?.join(' · ')||'Restricted access'),(uiContext.people?.[alias]||alias).split(' ').map(p=>p[0]).slice(0,2).join('')]);
-const courseSections = new Set(['overview','appointments','requirements','plan','evaluation','assignments','submissions','deadlines','results','history']);
+const courseSections = new Set(['prc','overview','appointments','requirements','plan','evaluation','assignments','submissions','deadlines','results','history']);
 const departmentRole=()=>['Admin','HOD'].includes(state.role);
 const departmentViews=new Set(['overview','documents','setup','records','courses','audit','notifications','projects','department','evaluations']);
 function readCourseLocation(){
@@ -202,7 +202,7 @@ async function load({reuseWorkspace=false}={}) {
   context.role=state.role;
   if(!previousRole&&personalRole()&&new URLSearchParams(location.search).has('work'))readWorkLocation();
   if(!previousRole&&(departmentRole()||state.role==='Coordinator'))readCourseLocation();
-  const next = {departmentRecord:null,appointmentCandidates:null,directoryListing:null,intakeListing:null,intakeTargets:null,courses:null,courseDetail:null,courseEvaluationQueue:null,courseEvaluationError:'',finalRevisionListing:null,guideCorrectionError:'',workListing:null,courseDocumentListing:null,courseNotifications:null,guideFinalCorrections:null,reviewManagement:null,requirementManagement:null,assignmentManagement:null,configurationManagement:null,management:null,proposalConfig:null,proposalError:'',documentError:'',setup:null,workspace:w,profile:null,offerings:[],memberships:[],projects:[],staff:null,academic:null,result:null,error:''};
+  const next = {prcOverview:null,prcError:'',departmentRecord:null,appointmentCandidates:null,directoryListing:null,intakeListing:null,intakeTargets:null,courses:null,courseDetail:null,courseEvaluationQueue:null,courseEvaluationError:'',finalRevisionListing:null,guideCorrectionError:'',workListing:null,courseDocumentListing:null,courseNotifications:null,guideFinalCorrections:null,reviewManagement:null,requirementManagement:null,assignmentManagement:null,configurationManagement:null,management:null,proposalConfig:null,proposalError:'',documentError:'',setup:null,workspace:w,profile:null,offerings:[],memberships:[],projects:[],staff:null,academic:null,result:null,error:''};
   // Resolve the role first, then load independent panels together.
   const staffCourse=['Coordinator','HOD'].includes(state.role)&&state.view==='courses';
   const workBrowser=personalRole()||state.role==='HOD'&&state.view==='documents';
@@ -210,7 +210,7 @@ async function load({reuseWorkspace=false}={}) {
   const courseDocuments=['assignments','submissions'].includes(state.courseSection);
   const coursePage=staffCourse&&state.courseId&&['assignments','submissions','plan','results','deadlines'].includes(state.courseSection);
   const selectedEvidence=staffCourse?(state.courseReviewId?w.reviews.find(r=>r.id===state.courseReviewId)?.projectId:
-    (state.courseSection==='evaluation'||courseDocuments)?state.courseProjectId:null):workBrowser?
+    (['evaluation','prc'].includes(state.courseSection)||courseDocuments)?state.courseProjectId:null):workBrowser?
     (state.view==='documents'?state.projectId:['evaluations','results'].includes(state.view)?assessmentEvidence:null):null;
   const loadProjects=async()=>{
     if (w.access.student && w.enrolled && !w.access.admin) {
@@ -319,6 +319,10 @@ async function load({reuseWorkspace=false}={}) {
          // Course authority reads may acquire coordinator-row locks. Do not
          // run the separate paginated read concurrently with offering details.
          await revisions();
+        if(state.role==='Coordinator'&&state.courseSection==='prc'){
+          try{next.prcOverview=await get('/api/v1/prc/offerings/'+offeringId+'?page='+(state.queuePage||1));}
+          catch(error){if(error.name==='AbortError')throw error;next.prcError=error.message;}
+        }
       }
     }
     if(w.access.operations&&!next.management)next.management=await get(`/api/v1/staff/departments/${w.department.id}/offering-management`);
@@ -339,6 +343,12 @@ async function load({reuseWorkspace=false}={}) {
     uiContext.courseManagement&&['overview','notifications'].includes(state.view)&&get('/api/v1/me/course-notifications').then(value=>{next.courseNotifications=value;}),
     uiContext.courseManagement&&state.role==='Faculty'&&state.view==='documents'&&state.projectId&&get('/api/v1/me/published-corrections?'+new URLSearchParams({projectId:state.projectId,page:state.guideCorrectionPage||1,...(state.guideCorrectionAnchor?{anchor:state.guideCorrectionAnchor}:{})})).then(value=>{next.guideFinalCorrections=value;next.guideCorrectionAnchor=value.anchor;}).catch(error=>{if(error.name==='AbortError')throw error;next.guideCorrectionError=error.message;})
   ]);
+  if(selectedEvidence&&next.documents){
+    try{
+      const prc=await get('/api/v1/prc/projects/'+selectedEvidence);
+      next.documents={...next.documents,projects:next.documents.projects.map(p=>p.id===selectedEvidence?{...p,prc}:p)};
+    }catch(error){if(error.name==='AbortError')throw error;if(error.status!==503&&error.status!==403)throw error;}
+  }
   if(generation!==state.generation)return;
   if((w.access.faculty||w.access.admin)&&next.documents) next.projects=[...new Map([...next.projects,...next.documents.projects].map(p=>[p.id,p])).values()];
   if(next.documents && next.offeringId && w.access.student && !w.access.admin && !selectedEvidence && state.view!=='history' && !state.openFromHistory) next.documents={...next.documents,projects:offeringProjects(next.documents.projects,next.offeringId)};

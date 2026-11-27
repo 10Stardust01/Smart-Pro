@@ -10,8 +10,11 @@ from . import setup_views
 from . import operation_views, lifecycle_views
 from . import course_views
 from . import reviewer_auth
+from . import prc_views
 
 urlpatterns = [
+    path('api/v1/prc/offerings/<uuid:offering_id>', prc_views.offering),
+    path('api/v1/prc/projects/<uuid:project_id>', prc_views.project),
     path("reviewer/login", reviewer_auth.login),
     path("reviewer/logout", reviewer_auth.logout),
     path("health/live", health.live),

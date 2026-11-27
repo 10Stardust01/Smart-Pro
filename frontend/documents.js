@@ -1,3 +1,4 @@
+import {prcStatus} from './prc.js';
 import {configuredRequirementCards} from './document-requirements.js';
 import {offeringManagement} from './offering-management.js';
 import {guideForm} from './coordination.js';
@@ -37,7 +38,7 @@ export function documentsUI({state,esc,displayDate,localDate,embedded=false}) {
       state.role==='Faculty'&&p.canReview&&pending?.state==='SUBMITTED'?'Review the submitted synopsis and record your decision.':'';
     const titleTag=embedded&&['Student','Faculty','HOD'].includes(state.role)?'h1':'h2';
     return `<section class="panel" data-search-record="${esc(p.title)}" data-review-status="${c?.state||'DRAFT'}"><div class="panel-title"><div><div class="eyebrow">Project workspace</div><${titleTag}>${esc(p.title)}</${titleTag}></div><span class="badge">Synopsis: ${esc(natural(documentState(p)))}</span></div>
-    ${nextTask?`<p class="notice"><strong>Next action</strong> · ${esc(nextTask)}</p>`:''}
+    ${prcStatus(p.prc,esc)}${nextTask?`<p class="notice"><strong>Next action</strong> · ${esc(nextTask)}</p>`:''}
     ${p.overallFinalPublished?'<div class="notice">Overall final result published. Ordinary document changes and revision requests are closed; earlier evidence remains accessible.</div>':''}${p.canReopenSynopsis?`<form data-form="reopen-synopsis" data-project="${p.id}" data-offering="${p.offeringId}" data-version="${p.case.version}"><label>Further revision feedback (optional)<textarea name="comment" maxlength="4000"></textarea></label><button class="secondary">Request further synopsis revision</button></form>`:''}
     ${['Faculty','Student'].includes(state.role)?`<section class="section-spacer"><h3>Assessments and results</h3>${state.workspace.reviews.filter(r=>r.projectId===p.id).map(r=>{
       const contribution=r.assessments?.find(a=>a.facultyId===state.workspace.actor.id);

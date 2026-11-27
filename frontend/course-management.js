@@ -1,3 +1,4 @@
+import {prcOffering} from './prc.js';
 import {instructionFields} from './setup-policy.js';
 import {offeringPager,offeringFilters,candidateSearch} from './offering-management.js';
 import {documentsUI} from './documents.js';
@@ -13,7 +14,7 @@ export function courseManagement(state,esc,displayDate,localDate){
  const evidence=state.documents?.projects||[],list=state.courseDocumentListing;
  const projects=(list?.projects||evidence).filter(p=>p.offeringId===course.id).map(p=>({...p,overallFinalPublished:p.overallFinalPublished||state.courseDetail?.overallResults.some(r=>r.project_id===p.id)})),ids=new Set(projects.map(p=>p.id)),reviews=state.workspace.reviews.filter(r=>ids.has(r.projectId));
  const section=state.courseSection||'overview';
- const tabs=[['overview','Overview'],['appointments','Coordinators'],['requirements','Academic requirements'],['plan','Reviews & marking'],...(state.role==='Coordinator'?[['evaluation','Project evaluation']]:[]),['assignments','Guides & evaluators'],['submissions','Submissions'],['deadlines','Deadlines'],['results','Results'],['history','Activity & history']];
+ const tabs=[['overview','Overview'],['appointments','Coordinators'],['requirements','Academic requirements'],['plan','Reviews & marking'],...(state.role==='Coordinator'?[['evaluation','Project evaluation'],['prc','PRC activities']]:[]),['assignments','Guides & evaluators'],['submissions','Submissions'],['deadlines','Deadlines'],['results','Results'],['history','Activity & history']];
  const scoped={...state,projectId:state.courseProjectId,documents:{...state.documents,projects:evidence,manager:state.role==='HOD'||course.responsibilities.includes('SUBMISSIONS'),operationalAdmin:false,instructions:[]},setup:{...state.setup,coordination:{canGuide:state.role==='HOD'||course.responsibilities.includes('GUIDE'),canSchedule:state.role==='HOD'||course.responsibilities.includes('PLAN')}}};
  let body='';
  if(section==='overview'){
@@ -23,6 +24,7 @@ export function courseManagement(state,esc,displayDate,localDate){
   body=`<div class="course-overview"><section class="panel course-metrics"><div class="panel-title"><div><span class="section-kicker">OFFERING STATUS</span><h2>At a glance</h2></div></div><div class="dashboard-metrics">${metrics.map(([label,value])=>`<div class="metric"><span class="metric-label">${esc(label)}</span><strong class="metric-value">${esc(value??'—')}</strong></div>`).join('')}</div></section>
    <section class="panel course-attention"><div class="panel-title"><div><span class="section-kicker">TO REVIEW</span><h2>Pending submissions</h2></div>${awaiting?`<span class="badge amber">${awaiting} pending</span>`:'<span class="badge green">Up to date</span>'}</div><div class="attention-numbers"><div><strong>${awaiting}</strong><span>Awaiting review</span></div><div><strong>${revising}</strong><span>Awaiting revision</span></div></div><div class="actions">${state.role!=='Admin'?'<button class="primary" data-action="course-section" data-section="submissions">View submissions →</button>':''}<button class="secondary" data-action="course-section" data-section="results">Results</button><button class="quiet" data-action="course-section" data-section="deadlines">Deadlines</button></div></section></div>`;
  }
+ if(section==='prc')body=prcOffering(state,esc)+(state.courseProjectId?documentsUI({state:scoped,esc,displayDate,localDate,embedded:true}):'');
  if(section==='evaluation')body=evaluationQueue(course,scoped,esc,displayDate,localDate);
  if(section==='appointments'){
   const edit=course.appointments.find(a=>a.id===state.editCourseAppointment),latest=course.appointments.filter(a=>a.latest??!course.appointments.some(n=>n.user_id===a.user_id&&n.version>a.version));
