@@ -20,6 +20,7 @@ urlpatterns = [
     path('api/v1/faculty-reference/departments/<uuid:department_id>', demo_views.faculty_reference),
     path('api/v1/me/course-notifications', course_views.notifications),
     path('api/v1/prc/offerings/<uuid:offering_id>', prc_views.offering),
+    path('api/v1/prc/projects/<uuid:project_id>', prc_views.student_project),
     path('api/v1/me/published-corrections', course_views.guide_final_corrections),
     path('api/v1/courses/offerings/<uuid:offering_id>/final-revisions', course_views.final_revisions_page),
     path('api/v1/staff/departments/<uuid:department_id>/leadership', setup_views.leadership),
