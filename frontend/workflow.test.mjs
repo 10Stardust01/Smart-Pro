@@ -56,7 +56,7 @@ for(const role of ['Student','Faculty','Coordinator']){
   assert.equal(facultyReferencePanel({...referenceState,role},referenceContext,esc),'');
 }
 assert.match(facultyReferencePanel({...referenceState,role:'Coordinator'},referenceContext,esc,'assigned'),/data-offering="assigned"/);
-assert.match(facultyReferencePanel({...referenceState,role:'Admin'},referenceContext,esc),/Faculty Reference/);
+assert.match(facultyReferencePanel({...referenceState,role:'Admin'},referenceContext,esc),/Faculty directory/);
 assert.equal(facultyReferencePanel({...referenceState,role:'HOD'},{},esc),'');
 
 assert.match(lifecycle,/<dt>Results<\/dt><dd>Published · history available/);
