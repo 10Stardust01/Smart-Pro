@@ -41,6 +41,13 @@ jobs:
       - run: pip install -r backend/requirements.txt
       - run: python -m unittest discover -s backend -p 'test_*.py'
       - run: python backend/verify_compatibility.py
+      - name: Validate PRC frontend without a browser
+        run: |
+          node --input-type=module --check < frontend/prc.js
+          node --input-type=module --check < frontend/app.js
+          node --input-type=module --check < frontend/course-management.js
+          node --input-type=module --check < frontend/documents.js
+          node --test frontend/prc.test.mjs
       - name: Offline private PDF recovery contract
         run: python -m unittest discover -s scripts -p 'test_verify_hosted_pdf_recovery.py'
       - uses: actions/upload-artifact@v4
