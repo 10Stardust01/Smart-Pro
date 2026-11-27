@@ -1,6 +1,7 @@
 import {instructionFields} from './setup-policy.js';
 import {offeringPager,offeringFilters,candidateSearch} from './offering-management.js';
 import {documentsUI} from './documents.js';
+import {prcCoordinatorSection} from './prc.js';
 
 export const responsibilities={OVERVIEW:'Course overview',REQUIREMENTS:'Approved requirements',PLAN:'Review planning',GUIDE:'Primary-guide allocation',EVALUATORS:'Evaluator assignments',SUBMISSIONS:'Submission oversight',DEADLINES:'Deadlines and reminders',RESULTS:'Result publication',CORRECTIONS:'Specific mark corrections',HISTORY:'Academic history'};
 export function courseManagement(state,esc,displayDate,localDate){
@@ -13,7 +14,7 @@ export function courseManagement(state,esc,displayDate,localDate){
  const evidence=state.documents?.projects||[],list=state.courseDocumentListing;
  const projects=(list?.projects||evidence).filter(p=>p.offeringId===course.id).map(p=>({...p,overallFinalPublished:p.overallFinalPublished||state.courseDetail?.overallResults.some(r=>r.project_id===p.id)})),ids=new Set(projects.map(p=>p.id)),reviews=state.workspace.reviews.filter(r=>ids.has(r.projectId));
  const section=state.courseSection||'overview';
- const tabs=[['overview','Overview'],['appointments','Coordinators'],['requirements','Academic requirements'],['plan','Reviews & marking'],...(state.role==='Coordinator'?[['evaluation','Project evaluation']]:[]),['assignments','Guides & evaluators'],['submissions','Submissions'],['deadlines','Deadlines'],['results','Results'],['history','Activity & history']];
+ const tabs=[['overview','Overview'],['appointments','Coordinators'],['requirements','Academic requirements'],['plan','Reviews & marking'],...(state.role==='Coordinator'?[['prc','PRC entry gate'],['evaluation','Project evaluation']]:[]),['assignments','Guides & evaluators'],['submissions','Submissions'],['deadlines','Deadlines'],['results','Results'],['history','Activity & history']];
  const scoped={...state,projectId:state.courseProjectId,documents:{...state.documents,projects:evidence,manager:state.role==='HOD'||course.responsibilities.includes('SUBMISSIONS'),operationalAdmin:false,instructions:[]},setup:{...state.setup,coordination:{canGuide:state.role==='HOD'||course.responsibilities.includes('GUIDE'),canSchedule:state.role==='HOD'||course.responsibilities.includes('PLAN')}}};
  let body='';
  if(section==='overview'){
