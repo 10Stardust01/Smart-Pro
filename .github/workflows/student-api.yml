@@ -36,6 +36,20 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - name: Use PostgreSQL 16 recovery tools from the existing test image
+        run: |
+          mkdir -p "$RUNNER_TEMP/pg16-tools"
+          cat > "$RUNNER_TEMP/pg16-tools/pg_dump" <<'SH'
+          #!/usr/bin/env bash
+          set -euo pipefail
+          exec docker run --rm --network host --user "$(id -u):$(id -g)" \
+            -e PGPASSWORD -v /tmp:/tmp postgres:16 "$(basename "$0")" "$@"
+          SH
+          chmod +x "$RUNNER_TEMP/pg16-tools/pg_dump"
+          cp "$RUNNER_TEMP/pg16-tools/pg_dump" "$RUNNER_TEMP/pg16-tools/pg_restore"
+          echo "$RUNNER_TEMP/pg16-tools" >> "$GITHUB_PATH"
+          "$RUNNER_TEMP/pg16-tools/pg_dump" --version
+          "$RUNNER_TEMP/pg16-tools/pg_restore" --version
       - run: pip install -r backend/requirements.txt
       - run: python -m pytest backend/tests -q --junitxml=evidence/student-api.xml -p no:cacheprovider
       - uses: actions/upload-artifact@v4
